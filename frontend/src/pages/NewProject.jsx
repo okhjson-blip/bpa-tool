@@ -8,8 +8,7 @@ export default function NewProject() {
     description: '',
     l1_domain: '',
     analysis_goal: '',
-    analysis_period: '',
-    ai_engine: 'chatgpt'
+    analysis_period: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,7 +27,13 @@ export default function NewProject() {
     setLoading(true);
 
     try {
-      const response = await projectsAPI.create(formData);
+      // Get ai_engine from localStorage
+      const aiEngine = localStorage.getItem('ai_engine') || 'chatgpt';
+      const submitData = {
+        ...formData,
+        ai_engine: aiEngine
+      };
+      const response = await projectsAPI.create(submitData);
       navigate(`/projects/${response.data.project.id}`);
     } catch (err) {
       setError(err.response?.data?.error || '과제 생성에 실패했습니다');
@@ -127,35 +132,6 @@ export default function NewProject() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="예: 2026-07-01 ~ 2026-07-31"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                AI 엔진 선택 <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { value: 'gemini', label: 'Gemini', icon: '🔷' },
-                  { value: 'chatgpt', label: 'ChatGPT', icon: '🟢' },
-                  { value: 'claude', label: 'Claude', icon: '🟠' }
-                ].map((engine) => (
-                  <button
-                    key={engine.value}
-                    type="button"
-                    onClick={() =>
-                      setFormData({ ...formData, ai_engine: engine.value })
-                    }
-                    className={`p-4 border-2 rounded-lg text-center transition ${
-                      formData.ai_engine === engine.value
-                        ? 'border-primary bg-blue-50'
-                        : 'border-gray-300 hover:border-primary'
-                    }`}
-                  >
-                    <div className="text-2xl mb-2">{engine.icon}</div>
-                    <div className="font-bold">{engine.label}</div>
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div className="flex gap-4 pt-4">

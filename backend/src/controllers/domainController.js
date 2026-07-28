@@ -6,7 +6,7 @@ export const getDomainTree = async (req, res) => {
   try {
     const domains = db
       .select('domains', { project_id: parseInt(projectId) })
-      .sort((a, b) => (a.level + a.sort_order).localeCompare(b.level + b.sort_order));
+      .sort((a, b) => a.level.localeCompare(b.level) || a.sort_order - b.sort_order);
 
     res.json(domains);
   } catch (error) {

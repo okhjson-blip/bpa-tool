@@ -1,35 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { analysisAPI } from '../services/api';
 
 export default function FinalReportStep() {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const [reportTitle, setReportTitle] = useState('마케팅 SNS 운영 AX 분석 결과');
-  const [downloadFormat, setDownloadFormat] = useState(null);
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // 모의 리포트 데이터
-  const report = {
-    project_name: '디지털마케팅 콘텐츠 제작 프로세스',
-    analysis_period: '2026-07-01 ~ 2026-07-31',
-    statistics: {
-      total_processes: 8,
-      as_is_total_time: 88,
-      to_be_total_time: 28,
-      time_savings: 60,
-      automation_rate: 68,
-      fte_equivalent: '0.03'
-    },
-    bdw_diagnosis: {
-      bottlenecks: 1,
-      delays: 1,
-      wastes: 0
+  useEffect(() => {
+    loadReport();
+  }, [projectId]);
+
+  const loadReport = async () => {
+    try {
+      const response = await analysisAPI.generateReport(projectId);
+      setReport(response.data);
+    } catch (err) {
+      setError(err.response?.data?.error || '리포트 생성 실패');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDownload = (format) => {
-    alert(`${format} 형식으로 다운로드 준비 중입니다...`);
-    setDownloadFormat(null);
-  };
+  if (loading) return <div className="text-center py-12">리포트 생성 중...</div>;
+
+  if (error || !report) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-primary text-white shadow">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-bold">Step 6: 최종 리포트</h1>
+          </div>
+        </header>
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <p className="text-red-600 mb-4">{error || '리포트를 불러올 수 없습니다'}</p>
+            <button
+              onClick={() => navigate(`/projects/${projectId}`)}
+              className="text-primary font-bold hover:underline"
+            >
+              ← 과제 상세로 이동
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -59,82 +77,31 @@ export default function FinalReportStep() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">리포트 구성</h2>
-            <div className="space-y-3">
-              {[
-                '✓ STATIK 업무 구조 (L1~L3)',
-                '✓ As-Is 프로세스 분석',
-                '✓ BDW 진단 결과',
-                '✓ AI FIT 분석',
-                '✓ To-Be 재설계',
-                '✓ AX 성과 지표 (FTE)'
-              ].map((item, i) => (
-                <p key={i} className="text-gray-700">
-                  {item}
-                </p>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">핵심 성과</h2>
-            <div className="space-y-3">
-              <div className="bg-blue-50 p-3 rounded">
-                <p className="font-bold text-sm">자동화율</p>
-                {/* 자동화율 계산식: (A영역 프로세스 수 / 전체 프로세스 수) × 100 */}
-                <p className="text-2xl font-bold text-blue-600">{report.statistics.automation_rate}%</p>
-              </div>
-              <div className="bg-green-50 p-3 rounded">
-                <p className="font-bold text-sm">절감 효과</p>
-                {/* 절감 효과 계산식: (절감 시간 × 52주 / 2248시간/년) = FTE 절감 */}
-                <p className="text-lg font-bold text-green-600">
-                  연간 {Math.round((report.statistics.time_savings * 52) / 2248)} FTE 절감
-                </p>
-              </div>
-              <div className="bg-orange-50 p-3 rounded">
-                <p className="font-bold text-sm">BDW 이슈</p>
-                <p className="text-sm text-gray-700">
-                  Bottleneck {report.bdw_diagnosis.bottlenecks}개, Delay {report.bdw_diagnosis.delays}개
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4">리포트 설정</h2>
-          <div className="mb-4">
-            <label className="block text-sm font-bold mb-2">리포트 제목</label>
-            <input
-              type="text"
-              value={reportTitle}
-              onChange={(e) => setReportTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold mb-2">다운로드 형식</label>
-            <div className="grid grid-cols-4 gap-4">
-              {[
-                { format: 'PPT', icon: '📊', color: 'orange' },
-                { format: 'Word', icon: '📄', color: 'blue' },
-                { format: 'PDF', icon: '📕', color: 'red' },
-                { format: '웹', icon: '🔗', color: 'gray' }
-              ].map((item) => (
-                <button
-                  key={item.format}
-                  onClick={() => handleDownload(item.format)}
-                  className={`py-3 rounded-lg font-bold transition ${
-                    color_map[item.color] || 'bg-gray-200 text-gray-700'
-                  } hover:opacity-90`}
-                >
-                  <div className="text-2xl mb-1">{item.icon}</div>
-                  <div className="text-sm">{item.format}</div>
-                </button>
-              ))}
+          <h2 className="text-xl font-bold mb-4">핵심 성과</h2>
+          <div className="space-y-3">
+            <div className="bg-blue-50 p-4 rounded">
+              <p className="font-bold text-sm">자동화율</p>
+              <p className="text-2xl font-bold text-blue-600">{report.statistics.automation_rate}%</p>
+              <p className="text-xs text-gray-600 mt-1">
+                계산식: (A영역 프로세스 수 / 전체 프로세스 수) × 100
+              </p>
+            </div>
+            <div className="bg-green-50 p-4 rounded">
+              <p className="font-bold text-sm">절감 효과</p>
+              <p className="text-lg font-bold text-green-600">
+                연간 {report.statistics.fte_equivalent} FTE 절감
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                계산식: (절감 시간(분) × 52주 ÷ 60분 ÷ 2248시간/년) — 주 1회 반복 업무 기준
+              </p>
+            </div>
+            <div className="bg-orange-50 p-4 rounded">
+              <p className="font-bold text-sm">BDW 이슈</p>
+              <p className="text-sm text-gray-700">
+                Bottleneck {report.bdw_diagnosis.bottlenecks}개, Delay {report.bdw_diagnosis.delays}개,
+                Waste {report.bdw_diagnosis.wastes}개
+              </p>
             </div>
           </div>
         </div>
@@ -146,11 +113,12 @@ export default function FinalReportStep() {
               <span className="font-bold">과제:</span> {report.project_name}
             </p>
             <p>
-              <span className="font-bold">분석 기간:</span> {report.analysis_period}
+              <span className="font-bold">분석 기간:</span> {report.analysis_period || '-'}
             </p>
             <p>
               <span className="font-bold">분석 결과:</span> 총 {report.statistics.total_processes}개
-              프로세스 중 {Math.round((report.statistics.automation_rate / 100) * report.statistics.total_processes)}개(
+              프로세스 중{' '}
+              {Math.round((report.statistics.automation_rate / 100) * report.statistics.total_processes)}개(
               {report.statistics.automation_rate}%)를 AI로 자동화 가능합니다.
             </p>
             <p>
@@ -164,7 +132,7 @@ export default function FinalReportStep() {
               onClick={() => navigate('/projects')}
               className="flex-1 bg-primary text-white font-bold px-6 py-3 rounded-lg hover:bg-opacity-90"
             >
-              ✓ 분석 완료 & 프로젝트 목록
+              ✓ 분석 완료 & 과제 목록
             </button>
           </div>
         </div>
@@ -172,10 +140,3 @@ export default function FinalReportStep() {
     </div>
   );
 }
-
-const color_map = {
-  orange: 'bg-orange-500 text-white',
-  blue: 'bg-blue-600 text-white',
-  red: 'bg-red-600 text-white',
-  gray: 'bg-gray-200 text-gray-800'
-};

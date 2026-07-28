@@ -47,7 +47,7 @@ export default function InterviewStep() {
 
     try {
       await interviewsAPI.create(projectId, {
-        interview_type: interviewType,
+        interview_type: 'text',
         text: interviewText
       });
 
@@ -126,30 +126,6 @@ export default function InterviewStep() {
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <h2 className="text-2xl font-bold mb-6">인터뷰 입력</h2>
 
-          <div className="mb-4">
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              입력 방식
-            </label>
-            <div className="flex gap-4">
-              {[
-                { value: 'text', label: '📝 텍스트 입력' },
-                { value: 'voice', label: '🎙 음성 녹음' },
-                { value: 'upload', label: '📁 파일 업로드' }
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setInterviewType(option.value)}
-                  className={`px-4 py-2 rounded-lg font-bold transition ${
-                    interviewType === option.value
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
           <form onSubmit={handleCreateInterview} className="space-y-4">
             <div>

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useAuthStore } from '../store/authStore';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -7,41 +6,13 @@ const api = axios.create({
   baseURL: API_URL
 });
 
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Auth API
-export const authAPI = {
-  signup: (data) => api.post('/auth/signup', data),
-  login: (data) => api.post('/auth/login', data),
-  requestPasswordReset: (email) => api.post('/auth/request-password-reset', { email }),
-  resetPassword: (token, newPassword) => api.post('/auth/reset-password', { token, newPassword })
-};
-
 // Projects API
 export const projectsAPI = {
   create: (data) => api.post('/projects', data),
   list: () => api.get('/projects'),
   get: (id) => api.get(`/projects/${id}`),
   update: (id, data) => api.put(`/projects/${id}`, data),
-  delete: (id) => api.delete(`/projects/${id}`),
-  addMember: (projectId, data) => api.post(`/projects/${projectId}/members`, data)
+  delete: (id) => api.delete(`/projects/${id}`)
 };
 
 // Domains API

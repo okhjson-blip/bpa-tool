@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { analysisAPI } from '../services/api';
+
+const BDW_OPTIONS = [
+  { value: 'normal', label: '✅ 정상' },
+  { value: 'bottleneck', label: '🔴 Bottleneck' },
+  { value: 'delay', label: '🟡 Delay' },
+  { value: 'waste', label: '⚫ Waste' }
+];
 
 export default function BDWDiagnosisStep() {
   const { projectId } = useParams();
@@ -7,53 +15,64 @@ export default function BDWDiagnosisStep() {
   const [diagnosis, setDiagnosis] = useState(null);
   const [processes, setProcesses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [savingId, setSavingId] = useState(null);
 
   useEffect(() => {
-    const fetchDiagnosis = async () => {
-      try {
-        // 모의 데이터
-        setDiagnosis({
-          bottleneck_count: 1,
-          delay_count: 1,
-          waste_count: 0,
-          total_execution_time: 88,
-          inefficient_time: 23,
-          inefficiency_rate: 26
-        });
-        setProcesses([
-          {
-            id: 1,
-            level: 'L6',
-            name: '검토 요청 메일 발송',
-            execution_time: 3,
-            bdw_tag: 'delay'
-          },
-          {
-            id: 2,
-            level: 'L6',
-            name: '수정사항 반영',
-            execution_time: 20,
-            bdw_tag: 'bottleneck'
-          },
-          {
-            id: 3,
-            level: 'L6',
-            name: '초안 작성',
-            execution_time: 30,
-            bdw_tag: 'normal'
-          }
-        ]);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDiagnosis();
+    loadDiagnosis();
   }, [projectId]);
 
+  const loadDiagnosis = async () => {
+    try {
+      const response = await analysisAPI.getBDWDiagnosis(projectId);
+      setProcesses(response.data.processes);
+      setDiagnosis(response.data.diagnosis);
+    } catch (err) {
+      setError('BDW 진단 조회 실패');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTagChange = async (processId, bdw_type) => {
+    setSavingId(processId);
+    setError('');
+    try {
+      await analysisAPI.tagBDW(processId, { bdw_type });
+      await loadDiagnosis();
+    } catch (err) {
+      setError('BDW 태그 저장 실패');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   if (loading) return <div className="text-center py-12">분석 중...</div>;
+
+  if (processes.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-primary text-white shadow">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-bold">Step 4: BDW 진단 (Bottleneck·Delay·Waste)</h1>
+          </div>
+        </header>
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <p className="text-gray-600 mb-4">
+              진단할 프로세스가 없습니다. 먼저 인터뷰 & AI Draft를 생성하세요
+            </p>
+            <button
+              onClick={() => navigate(`/projects/${projectId}/step2`)}
+              className="text-primary font-bold hover:underline"
+            >
+              ← Step 2로 이동
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -64,6 +83,12 @@ export default function BDWDiagnosisStep() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
         <div className="grid grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-gray-600 text-sm">🔴 Bottleneck</p>
@@ -104,23 +129,20 @@ export default function BDWDiagnosisStep() {
                       </span>
                     </td>
                     <td className="px-4 py-2 font-bold">{proc.name}</td>
-                    <td className="px-4 py-2">{proc.execution_time}</td>
+                    <td className="px-4 py-2">{proc.execution_time ?? '-'}</td>
                     <td className="px-4 py-2">
-                      {proc.bdw_tag === 'bottleneck' && (
-                        <span className="bg-red-100 text-red-800 px-3 py-1 rounded text-sm font-bold">
-                          🔴 Bottleneck
-                        </span>
-                      )}
-                      {proc.bdw_tag === 'delay' && (
-                        <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded text-sm font-bold">
-                          🟡 Delay
-                        </span>
-                      )}
-                      {proc.bdw_tag === 'normal' && (
-                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded text-sm font-bold">
-                          ✅ 정상
-                        </span>
-                      )}
+                      <select
+                        value={proc.bdw_tag}
+                        disabled={savingId === proc.id}
+                        onChange={(e) => handleTagChange(proc.id, e.target.value)}
+                        className="border border-gray-300 rounded px-2 py-1 text-sm disabled:opacity-50"
+                      >
+                        {BDW_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                   </tr>
                 ))}

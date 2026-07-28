@@ -1,56 +1,85 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { analysisAPI, interviewsAPI } from '../services/api';
 
 export default function AIFitAnalysisStep() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState([]);
+  const [summary, setSummary] = useState(null);
   const [activeTab, setActiveTab] = useState('inline');
+  const [loading, setLoading] = useState(true);
+  const [proceeding, setProceeding] = useState(false);
+  const [error, setError] = useState('');
+  const [asIsTotal, setAsIsTotal] = useState(0);
 
   useEffect(() => {
-    // 모의 데이터
-    setAnalysis([
-      {
-        id: 1,
-        name: '트렌드 키워드 검색',
-        ai_possibility: 5,
-        inefficiency: 4,
-        fit_category: 'A',
-        recommended_tech: 'LLM (웹검색)',
-        time_savings: 8
-      },
-      {
-        id: 2,
-        name: '초안 작성',
-        ai_possibility: 5,
-        inefficiency: 5,
-        fit_category: 'A',
-        recommended_tech: 'LLM (생성AI)',
-        time_savings: 25
-      },
-      {
-        id: 3,
-        name: '검토 요청 발송',
-        ai_possibility: 5,
-        inefficiency: 5,
-        fit_category: 'A',
-        recommended_tech: 'RPA',
-        time_savings: 3
-      },
-      {
-        id: 4,
-        name: '수정사항 반영',
-        ai_possibility: 3,
-        inefficiency: 4,
-        fit_category: 'A',
-        recommended_tech: 'LLM (협업편집)',
-        time_savings: 12
-      }
-    ]);
-  }, []);
+    runAnalysis();
+  }, [projectId]);
+
+  const runAnalysis = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [analysisRes, processesRes] = await Promise.all([
+        analysisAPI.analyzeAIFit(projectId),
+        interviewsAPI.getProcesses(projectId)
+      ]);
+      setAnalysis(analysisRes.data.analysis);
+      setSummary(analysisRes.data.summary);
+      const total = processesRes.data.reduce((sum, p) => sum + (p.execution_time || 0), 0);
+      setAsIsTotal(total);
+    } catch (err) {
+      setError(err.response?.data?.error || 'AI FIT 분석 실패');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProceed = async () => {
+    setProceeding(true);
+    setError('');
+    try {
+      await analysisAPI.createToBe(projectId, { ai_analysis: analysis });
+      navigate(`/projects/${projectId}/step6`);
+    } catch (err) {
+      setError(err.response?.data?.error || 'To-Be 생성 실패');
+    } finally {
+      setProceeding(false);
+    }
+  };
+
+  if (loading) return <div className="text-center py-12">AI FIT 분석 중...</div>;
+
+  if (error && analysis.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-primary text-white shadow">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-bold">Step 5: AI FIT 분석</h1>
+          </div>
+        </header>
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => navigate(`/projects/${projectId}/step2`)}
+              className="text-primary font-bold hover:underline"
+            >
+              ← Step 2로 이동
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const categoryA = analysis.filter((a) => a.fit_category === 'A');
-  const totalSavings = analysis.reduce((sum, a) => sum + a.time_savings, 0);
+  const categoryB = analysis.filter((a) => a.fit_category === 'B');
+  const categoryC = analysis.filter((a) => a.fit_category === 'C');
+  const categoryD = analysis.filter((a) => a.fit_category === 'D');
+  const totalSavings = summary?.estimated_total_time_savings ?? 0;
+  const toBeTotal = Math.max(0, asIsTotal - totalSavings);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,6 +90,12 @@ export default function AIFitAnalysisStep() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
         <div className="grid grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-gray-600 text-sm">전체 프로세스</p>
@@ -72,9 +107,7 @@ export default function AIFitAnalysisStep() {
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-gray-600 text-sm">자동화율</p>
-            <p className="text-3xl font-bold text-blue-600">
-              {Math.round((categoryA.length / analysis.length) * 100)}%
-            </p>
+            <p className="text-3xl font-bold text-blue-600">{summary?.automation_rate ?? 0}%</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-gray-600 text-sm">절감 시간</p>
@@ -117,7 +150,7 @@ export default function AIFitAnalysisStep() {
                 </thead>
                 <tbody>
                   {analysis.map((proc) => (
-                    <tr key={proc.id} className="border-b hover:bg-gray-50">
+                    <tr key={proc.process_id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-2 font-bold">{proc.name}</td>
                       <td className="px-4 py-2">
                         <div className="flex items-center justify-center">
@@ -139,7 +172,7 @@ export default function AIFitAnalysisStep() {
                         </span>
                       </td>
                       <td className="px-4 py-2">{proc.recommended_tech}</td>
-                      <td className="px-4 py-2 font-bold">{proc.time_savings}</td>
+                      <td className="px-4 py-2 font-bold">{proc.estimated_time_savings}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -151,22 +184,31 @@ export default function AIFitAnalysisStep() {
             <div className="grid grid-cols-2 gap-6">
               <div className="border-2 border-orange-500 rounded-lg p-4 bg-orange-50">
                 <h3 className="font-bold text-lg mb-2">🟠 B: 수동 개선 先</h3>
-                <p className="text-sm text-gray-700">AI 가능성↓ + 비효율↑</p>
+                <p className="text-sm text-gray-700 mb-2">AI 가능성↓ + 비효율↑</p>
+                {categoryB.map((a) => (
+                  <p key={a.process_id} className="text-sm mt-1">• {a.name}</p>
+                ))}
               </div>
               <div className="border-2 border-green-500 rounded-lg p-4 bg-green-50">
                 <h3 className="font-bold text-lg mb-2">🟢 A: 즉시 적용</h3>
-                <p className="text-sm text-gray-700">AI 가능성↑ + 비효율↑</p>
+                <p className="text-sm text-gray-700 mb-2">AI 가능성↑ + 비효율↑</p>
                 {categoryA.map((a) => (
-                  <p key={a.id} className="text-sm mt-1">• {a.name}</p>
+                  <p key={a.process_id} className="text-sm mt-1">• {a.name}</p>
                 ))}
               </div>
               <div className="border-2 border-gray-400 rounded-lg p-4 bg-gray-50">
                 <h3 className="font-bold text-lg mb-2">⚫ D: 현상 유지</h3>
-                <p className="text-sm text-gray-700">AI 가능성↓ + 비효율↓</p>
+                <p className="text-sm text-gray-700 mb-2">AI 가능성↓ + 비효율↓</p>
+                {categoryD.map((a) => (
+                  <p key={a.process_id} className="text-sm mt-1">• {a.name}</p>
+                ))}
               </div>
               <div className="border-2 border-blue-500 rounded-lg p-4 bg-blue-50">
                 <h3 className="font-bold text-lg mb-2">🔵 C: 장기 검토</h3>
-                <p className="text-sm text-gray-700">AI 가능성↑ + 비효율↓</p>
+                <p className="text-sm text-gray-700 mb-2">AI 가능성↑ + 비효율↓</p>
+                {categoryC.map((a) => (
+                  <p key={a.process_id} className="text-sm mt-1">• {a.name}</p>
+                ))}
               </div>
             </div>
           )}
@@ -176,24 +218,23 @@ export default function AIFitAnalysisStep() {
               <div className="border border-red-300 rounded-lg p-4">
                 <h3 className="font-bold text-lg text-red-600 mb-4">현재 (As-Is)</h3>
                 <p className="text-sm">• 수작업 위주</p>
-                <p className="text-sm">• 총 88분 소요</p>
-                <p className="text-sm">• 승인 대기 24h</p>
+                <p className="text-sm">• 총 {asIsTotal}분 소요</p>
               </div>
               <div className="border border-green-300 rounded-lg p-4">
                 <h3 className="font-bold text-lg text-green-600 mb-4">개선 후 (To-Be)</h3>
-                <p className="text-sm">• AI 자동화 적용</p>
-                <p className="text-sm">• 총 28분 소요 (↓60분)</p>
-                <p className="text-sm">• 승인 대기 2시간</p>
+                <p className="text-sm">• AI 자동화 적용 ({categoryA.length}개 프로세스)</p>
+                <p className="text-sm">• 총 {toBeTotal}분 소요 (↓{totalSavings}분)</p>
               </div>
             </div>
           )}
 
           <div className="mt-6 flex gap-4">
             <button
-              onClick={() => navigate(`/projects/${projectId}/step6`)}
-              className="bg-primary text-white font-bold px-6 py-2 rounded-lg hover:bg-opacity-90"
+              onClick={handleProceed}
+              disabled={proceeding}
+              className="bg-primary text-white font-bold px-6 py-2 rounded-lg hover:bg-opacity-90 disabled:opacity-50"
             >
-              다음: 결과 리포트 →
+              {proceeding ? '생성 중...' : '다음: 결과 리포트 →'}
             </button>
             <button
               onClick={() => navigate(`/projects/${projectId}`)}

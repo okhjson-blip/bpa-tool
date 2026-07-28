@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { interviewsAPI } from '../services/api';
 
+const STATUS_OPTIONS = ['draft', 'confirmed', 'optimized'];
+
 export default function ProcessEditStep() {
   const { projectId } = useParams();
   const navigate = useNavigate();
@@ -9,6 +11,8 @@ export default function ProcessEditStep() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadProcesses();
@@ -25,13 +29,36 @@ export default function ProcessEditStep() {
     }
   };
 
-  const handleUpdate = async (processId, updates) => {
+  const startEdit = (proc) => {
+    setEditingId(proc.id);
+    setEditForm({
+      name: proc.name || '',
+      execution_time: proc.execution_time ?? '',
+      method: proc.method || '',
+      tool: proc.tool || '',
+      status: proc.status || 'draft'
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const handleUpdate = async (processId) => {
+    setSaving(true);
+    setError('');
     try {
-      await interviewsAPI.updateProcess(processId, updates);
-      loadProcesses();
-      setEditingId(null);
+      await interviewsAPI.updateProcess(processId, {
+        ...editForm,
+        execution_time: editForm.execution_time === '' ? null : parseInt(editForm.execution_time)
+      });
+      await loadProcesses();
+      cancelEdit();
     } catch (err) {
       setError('업데이트 실패');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -83,32 +110,102 @@ export default function ProcessEditStep() {
                 </tr>
               </thead>
               <tbody>
-                {processes.map((proc) => (
-                  <tr key={proc.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-2 font-bold">
-                      <span className="bg-primary text-white px-2 py-1 rounded text-xs">
-                        {proc.level}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{proc.name}</td>
-                    <td className="px-4 py-2">{proc.method || '-'}</td>
-                    <td className="px-4 py-2">{proc.tool || '-'}</td>
-                    <td className="px-4 py-2">{proc.execution_time || '-'}</td>
-                    <td className="px-4 py-2">
-                      <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
-                        {proc.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={() => setEditingId(proc.id)}
-                        className="text-primary hover:underline text-sm"
-                      >
-                        편집
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {processes.map((proc) =>
+                  editingId === proc.id ? (
+                    <tr key={proc.id} className="border-b bg-blue-50">
+                      <td className="px-4 py-2 font-bold">
+                        <span className="bg-primary text-white px-2 py-1 rounded text-xs">
+                          {proc.level}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="text"
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          className="w-full px-2 py-1 border border-gray-300 rounded"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="text"
+                          value={editForm.method}
+                          onChange={(e) => setEditForm({ ...editForm, method: e.target.value })}
+                          className="w-24 px-2 py-1 border border-gray-300 rounded"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="text"
+                          value={editForm.tool}
+                          onChange={(e) => setEditForm({ ...editForm, tool: e.target.value })}
+                          className="w-24 px-2 py-1 border border-gray-300 rounded"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="number"
+                          value={editForm.execution_time}
+                          onChange={(e) => setEditForm({ ...editForm, execution_time: e.target.value })}
+                          className="w-20 px-2 py-1 border border-gray-300 rounded"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <select
+                          value={editForm.status}
+                          onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                          className="px-2 py-1 border border-gray-300 rounded"
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-4 py-2 flex gap-2">
+                        <button
+                          onClick={() => handleUpdate(proc.id)}
+                          disabled={saving}
+                          className="text-success font-bold hover:underline text-sm disabled:opacity-50"
+                        >
+                          저장
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="text-gray-600 hover:underline text-sm"
+                        >
+                          취소
+                        </button>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={proc.id} className="border-b hover:bg-gray-50">
+                      <td className="px-4 py-2 font-bold">
+                        <span className="bg-primary text-white px-2 py-1 rounded text-xs">
+                          {proc.level}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 font-bold">{proc.name}</td>
+                      <td className="px-4 py-2">{proc.method || '-'}</td>
+                      <td className="px-4 py-2">{proc.tool || '-'}</td>
+                      <td className="px-4 py-2">{proc.execution_time ?? '-'}</td>
+                      <td className="px-4 py-2">
+                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
+                          {proc.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={() => startEdit(proc)}
+                          className="text-primary hover:underline text-sm"
+                        >
+                          편집
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </div>
