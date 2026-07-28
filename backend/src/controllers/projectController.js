@@ -1,9 +1,7 @@
 import { db } from '../config/database.js';
 
 export const createProject = async (req, res) => {
-  const { name, description, l1_domain, analysis_goal, analysis_period, ai_engine, ai_api_key } =
-    req.body;
-  const userId = req.user.id;
+  const { name, description, l1_domain, analysis_goal, analysis_period, ai_engine } = req.body;
 
   try {
     const project = db.insert('projects', {
@@ -12,10 +10,9 @@ export const createProject = async (req, res) => {
       l1_domain,
       analysis_goal,
       analysis_period,
-      ai_engine,
-      ai_api_key,
-      created_by: userId,
-      tenant_id: userId
+      ai_engine: ai_engine || 'chatgpt',
+      created_by: 1,
+      tenant_id: 1
     });
 
     // L1 도메인 자동 생성
@@ -26,10 +23,10 @@ export const createProject = async (req, res) => {
       sort_order: 0
     });
 
-    // 과제 멤버 추가 (생성자)
+    // 과제 멤버 추가 (고정 사용자 1)
     db.insert('project_members', {
       project_id: project.id,
-      user_id: userId,
+      user_id: 1,
       role: 'owner'
     });
 
@@ -44,10 +41,9 @@ export const createProject = async (req, res) => {
 };
 
 export const getProjects = async (req, res) => {
-  const userId = req.user.id;
-
   try {
-    const members = db.select('project_members', { user_id: userId });
+    // 모든 프로젝트 반환 (user_id = 1로 필터링)
+    const members = db.select('project_members', { user_id: 1 });
     const projectIds = members.map((m) => m.project_id);
 
     const projects = db.select('projects').filter((p) => projectIds.includes(p.id));
@@ -61,19 +57,13 @@ export const getProjects = async (req, res) => {
 
 export const getProject = async (req, res) => {
   const { projectId } = req.params;
-  const userId = req.user.id;
 
   try {
-    const member = db.selectOne('project_members', {
-      project_id: parseInt(projectId),
-      user_id: userId
-    });
+    const project = db.selectOne('projects', { id: parseInt(projectId) });
 
-    if (!member) {
+    if (!project) {
       return res.status(404).json({ error: '과제를 찾을 수 없습니다' });
     }
-
-    const project = db.selectOne('projects', { id: parseInt(projectId) });
 
     res.json(project);
   } catch (error) {
@@ -84,24 +74,12 @@ export const getProject = async (req, res) => {
 
 export const updateProject = async (req, res) => {
   const { projectId } = req.params;
-  const { name, description, ai_engine, ai_api_key } = req.body;
-  const userId = req.user.id;
+  const { name, description } = req.body;
 
   try {
-    const member = db.selectOne('project_members', {
-      project_id: parseInt(projectId),
-      user_id: userId
-    });
-
-    if (!member || !['owner', 'editor'].includes(member.role)) {
-      return res.status(403).json({ error: '권한이 없습니다' });
-    }
-
     const project = db.update('projects', parseInt(projectId), {
       name,
-      description,
-      ai_engine,
-      ai_api_key
+      description
     });
 
     res.json({
@@ -116,18 +94,8 @@ export const updateProject = async (req, res) => {
 
 export const deleteProject = async (req, res) => {
   const { projectId } = req.params;
-  const userId = req.user.id;
 
   try {
-    const member = db.selectOne('project_members', {
-      project_id: parseInt(projectId),
-      user_id: userId
-    });
-
-    if (!member || member.role !== 'owner') {
-      return res.status(403).json({ error: '과제를 삭제할 권한이 없습니다' });
-    }
-
     db.delete('projects', parseInt(projectId));
 
     res.json({ message: '과제가 삭제되었습니다' });

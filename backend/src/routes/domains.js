@@ -1,11 +1,8 @@
 import express from 'express';
 import { body, param } from 'express-validator';
-import { authenticateToken } from '../middleware/auth.js';
 import * as domainController from '../controllers/domainController.js';
 
 const router = express.Router();
-
-router.use(authenticateToken);
 
 router.get('/project/:projectId', [
   param('projectId').isInt()

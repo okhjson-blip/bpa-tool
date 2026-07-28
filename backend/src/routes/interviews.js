@@ -1,12 +1,10 @@
 import express from 'express';
 import { body, param } from 'express-validator';
-import { authenticateToken } from '../middleware/auth.js';
 import * as interviewController from '../controllers/interviewController.js';
 import { dataMaskingMiddleware } from '../middleware/dataMasking.js';
 
 const router = express.Router();
 
-router.use(authenticateToken);
 router.use(dataMaskingMiddleware);
 
 // 인터뷰 생성

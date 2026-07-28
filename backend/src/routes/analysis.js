@@ -1,11 +1,8 @@
 import express from 'express';
 import { param, body } from 'express-validator';
-import { authenticateToken } from '../middleware/auth.js';
 import * as bdwController from '../controllers/bdwController.js';
 
 const router = express.Router();
-
-router.use(authenticateToken);
 
 // BDW 태그 부착
 router.post('/process/:processId/bdw', [
