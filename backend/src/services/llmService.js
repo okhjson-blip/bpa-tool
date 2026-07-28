@@ -1,6 +1,4 @@
-import fetch from 'node-fetch';
-
-// LLM 인터페이스 추상화
+// LLM 인터페이스 추상화 (Node 18+ 전역 fetch 사용)
 class LLMProvider {
   async analyzeInterview(transcription, level) {
     throw new Error('Not implemented');

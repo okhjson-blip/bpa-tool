@@ -48,17 +48,11 @@ const mockAnalyzeInterview = (transcription, level) => {
 export const createInterview = async (req, res) => {
   const { projectId } = req.params;
   const { domain_l3_id, text, transcription, interview_type } = req.body;
-  const userId = req.user.id;
 
   try {
-    // 권한 확인
-    const member = db.selectOne('project_members', {
-      project_id: parseInt(projectId),
-      user_id: userId
-    });
-
-    if (!member) {
-      return res.status(403).json({ error: '권한이 없습니다' });
+    const project = db.selectOne('projects', { id: parseInt(projectId) });
+    if (!project) {
+      return res.status(404).json({ error: '과제를 찾을 수 없습니다' });
     }
 
     // 데이터 마스킹
@@ -72,8 +66,7 @@ export const createInterview = async (req, res) => {
       text,
       text_masked: textMasked,
       transcription,
-      transcription_masked: transcriptionMasked,
-      created_by: userId
+      transcription_masked: transcriptionMasked
     });
 
     res.status(201).json({
@@ -88,19 +81,8 @@ export const createInterview = async (req, res) => {
 
 export const analyzeInterview = async (req, res) => {
   const { projectId, interviewId } = req.params;
-  const userId = req.user.id;
 
   try {
-    // 권한 확인
-    const member = db.selectOne('project_members', {
-      project_id: parseInt(projectId),
-      user_id: userId
-    });
-
-    if (!member) {
-      return res.status(403).json({ error: '권한이 없습니다' });
-    }
-
     // 인터뷰 조회
     const interview = db.selectOne('interviews', { id: parseInt(interviewId) });
     if (!interview) {
@@ -153,18 +135,8 @@ export const analyzeInterview = async (req, res) => {
 
 export const getInterviews = async (req, res) => {
   const { projectId } = req.params;
-  const userId = req.user.id;
 
   try {
-    const member = db.selectOne('project_members', {
-      project_id: parseInt(projectId),
-      user_id: userId
-    });
-
-    if (!member) {
-      return res.status(403).json({ error: '권한이 없습니다' });
-    }
-
     const interviews = db
       .select('interviews', { project_id: parseInt(projectId) })
       .map((int) => {
@@ -181,18 +153,8 @@ export const getInterviews = async (req, res) => {
 
 export const getProcesses = async (req, res) => {
   const { projectId } = req.params;
-  const userId = req.user.id;
 
   try {
-    const member = db.selectOne('project_members', {
-      project_id: parseInt(projectId),
-      user_id: userId
-    });
-
-    if (!member) {
-      return res.status(403).json({ error: '권한이 없습니다' });
-    }
-
     const processes = db.select('processes', { project_id: parseInt(projectId) });
 
     res.json(processes);

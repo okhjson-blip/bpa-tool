@@ -1,27 +1,53 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { analysisAPI } from '../services/api';
 
 export default function FinalReportStep() {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // 모의 리포트 데이터
-  const report = {
-    project_name: '디지털마케팅 콘텐츠 제작 프로세스',
-    analysis_period: '2026-07-01 ~ 2026-07-31',
-    statistics: {
-      total_processes: 8,
-      as_is_total_time: 88,
-      to_be_total_time: 28,
-      time_savings: 60,
-      automation_rate: 68,
-      fte_equivalent: '0.03'
-    },
-    bdw_diagnosis: {
-      bottlenecks: 1,
-      delays: 1,
-      wastes: 0
+  useEffect(() => {
+    loadReport();
+  }, [projectId]);
+
+  const loadReport = async () => {
+    try {
+      const response = await analysisAPI.generateReport(projectId);
+      setReport(response.data);
+    } catch (err) {
+      setError(err.response?.data?.error || '리포트 생성 실패');
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loading) return <div className="text-center py-12">리포트 생성 중...</div>;
+
+  if (error || !report) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-primary text-white shadow">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-bold">Step 6: 최종 리포트</h1>
+          </div>
+        </header>
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <p className="text-red-600 mb-4">{error || '리포트를 불러올 수 없습니다'}</p>
+            <button
+              onClick={() => navigate(`/projects/${projectId}`)}
+              className="text-primary font-bold hover:underline"
+            >
+              ← 과제 상세로 이동
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -64,21 +90,21 @@ export default function FinalReportStep() {
             <div className="bg-green-50 p-4 rounded">
               <p className="font-bold text-sm">절감 효과</p>
               <p className="text-lg font-bold text-green-600">
-                연간 {Math.round((report.statistics.time_savings * 52) / 2248)} FTE 절감
+                연간 {report.statistics.fte_equivalent} FTE 절감
               </p>
               <p className="text-xs text-gray-600 mt-1">
-                계산식: (절감 시간 × 52주 / 2248시간/년)
+                계산식: (절감 시간(분) × 52주 ÷ 60분 ÷ 2248시간/년) — 주 1회 반복 업무 기준
               </p>
             </div>
             <div className="bg-orange-50 p-4 rounded">
               <p className="font-bold text-sm">BDW 이슈</p>
               <p className="text-sm text-gray-700">
-                Bottleneck {report.bdw_diagnosis.bottlenecks}개, Delay {report.bdw_diagnosis.delays}개
+                Bottleneck {report.bdw_diagnosis.bottlenecks}개, Delay {report.bdw_diagnosis.delays}개,
+                Waste {report.bdw_diagnosis.wastes}개
               </p>
             </div>
           </div>
         </div>
-
 
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-bold mb-4">분석 요약</h2>
@@ -87,11 +113,12 @@ export default function FinalReportStep() {
               <span className="font-bold">과제:</span> {report.project_name}
             </p>
             <p>
-              <span className="font-bold">분석 기간:</span> {report.analysis_period}
+              <span className="font-bold">분석 기간:</span> {report.analysis_period || '-'}
             </p>
             <p>
               <span className="font-bold">분석 결과:</span> 총 {report.statistics.total_processes}개
-              프로세스 중 {Math.round((report.statistics.automation_rate / 100) * report.statistics.total_processes)}개(
+              프로세스 중{' '}
+              {Math.round((report.statistics.automation_rate / 100) * report.statistics.total_processes)}개(
               {report.statistics.automation_rate}%)를 AI로 자동화 가능합니다.
             </p>
             <p>

@@ -5,7 +5,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { initializeDatabase } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
 import domainRoutes from './routes/domains.js';
 import interviewRoutes from './routes/interviews.js';
@@ -30,7 +29,6 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/domains', domainRoutes);
 app.use('/api/interviews', interviewRoutes);

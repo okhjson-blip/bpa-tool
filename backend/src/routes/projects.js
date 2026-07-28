@@ -1,5 +1,6 @@
 import express from 'express';
 import { body, param } from 'express-validator';
+import { validate } from '../middleware/validate.js';
 import * as projectController from '../controllers/projectController.js';
 
 const router = express.Router();
@@ -11,23 +12,23 @@ router.post('/', [
   body('analysis_goal').trim().optional(),
   body('analysis_period').trim().optional(),
   body('ai_engine').optional()
-], projectController.createProject);
+], validate, projectController.createProject);
 
 router.get('/', projectController.getProjects);
 
 router.get('/:projectId', [
   param('projectId').isInt()
-], projectController.getProject);
+], validate, projectController.getProject);
 
 router.put('/:projectId', [
   param('projectId').isInt(),
   body('name').trim().optional(),
   body('description').trim().optional()
-], projectController.updateProject);
+], validate, projectController.updateProject);
 
 router.delete('/:projectId', [
   param('projectId').isInt()
-], projectController.deleteProject);
+], validate, projectController.deleteProject);
 
 // Member route removed - no longer used
 
