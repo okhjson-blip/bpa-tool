@@ -13,6 +13,8 @@
 
 `ui mokup` 폴더는 디자인 및 요구사항 참고용입니다. 실행 환경은 해당 폴더의 파일을 직접 참조하지 않습니다.
 
+AI API Key는 브라우저에서 성공으로 가정하지 않습니다. `POST /api/connections/test`가 선택한 공급자의 모델 목록 API를 호출하고 인증 성공을 반환한 경우에만 연결 완료 상태를 표시합니다.
+
 ## 2. 실행 연결
 
 Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 결과는 `frontend/dist`에 생성됩니다. Express는 `/api/*`를 먼저 처리하고 나머지 요청에 `frontend/dist/index.html`을 반환합니다.

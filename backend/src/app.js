@@ -9,6 +9,7 @@ import projectRoutes from './routes/projects.js';
 import domainRoutes from './routes/domains.js';
 import interviewRoutes from './routes/interviews.js';
 import analysisRoutes from './routes/analysis.js';
+import connectionRoutes from './routes/connections.js';
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/domains', domainRoutes);
 app.use('/api/interviews', interviewRoutes);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/connections', connectionRoutes);
 
 // Error handler
 app.use(errorHandler);

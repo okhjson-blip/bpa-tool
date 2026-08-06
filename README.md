@@ -76,6 +76,7 @@ bpa-tool/
 - `GET|POST /api/projects`
 - `GET|PUT|DELETE /api/projects/:projectId`
 - `GET|POST /api/projects/:projectId/tasks`
+- `POST /api/connections/test`: 선택한 AI 엔진의 API Key 실제 연결 검증
 - `/api/interviews/*`: 인터뷰와 Draft
 - `/api/domains/*`: 업무 계층
 - `/api/analysis/*`: BDW, AI FIT, To-Be, 리포트

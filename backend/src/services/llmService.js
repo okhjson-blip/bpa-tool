@@ -278,6 +278,77 @@ export class LLMService {
     const provider = this.getProvider(engine, apiKey);
     return await provider.analyzeInterview(transcription, level);
   }
+
+  static async testConnection(engine, apiKey) {
+    const normalizedEngine = String(engine || '').toLowerCase();
+    const normalizedKey = String(apiKey || '').trim();
+
+    if (normalizedKey.length < 20 || /\s/.test(normalizedKey)) {
+      const error = new Error('Invalid API key format');
+      error.code = 'INVALID_API_KEY';
+      error.userMessage = 'API Key 형식이 올바르지 않습니다.';
+      throw error;
+    }
+
+    const requestByEngine = {
+      chatgpt: {
+        url: 'https://api.openai.com/v1/models',
+        headers: { Authorization: `Bearer ${normalizedKey}` }
+      },
+      gemini: {
+        url: 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1',
+        headers: { 'x-goog-api-key': normalizedKey }
+      },
+      claude: {
+        url: 'https://api.anthropic.com/v1/models?limit=1',
+        headers: {
+          'x-api-key': normalizedKey,
+          'anthropic-version': '2023-06-01'
+        }
+      }
+    };
+
+    const request = requestByEngine[normalizedEngine];
+    if (!request) {
+      const error = new Error('Unknown LLM engine');
+      error.code = 'INVALID_API_KEY';
+      error.userMessage = '지원하지 않는 AI 엔진입니다.';
+      throw error;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const response = await fetch(request.url, {
+        method: 'GET',
+        headers: request.headers,
+        signal: controller.signal
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        const error = new Error(`Authentication rejected: ${response.status}`);
+        error.code = 'INVALID_API_KEY';
+        error.userMessage = 'API Key가 유효하지 않거나 해당 엔진에 대한 권한이 없습니다.';
+        throw error;
+      }
+
+      if (!response.ok) {
+        const error = new Error(`Provider connection failed: ${response.status}`);
+        error.userMessage = `AI 공급자 연결에 실패했습니다. (HTTP ${response.status})`;
+        throw error;
+      }
+
+      return true;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        error.userMessage = 'AI 공급자 응답 시간이 초과되었습니다.';
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
 }
 
 export default LLMService;
