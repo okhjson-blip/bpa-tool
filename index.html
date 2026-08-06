@@ -3,7 +3,7 @@
 <head><meta charset="UTF-8"><title>Business Process Analysis Too for AX</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--p:#1428A0;--pl:#e8effd;--s:#2e7d32;--w:#e65100;--d:#c62828;--pu:#6a1b9a;--bd:#e0e6f0;--bg:#f0f3f8;--t:#1a1a2e;--mt:#6b7280}
+:root{--p:#060f45;--pl:#e8effd;--s:#2e7d32;--w:#e65100;--d:#c62828;--pu:#6a1b9a;--bd:#e0e6f0;--bg:#f0f3f8;--t:#1a1a2e;--mt:#6b7280}
 body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:var(--t);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 .hdr{background:var(--p);color:#fff;height:46px;display:flex;align-items:center;padding:0 16px;gap:11px;flex-shrink:0}
 .hdr-logo{font-size:17px;font-weight:800;letter-spacing:-.3px;cursor:pointer}
@@ -56,12 +56,6 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .lv3c{background:#e8f5e9;color:var(--s)}
 .tr-val{flex:1;font-size:14px;color:var(--t)}
 .tr-add{font-size:11px;color:var(--p);cursor:pointer;padding:1px 5px;border-radius:4px;border:1px solid var(--bd)}
-.eng-row{display:flex;gap:8px}
-.eng{flex:1;border:2px solid var(--bd);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;transition:all .15s}
-.eng.sel{border-color:var(--p);background:var(--pl)}
-.eng-ic{font-size:24px;margin-bottom:3px}
-.eng-nm{font-size:14px;font-weight:700}
-.eng-ds{font-size:11px;color:#999;margin-top:2px;line-height:1.3}
 .btn{padding:8px 14px;border-radius:6px;border:none;font-size:14px;font-weight:400;cursor:pointer;transition:all .15s;white-space:nowrap}
 .btn-p{background:var(--p);color:#fff}
 .btn-o{background:#fff;border:1.5px solid var(--bd);color:var(--t)}
@@ -173,7 +167,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .welcome-shell{width:min(760px,100%);text-align:center}
 .welcome-title{font-size:clamp(31px,5vw,52px);line-height:1.12;font-weight:900;letter-spacing:-1.8px;color:var(--p);margin-bottom:12px}
 .welcome-sub{font-size:14px;color:var(--mt);line-height:1.7;margin-bottom:36px}
-.welcome-card{background:#fff;border:1px solid var(--bd);border-radius:18px;padding:24px;box-shadow:0 18px 45px rgba(20,40,160,.10);text-align:left}
+.welcome-card{background:#fff;border:1px solid var(--bd);border-radius:18px;padding:24px;box-shadow:0 18px 45px rgba(6,15,69,.10);text-align:left}
 .welcome-section{padding:0 0 19px;margin-bottom:19px;border-bottom:1px solid #edf0f6}
 .welcome-section-title{font-size:15px;font-weight:900;margin-bottom:5px}
 .welcome-section-desc{font-size:12px;color:var(--mt);margin-bottom:11px}
@@ -200,7 +194,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .list-title{font-size:19px;font-weight:900}
 .list-sub{font-size:12px;color:var(--mt);margin-top:3px}
 .proj-card,.task-card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:13px 15px;margin-bottom:10px;cursor:pointer;transition:all .15s}
-.proj-card:hover,.task-card:hover{border-color:var(--p);box-shadow:0 2px 10px rgba(20,40,160,.08)}
+.proj-card:hover,.task-card:hover{border-color:var(--p);box-shadow:0 2px 10px rgba(6,15,69,.08)}
 .proj-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
 .proj-name{font-size:16px;font-weight:800}
 .proj-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
@@ -221,7 +215,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 /* 업무 계층 팝업 */
 .lv-popup-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--p);color:#fff;font-size:10px;font-weight:600;cursor:pointer;border:none;line-height:1;flex-shrink:0;opacity:.75;transition:opacity .15s}
 .lv-popup-btn:hover{opacity:1}
-.popup-overlay{display:none;position:fixed;inset:0;background:rgba(20,40,160,.18);z-index:9000;align-items:center;justify-content:center}
+.popup-overlay{display:none;position:fixed;inset:0;background:rgba(6,15,69,.18);z-index:9000;align-items:center;justify-content:center}
 .popup-overlay.open{display:flex}
 .popup-box{background:#fff;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.18);padding:20px 22px;max-width:420px;width:90%;position:relative;max-height:85vh;overflow-y:auto}
 .popup-close{position:absolute;top:12px;right:14px;font-size:19px;cursor:pointer;color:#999;border:none;background:none;line-height:1}
@@ -328,19 +322,6 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="frow"><div class="fg"><span class="fl">회사명 <span class="req">*</span></span><input class="fi" id="newCompanyName" readonly></div><div class="fg"><span class="fl">부서명</span><input class="fi" id="newDeptName" placeholder="예: 마케팅부문"></div></div>
     <div class="frow"><div class="fg"><span class="fl">프로젝트명 <span class="req">*</span></span><input class="fi" id="newProjName" placeholder="프로젝트명을 입력하세요"></div><div class="fg" style="max-width:240px"><span class="fl">프로젝트 기간</span><input class="fi" id="newAnalysisPeriod" placeholder="예: 2026-07-01 ~ 2026-07-31"></div></div>
     <div class="frow"><div class="fg"><span class="fl">프로젝트 목적</span><input class="fi" id="newAnalysisGoal" placeholder="프로젝트 목적을 입력하세요"></div></div>
-  </div>
-  <div class="card">
-    <div class="card-title">AI 엔진 설정 <span class="ct-b">필수</span></div>
-    <div class="eng-row" style="margin-bottom:10px">
-      <div class="eng" data-engine="gemini" onclick="selEng(this)"><div class="eng-ic">🔷</div><div class="eng-nm">Gemini</div><div class="eng-ds">Google 멀티모달<br>한국어 강점</div></div>
-      <div class="eng sel" data-engine="chatgpt" onclick="selEng(this)"><div class="eng-ic">🟢</div><div class="eng-nm">ChatGPT</div><div class="eng-ds">GPT-4o<br>범용 분석 강점</div></div>
-      <div class="eng" data-engine="claude" onclick="selEng(this)"><div class="eng-ic">🟠</div><div class="eng-nm">Claude</div><div class="eng-ds">Anthropic<br>문서 분석 강점</div></div>
-    </div>
-    <div class="frow">
-      <div class="fg"><span class="fl">API Key <span class="req">*</span></span><input class="fi mask" id="apiKeyInput" type="password" autocomplete="off" placeholder="선택한 AI 엔진의 API Key 입력"></div>
-      <div style="display:flex;align-items:flex-end;padding-bottom:1px"><button class="btn btn-o btn-sm" id="btnTestConnection" type="button" onclick="testAIConnection()">연결 테스트</button></div>
-    </div>
-    <div id="connectionStatus" role="status" aria-live="polite" style="display:none;font-size:12px;margin-top:-4px"></div>
   </div>
   <div class="card">
     <div class="card-title">참여자 등록</div>
@@ -531,7 +512,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
             <line x1="132" y1="33.6" x2="132" y2="43.2" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
             <rect x="21.6" y="43.2" width="220.8" height="24" rx="4.8" fill="#fff3e0" stroke="#e65100" stroke-width="1.4"/><text x="132" y="58.8" text-anchor="middle" fill="#e65100">게시물 기획 (L5 단위)</text>
             <line x1="132" y1="67.2" x2="132" y2="76.8" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
-            <rect x="26.4" y="76.8" width="211.2" height="24" rx="4.8" fill="#e8f0fe" stroke="#1428A0" stroke-width="2.4"/><text x="132" y="92.4" text-anchor="middle" fill="#1428A0" font-weight="700">키워드를 검색한다 (10분) · L6 Act</text>
+            <rect x="26.4" y="76.8" width="211.2" height="24" rx="4.8" fill="#e8f0fe" stroke="#060f45" stroke-width="2.4"/><text x="132" y="92.4" text-anchor="middle" fill="#060f45" font-weight="700">키워드를 검색한다 (10분) · L6 Act</text>
             <line x1="132" y1="100.8" x2="132" y2="110.4" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
             <rect x="21.6" y="110.4" width="220.8" height="24" rx="4.8" fill="#fff3e0" stroke="#e65100" stroke-width="1.4"/><text x="132" y="126" text-anchor="middle" fill="#e65100">게시물 제작 (L5 단위)</text>
             <line x1="132" y1="134.4" x2="132" y2="144" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
@@ -843,9 +824,6 @@ async function registerWelcomeAI(){
 async function startApplication(){
   if(!appState.companyRegistered){document.getElementById('companyRegisterStatus').style.color='var(--d)';document.getElementById('companyRegisterStatus').textContent='회사명을 먼저 등록해 주세요.';return;}
   if(!appState.aiConnected){document.getElementById('welcomeAIStatus').style.color='var(--d)';document.getElementById('welcomeAIStatus').textContent='외부 AI API를 등록하고 연결을 확인해 주세요.';return;}
-  document.getElementById('apiKeyInput').value=appState.apiKey;
-  const engineCard=document.querySelector('.eng[data-engine="'+appState.aiEngine+'"]');
-  if(engineCard) selEng(engineCard);
   setHeaderVisible(true);
   await openProjectList();
 }
@@ -983,52 +961,6 @@ function go(n){
 }
 function prev(){ if(cur>1) go(cur-1); else openTaskListCurrent(); }
 function next(){ if(cur<6) go(cur+1); }
-function selEng(el){
-  document.querySelectorAll('.eng').forEach(e=>e.classList.remove('sel'));
-  el.classList.add('sel');
-  const status=document.getElementById('connectionStatus');
-  if(status){status.style.display='none';status.textContent='';}
-}
-async function testAIConnection(){
-  const selected=document.querySelector('.eng.sel');
-  const apiKey=document.getElementById('apiKeyInput').value.trim();
-  const button=document.getElementById('btnTestConnection');
-  const status=document.getElementById('connectionStatus');
-  const engine=selected&&selected.dataset.engine;
-
-  status.style.display='block';
-  if(!apiKey){
-    status.style.color='var(--d)';
-    status.textContent='API Key를 입력해 주세요.';
-    return;
-  }
-
-  button.disabled=true;
-  button.textContent='확인 중...';
-  status.style.color='var(--mt)';
-  status.textContent='선택한 AI 엔진에 연결하고 있습니다.';
-
-  try{
-    const response=await fetch(apiBase+'/connections/test',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({engine,apiKey})
-    });
-    const result=await response.json();
-    if(!response.ok||!result.connected) throw new Error(result.error||'API 연결에 실패했습니다.');
-    status.style.color='var(--s)';
-    status.textContent='✓ '+result.message;
-  }catch(error){
-    status.style.color='var(--d)';
-    const message=error instanceof TypeError
-      ? '백엔드 서버에 연결할 수 없습니다. npm start로 서버를 실행해 주세요.'
-      : (error.message||'API 연결에 실패했습니다.');
-    status.textContent='✕ '+message;
-  }finally{
-    button.disabled=false;
-    button.textContent='연결 테스트';
-  }
-}
 function selOpt(n){[1,3].forEach(i=>{const e=document.getElementById('opt'+i); if(e) e.classList.remove('sel');}); document.getElementById('opt'+n).classList.add('sel');}
 function swTab(el,tid){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.tv').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById(tid).classList.add('on');}
 
