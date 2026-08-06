@@ -19,7 +19,7 @@ AI API Key는 브라우저에서 성공으로 가정하지 않습니다. `POST /
 Provider별 운영 모델과 구조화 출력 방식은 다음과 같습니다.
 
 - OpenAI: `gpt-5.6-sol`, Responses API `text.format` JSON Schema
-- Gemini: `gemini-3.6-flash`, `generationConfig.responseFormat.text`의 `APPLICATION_JSON` 및 JSON Schema (환경변수 `GEMINI_MODEL`로 재정의 가능)
+- Gemini: `gemini-3.5-flash-lite`, `generationConfig.responseFormat.text`의 `APPLICATION_JSON` 및 JSON Schema (환경변수 `GEMINI_MODEL`로 재정의 가능)
 - Claude: `claude-sonnet-5`, Messages API `output_config.format` JSON Schema
 
 응답 스키마를 L4/L5/L6 프로세스, BDW, AI FIT 구조로 제한합니다. 저장된 프로세스의 `task_id`와 세션 API Key는 후속 분석 API에도 전달하되 API Key는 브라우저 저장소와 데이터베이스에 저장하지 않습니다. 백엔드는 요청 본문의 엔진명을 신뢰하지 않고 프로젝트의 `ai_engine`으로 Provider를 선택합니다.
