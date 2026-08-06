@@ -2,7 +2,7 @@ const REQUEST_TIMEOUT_MS = 60000;
 
 const MODEL_BY_ENGINE = Object.freeze({
   chatgpt: 'gpt-5.6-sol',
-  gemini: 'gemini-2.5-flash',
+  gemini: process.env.GEMINI_MODEL?.trim() || 'gemini-3.6-flash',
   claude: 'claude-sonnet-5'
 });
 
@@ -97,19 +97,6 @@ function compactProcesses(processes) {
     method: process.method || 'manual',
     tool: process.tool || 'other'
   }));
-}
-
-function toGeminiSchema(value) {
-  if (Array.isArray(value)) return value.map(toGeminiSchema);
-  if (!value || typeof value !== 'object') return value;
-  const converted = {};
-  for (const [key, child] of Object.entries(value)) {
-    if (key === 'additionalProperties') continue;
-    converted[key] = key === 'type' && typeof child === 'string'
-      ? child.toUpperCase()
-      : toGeminiSchema(child);
-  }
-  return converted;
 }
 
 function parseStructuredText(text, providerName) {
@@ -245,10 +232,13 @@ class GeminiProvider extends LLMProvider {
           systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.2,
             maxOutputTokens: 8192,
-            responseMimeType: 'application/json',
-            responseSchema: toGeminiSchema(schema)
+            responseFormat: {
+              text: {
+                mimeType: 'APPLICATION_JSON',
+                schema
+              }
+            }
           }
         })
       },

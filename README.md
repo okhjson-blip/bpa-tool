@@ -115,7 +115,7 @@ bpa-tool/
 - 모든 업무 데이터는 `project_id` 및 `task_id` 범위로 격리합니다.
 - Vercel 배포 시 루트 `index.html`을 프런트엔드 빌드 입력으로 사용합니다.
 - 운영 및 로컬 API 데이터베이스는 Supabase PostgreSQL을 사용합니다.
-- AI 분석 모델은 OpenAI `gpt-5.6-sol`, Gemini `gemini-2.5-flash`, Claude `claude-sonnet-5`를 사용합니다.
+- AI 분석 모델은 OpenAI `gpt-5.6-sol`, Gemini `gemini-3.6-flash`, Claude `claude-sonnet-5`를 사용합니다. Gemini 모델은 `GEMINI_MODEL` 환경변수로 교체할 수 있습니다.
 - 세 공급자 모두 공식 JSON Schema 구조화 출력을 사용하며 API Key는 Draft·BDW·AI FIT 요청 처리 중에만 백엔드로 전달됩니다.
 
 ## Supabase 설정
