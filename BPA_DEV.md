@@ -18,7 +18,7 @@ AI API Key는 브라우저에서 성공으로 가정하지 않습니다. `POST /
 
 Provider별 운영 모델과 구조화 출력 방식은 다음과 같습니다.
 
-- OpenAI: `gpt-5.6-sol`, Responses API `text.format` JSON Schema
+- OpenAI: `gpt-5-nano`, Responses API `text.format` JSON Schema (환경변수 `OPENAI_MODEL`로 재정의 가능)
 - Gemini: `gemini-3.5-flash-lite`, `generationConfig.responseFormat.text`의 `APPLICATION_JSON` 및 JSON Schema (환경변수 `GEMINI_MODEL`로 재정의 가능)
 - Claude: `claude-sonnet-5`, Messages API `output_config.format` JSON Schema
 

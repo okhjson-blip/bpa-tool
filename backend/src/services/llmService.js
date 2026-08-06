@@ -1,7 +1,7 @@
 const REQUEST_TIMEOUT_MS = 60000;
 
 const MODEL_BY_ENGINE = Object.freeze({
-  chatgpt: 'gpt-5.6-sol',
+  chatgpt: process.env.OPENAI_MODEL?.trim() || 'gpt-5-nano',
   gemini: process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash-lite',
   claude: 'claude-sonnet-5'
 });
