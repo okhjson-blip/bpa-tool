@@ -9,7 +9,9 @@ const api = axios.create({
 // Projects API
 export const projectsAPI = {
   create: (data) => api.post('/projects', data),
-  list: () => api.get('/projects'),
+  list: (companyName) => api.get('/projects', {
+    params: companyName ? { company_name: companyName } : undefined
+  }),
   get: (id) => api.get(`/projects/${id}`),
   update: (id, data) => api.put(`/projects/${id}`, data),
   delete: (id) => api.delete(`/projects/${id}`)

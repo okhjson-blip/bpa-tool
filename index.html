@@ -1,6 +1,6 @@
 <!doctype html>
 <html>
-<head><meta charset="UTF-8"><title>BPA Tool — UI 프리뷰</title>
+<head><meta charset="UTF-8"><title>Business Process Analysis Too for AX</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--p:#1428A0;--pl:#e8effd;--s:#2e7d32;--w:#e65100;--d:#c62828;--pu:#6a1b9a;--bd:#e0e6f0;--bg:#f0f3f8;--t:#1a1a2e;--mt:#6b7280}
@@ -13,8 +13,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .hdr-brd span:hover{text-decoration:underline}
 .hdr-brd .crumb-sep{opacity:.5;margin:0 2px}
 .hdr-r{margin-left:auto;display:flex;align-items:center;gap:10px}
-.avatar{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-.hdr-save{font-size:12px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer}
+.hdr-company{font-size:13px;font-weight:800;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);padding:5px 11px;border-radius:16px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .step-bar{background:#fff;border-bottom:1.5px solid var(--bd);padding:0 16px;display:flex;align-items:center;gap:2px;height:45px;flex-shrink:0;overflow-x:auto}
 .sp{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:18px;cursor:pointer;white-space:nowrap;font-size:14px;font-weight:600;color:var(--mt);transition:all .15s}
 .sp:hover{background:#f5f7ff}
@@ -169,6 +168,29 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .sv{display:none}
 .sv.on{display:block}
 
+/* 접속 첫 화면 */
+.welcome-page{min-height:calc(100vh - 28px);display:flex;align-items:center;justify-content:center;padding:24px}
+.welcome-shell{width:min(760px,100%);text-align:center}
+.welcome-title{font-size:clamp(31px,5vw,52px);line-height:1.12;font-weight:900;letter-spacing:-1.8px;color:var(--p);margin-bottom:12px}
+.welcome-sub{font-size:14px;color:var(--mt);line-height:1.7;margin-bottom:36px}
+.welcome-card{background:#fff;border:1px solid var(--bd);border-radius:18px;padding:24px;box-shadow:0 18px 45px rgba(20,40,160,.10);text-align:left}
+.welcome-section{padding:0 0 19px;margin-bottom:19px;border-bottom:1px solid #edf0f6}
+.welcome-section-title{font-size:15px;font-weight:900;margin-bottom:5px}
+.welcome-section-desc{font-size:12px;color:var(--mt);margin-bottom:11px}
+.welcome-row{display:flex;gap:8px;align-items:flex-end}
+.welcome-row .fg{min-width:0}
+.dropdown-wrap{position:relative}
+.dropdown-wrap:after{content:'⌄';position:absolute;right:12px;top:50%;transform:translateY(-54%);pointer-events:none;color:var(--p);font-size:17px;font-weight:900}
+.dropdown-select{appearance:none;padding-right:36px;border-width:1.5px;font-weight:700;cursor:pointer}
+.register-btn{min-width:112px;height:35px}
+.welcome-status{font-size:12px;margin-top:8px;min-height:18px}
+.start-wrap{text-align:center;padding-top:2px}
+.start-btn{min-width:220px;padding:12px 24px;border-radius:9px;font-weight:800;font-size:15px}
+.start-hint{font-size:11px;color:#999;margin-top:8px}
+.empty-state{background:#fff;border:1px dashed var(--bd);border-radius:10px;padding:28px;text-align:center;color:var(--mt);margin-bottom:10px}
+.loading-state{padding:24px;text-align:center;color:var(--mt)}
+@media(max-width:620px){.welcome-row{align-items:stretch;flex-direction:column}.register-btn{width:100%}.welcome-card{padding:18px}.welcome-title{letter-spacing:-1px}}
+
 /* 프로젝트/과제 목록 페이지 */
 .pg-brd{font-size:14px;color:var(--mt);margin-bottom:12px;display:flex;align-items:center;gap:4px}
 .pg-brd span{cursor:pointer;color:var(--p);font-weight:700}
@@ -233,8 +255,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <span class="hdr-sep"></span>
   <div class="hdr-brd" id="hdrBrd"><span onclick="openProjectList()">프로젝트 목록</span></div>
   <div class="hdr-r">
-    <button class="hdr-save">💾 임시저장</button>
-    <div class="avatar">HJ</div>
+    <div class="hdr-company" id="headerCompany">회사 미등록</div>
   </div>
 </div>
 <div class="step-bar" id="stepBar">
@@ -254,22 +275,48 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <div class="body">
 <div class="content">
 
+<!-- PAGE: 접속 첫 화면 -->
+<div class="sv" id="pageWelcome">
+  <div class="welcome-page">
+    <div class="welcome-shell">
+      <h1 class="welcome-title">Business Process Analysis Too for AX</h1>
+      <p class="welcome-sub">회사를 등록하고 외부 AI 엔진을 연결한 뒤<br>우리 회사의 업무 프로세스 분석을 시작하세요.</p>
+      <div class="welcome-card">
+        <section class="welcome-section">
+          <div class="welcome-section-title">1. 회사명 등록</div>
+          <div class="welcome-section-desc">등록한 회사명과 일치하는 프로젝트만 목록에 표시됩니다.</div>
+          <div class="welcome-row">
+            <div class="fg"><label class="fl" for="welcomeCompanyName">회사명 <span class="req">*</span></label><input class="fi" id="welcomeCompanyName" autocomplete="organization" placeholder="예: 삼성전자"></div>
+            <button class="btn btn-o register-btn" type="button" onclick="registerCompany()">회사명 등록</button>
+          </div>
+          <div class="welcome-status" id="companyRegisterStatus" role="status" aria-live="polite"></div>
+        </section>
+        <section class="welcome-section">
+          <div class="welcome-section-title">2. 외부 AI API 등록</div>
+          <div class="welcome-section-desc">AI 엔진을 드롭다운에서 선택하고 실제 API 연결을 확인합니다. API Key는 브라우저에 저장하지 않습니다.</div>
+          <div class="welcome-row">
+            <div class="fg" style="max-width:210px"><label class="fl" for="welcomeAiEngine">AI 엔진 <span class="req">*</span></label><div class="dropdown-wrap"><select class="fi dropdown-select" id="welcomeAiEngine" onchange="resetWelcomeAIStatus()"><option value="gemini">Gemini</option><option value="chatgpt">ChatGPT</option><option value="claude">Claude</option></select></div></div>
+            <div class="fg"><label class="fl" for="welcomeApiKey">API Key <span class="req">*</span></label><input class="fi mask" id="welcomeApiKey" type="password" autocomplete="off" placeholder="선택한 AI 엔진의 API Key"></div>
+            <button class="btn btn-o register-btn" id="btnRegisterAI" type="button" onclick="registerWelcomeAI()">AI API 등록</button>
+          </div>
+          <div class="welcome-status" id="welcomeAIStatus" role="status" aria-live="polite"></div>
+        </section>
+        <div class="start-wrap">
+          <button class="btn btn-p start-btn" type="button" onclick="startApplication()">시작하기 →</button>
+          <div class="start-hint">회사명과 AI API 연결을 등록하면 프로젝트 목록으로 이동합니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- PAGE: 프로젝트 목록 -->
 <div class="sv" id="pageProjectList">
   <div class="list-hd">
     <div><div class="list-title">프로젝트 목록</div><div class="list-sub">진행 중인 AX 프로세스 분석 프로젝트를 확인하고 관리하세요.</div></div>
     <button class="btn btn-p" onclick="openNewProjectForm()">+ 새 프로젝트</button>
   </div>
-  <div class="proj-card" onclick="openTaskList('디지털마케팅 콘텐츠 제작 프로세스 분석')">
-    <div class="proj-card-top"><div class="proj-name">디지털마케팅 콘텐츠 제작 프로세스 분석</div><span style="font-size:11px;color:#bbb">최근 수정 2026-07-29</span></div>
-    <div class="proj-meta"><span class="proj-chip">목적: SNS 콘텐츠 운영 프로세스의 AI 자동화 방안 도출</span><span class="proj-chip">기간 2026-07-01~2026-07-31</span><span class="proj-chip">참여자 이한결·김현수·손희정</span></div>
-    <div class="proj-stats">과제 3건 · 진행중 2 · 완료 1</div>
-  </div>
-  <div class="proj-card" onclick="openTaskList('제조 공정 효율화 프로젝트')">
-    <div class="proj-card-top"><div class="proj-name">제조 공정 효율화 프로젝트</div><span style="font-size:11px;color:#bbb">최근 수정 2026-07-10</span></div>
-    <div class="proj-meta"><span class="proj-chip">목적: 제조 공정 병목 구간 진단 및 자동화</span><span class="proj-chip">기간 2026-06-01~2026-06-30</span><span class="proj-chip">참여자 이수민 외 2명</span></div>
-    <div class="proj-stats">과제 1건 · 진행중 1</div>
-  </div>
+  <div id="projectListContainer"></div>
   <div class="add-card" onclick="openNewProjectForm()">+ 새 프로젝트 생성하기</div>
 </div>
 
@@ -278,9 +325,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="pg-brd"><span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="color:var(--t);font-weight:700;cursor:default">새 프로젝트 생성</span></div>
   <div class="card">
     <div class="card-title">기본 정보 <span class="ct-b">필수</span></div>
-    <div class="frow"><div class="fg"><span class="fl">회사명 <span class="req">*</span></span><input class="fi" id="newCompanyName" value="삼성전자"></div><div class="fg"><span class="fl">부서명</span><input class="fi" id="newDeptName" value="마케팅부문"></div></div>
-    <div class="frow"><div class="fg"><span class="fl">프로젝트명 <span class="req">*</span></span><input class="fi" id="newProjName" value="디지털마케팅 콘텐츠 제작 프로세스 분석"></div><div class="fg" style="max-width:200px"><span class="fl">프로젝트 기간</span><input class="fi" value="2026-07-01 ~ 2026-07-31"></div></div>
-    <div class="frow"><div class="fg"><span class="fl">프로젝트 목적</span><input class="fi" value="SNS 콘텐츠 운영 프로세스의 AI 자동화 방안 도출"></div></div>
+    <div class="frow"><div class="fg"><span class="fl">회사명 <span class="req">*</span></span><input class="fi" id="newCompanyName" readonly></div><div class="fg"><span class="fl">부서명</span><input class="fi" id="newDeptName" placeholder="예: 마케팅부문"></div></div>
+    <div class="frow"><div class="fg"><span class="fl">프로젝트명 <span class="req">*</span></span><input class="fi" id="newProjName" placeholder="프로젝트명을 입력하세요"></div><div class="fg" style="max-width:240px"><span class="fl">프로젝트 기간</span><input class="fi" id="newAnalysisPeriod" placeholder="예: 2026-07-01 ~ 2026-07-31"></div></div>
+    <div class="frow"><div class="fg"><span class="fl">프로젝트 목적</span><input class="fi" id="newAnalysisGoal" placeholder="프로젝트 목적을 입력하세요"></div></div>
   </div>
   <div class="card">
     <div class="card-title">AI 엔진 설정 <span class="ct-b">필수</span></div>
@@ -325,7 +372,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="pg-brd"><span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="color:var(--t);font-weight:700;cursor:default" id="tlProjName">디지털마케팅 콘텐츠 제작 프로세스 분석</span></div>
   <div class="card">
     <div class="card-title">프로젝트 정보</div>
-    <div class="proj-meta"><span class="proj-chip">삼성전자 · 마케팅부문</span><span class="proj-chip">목적: SNS 콘텐츠 운영 프로세스의 AI 자동화 방안 도출</span><span class="proj-chip">기간 2026-07-01~2026-07-31</span><span class="proj-chip">AI엔진 ChatGPT</span><span class="proj-chip">참여자 이한결(리더)·김현수(담당자)·손희정(컨설턴트)</span></div>
+    <div class="proj-meta"><span class="proj-chip" id="taskProjectCompany">회사명</span><span class="proj-chip">목적: SNS 콘텐츠 운영 프로세스의 AI 자동화 방안 도출</span><span class="proj-chip">기간 2026-07-01~2026-07-31</span><span class="proj-chip" id="taskProjectEngine">AI엔진</span><span class="proj-chip">참여자 이한결(리더)·김현수(담당자)·손희정(컨설턴트)</span></div>
   </div>
   <div class="list-hd">
     <div class="list-title" style="font-size:16px">과제 목록 <span style="font-size:11px;font-weight:600;color:var(--mt)">(L4 단위 등록)</span></div>
@@ -739,8 +786,91 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 </div>
 <script>
 let cur=1;
-let ctx={project:'',l1:'영업마케팅',l2:'디지털마케팅',l3:'콘텐츠 제작',l4:'SNS 채널 관리'};
+let ctx={project:'',projectId:null,l1:'영업마케팅',l2:'디지털마케팅',l3:'콘텐츠 제작',l4:'SNS 채널 관리'};
+const appState={companyName:'',companyRegistered:false,aiConnected:false,aiEngine:'gemini',apiKey:''};
 const names=['','과제 등록','인터뷰 & Draft','프로세스 수정','BDW 진단','AI FIT 분석','결과 리포트'];
+const apiBase=window.location.protocol==='file:'?'http://localhost:5000/api':'/api';
+
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+}
+function setHeaderVisible(visible){
+  document.querySelector('.hdr').style.display=visible?'flex':'none';
+}
+function showWelcome(){
+  hideFlowChrome();
+  setHeaderVisible(false);
+  show('pageWelcome');
+}
+function registerCompany(){
+  const input=document.getElementById('welcomeCompanyName');
+  const status=document.getElementById('companyRegisterStatus');
+  const companyName=input.value.trim();
+  if(!companyName){status.style.color='var(--d)';status.textContent='회사명을 입력해 주세요.';return;}
+  appState.companyName=companyName;
+  appState.companyRegistered=true;
+  localStorage.setItem('bpaCompanyName',companyName);
+  document.getElementById('headerCompany').textContent=companyName;
+  document.getElementById('newCompanyName').value=companyName;
+  status.style.color='var(--s)';
+  status.textContent='✓ '+companyName+' 회사가 등록되었습니다.';
+}
+function resetWelcomeAIStatus(){
+  appState.aiConnected=false;
+  document.getElementById('welcomeAIStatus').textContent='';
+}
+async function registerWelcomeAI(){
+  const engine=document.getElementById('welcomeAiEngine').value;
+  const apiKey=document.getElementById('welcomeApiKey').value.trim();
+  const button=document.getElementById('btnRegisterAI');
+  const status=document.getElementById('welcomeAIStatus');
+  appState.aiConnected=false;
+  status.style.color='var(--d)';
+  if(!apiKey){status.textContent='API Key를 입력해 주세요.';return;}
+  button.disabled=true;button.textContent='연결 확인 중...';
+  status.style.color='var(--mt)';status.textContent='선택한 AI 엔진에 실제 연결하고 있습니다.';
+  try{
+    const response=await fetch(apiBase+'/connections/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({engine,apiKey})});
+    const result=await response.json();
+    if(!response.ok||!result.connected) throw new Error(result.error||'API 연결에 실패했습니다.');
+    appState.aiConnected=true;appState.aiEngine=engine;appState.apiKey=apiKey;
+    status.style.color='var(--s)';status.textContent='✓ '+result.message;
+  }catch(error){
+    status.style.color='var(--d)';
+    status.textContent='✕ '+(error instanceof TypeError?'백엔드 서버에 연결할 수 없습니다.':(error.message||'API 연결에 실패했습니다.'));
+  }finally{button.disabled=false;button.textContent='AI API 등록';}
+}
+async function startApplication(){
+  if(!appState.companyRegistered){document.getElementById('companyRegisterStatus').style.color='var(--d)';document.getElementById('companyRegisterStatus').textContent='회사명을 먼저 등록해 주세요.';return;}
+  if(!appState.aiConnected){document.getElementById('welcomeAIStatus').style.color='var(--d)';document.getElementById('welcomeAIStatus').textContent='외부 AI API를 등록하고 연결을 확인해 주세요.';return;}
+  document.getElementById('apiKeyInput').value=appState.apiKey;
+  const engineCard=document.querySelector('.eng[data-engine="'+appState.aiEngine+'"]');
+  if(engineCard) selEng(engineCard);
+  setHeaderVisible(true);
+  await openProjectList();
+}
+
+async function loadCompanyProjects(){
+  const container=document.getElementById('projectListContainer');
+  container.innerHTML='<div class="loading-state">'+escapeHtml(appState.companyName)+' 프로젝트를 불러오는 중입니다...</div>';
+  try{
+    const response=await fetch(apiBase+'/projects?company_name='+encodeURIComponent(appState.companyName));
+    const projects=await response.json();
+    if(!response.ok) throw new Error(projects.error||'프로젝트 목록을 불러오지 못했습니다.');
+    if(!projects.length){container.innerHTML='<div class="empty-state"><b>'+escapeHtml(appState.companyName)+'</b>에 등록된 프로젝트가 없습니다.<br>새 프로젝트를 생성해 주세요.</div>';return;}
+    container.innerHTML='';
+    projects.forEach(project=>{
+      const card=document.createElement('div');
+      card.className='proj-card';
+      const updated=project.updated_at||project.created_at;
+      const date=updated?new Date(updated).toLocaleDateString('ko-KR'):'-';
+      const period=project.analysis_period||[project.start_date,project.end_date].filter(Boolean).join(' ~ ')||'기간 미등록';
+      card.innerHTML='<div class="proj-card-top"><div class="proj-name">'+escapeHtml(project.name)+'</div><span style="font-size:11px;color:#bbb">최근 수정 '+escapeHtml(date)+'</span></div><div class="proj-meta"><span class="proj-chip">목적: '+escapeHtml(project.analysis_goal||project.description||'미등록')+'</span><span class="proj-chip">'+escapeHtml(period)+'</span></div><div class="proj-stats">과제 '+Number(project.task_count||0)+'건 · 진행중 '+Number(project.in_progress_count||0)+' · 완료 '+Number(project.completed_count||0)+'</div>';
+      card.addEventListener('click',()=>openTaskList(project.name,project.id));
+      container.appendChild(card);
+    });
+  }catch(error){container.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
+}
 
 function show(id){
   document.querySelectorAll('.sv').forEach(el=>el.classList.remove('on'));
@@ -763,23 +893,38 @@ function setHdrTrail(mid,last){
   document.getElementById('hdrBrd').innerHTML='<span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span onclick="openTaskListCurrent()">'+mid+'</span>'+(last?'<span class="crumb-sep">›</span><span style="font-weight:800;cursor:default">'+last+'</span>':'');
 }
 
-function openProjectList(){
+async function openProjectList(){
+  if(!appState.companyRegistered){showWelcome();return;}
+  setHeaderVisible(true);
   hideFlowChrome();
   show('pageProjectList');
   setHdrSingle('프로젝트 목록');
+  await loadCompanyProjects();
 }
 function openNewProjectForm(){
+  if(!appState.companyRegistered){showWelcome();return;}
   hideFlowChrome();
   show('pageNewProject');
+  document.getElementById('newCompanyName').value=appState.companyName;
   document.getElementById('hdrBrd').innerHTML='<span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="font-weight:800;cursor:default">새 프로젝트 생성</span>';
 }
-function createProject(){
-  const nm=document.getElementById('newProjName').value||'새 프로젝트';
-  openTaskList(nm);
+async function createProject(){
+  const name=document.getElementById('newProjName').value.trim();
+  if(!name){alert('프로젝트명을 입력해 주세요.');return;}
+  const body={name,company_name:appState.companyName,department_name:document.getElementById('newDeptName').value.trim(),analysis_period:document.getElementById('newAnalysisPeriod').value.trim(),analysis_goal:document.getElementById('newAnalysisGoal').value.trim(),ai_engine:appState.aiEngine,participants:[]};
+  try{
+    const response=await fetch(apiBase+'/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const result=await response.json();
+    if(!response.ok) throw new Error(result.error||'프로젝트 생성에 실패했습니다.');
+    openTaskList(result.project.name,result.project.id);
+  }catch(error){alert(error.message);}
 }
-function openTaskList(name){
+function openTaskList(name,projectId=ctx.projectId){
   ctx.project=name;
+  ctx.projectId=projectId;
   document.getElementById('tlProjName').textContent=name;
+  document.getElementById('taskProjectCompany').textContent=appState.companyName;
+  document.getElementById('taskProjectEngine').textContent='AI엔진 '+({gemini:'Gemini',chatgpt:'ChatGPT',claude:'Claude'}[appState.aiEngine]||appState.aiEngine);
   hideFlowChrome();
   show('pageTaskList');
   setHdrTrail(name,'과제 목록');
@@ -864,7 +1009,6 @@ async function testAIConnection(){
   status.textContent='선택한 AI 엔진에 연결하고 있습니다.';
 
   try{
-    const apiBase=window.location.protocol==='file:'?'http://localhost:5000/api':'/api';
     const response=await fetch(apiBase+'/connections/test',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -888,7 +1032,9 @@ async function testAIConnection(){
 function selOpt(n){[1,3].forEach(i=>{const e=document.getElementById('opt'+i); if(e) e.classList.remove('sel');}); document.getElementById('opt'+n).classList.add('sel');}
 function swTab(el,tid){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.tv').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById(tid).classList.add('on');}
 
-openProjectList();
+const savedCompany=localStorage.getItem('bpaCompanyName');
+if(savedCompany) document.getElementById('welcomeCompanyName').value=savedCompany;
+showWelcome();
 </script>
 
 <!-- 업무 계층별 정의 팝업 -->

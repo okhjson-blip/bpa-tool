@@ -1,5 +1,5 @@
 import express from 'express';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { validate } from '../middleware/validate.js';
 import * as projectController from '../controllers/projectController.js';
 
@@ -17,7 +17,9 @@ router.post('/', [
   body('participants').isArray().optional()
 ], validate, projectController.createProject);
 
-router.get('/', projectController.getProjects);
+router.get('/', [
+  query('company_name').optional().trim().notEmpty()
+], validate, projectController.getProjects);
 
 router.get('/:projectId', [
   param('projectId').isInt()

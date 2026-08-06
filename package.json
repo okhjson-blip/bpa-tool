@@ -6,6 +6,7 @@
   "scripts": {
     "install-all": "npm install",
     "build": "vite build --config frontend/vite.config.js",
+    "prestart": "npm run build",
     "start": "node backend/src/app.js",
     "dev": "vite --config frontend/vite.config.js",
     "dev:frontend": "vite --config frontend/vite.config.js",

@@ -53,11 +53,16 @@ export const createProject = async (req, res) => {
 
 export const getProjects = async (req, res) => {
   try {
+    const companyName = String(req.query.company_name || '').trim();
+
     // 모든 프로젝트 반환 (user_id = 1로 필터링)
     const members = await db.select('project_members', { user_id: 1 });
     const projectIds = members.map((m) => m.project_id);
 
-    const projects = (await db.select('projects')).filter((p) => projectIds.includes(p.id));
+    const projects = (await db.select(
+      'projects',
+      companyName ? { company_name: companyName } : null
+    )).filter((p) => projectIds.includes(p.id));
 
     res.json(await Promise.all(projects.map(async (project) => {
       const tasks = await db.select('tasks', { project_id: project.id });
