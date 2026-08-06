@@ -15,6 +15,8 @@
 
 AI API Key는 브라우저에서 성공으로 가정하지 않습니다. `POST /api/connections/test`가 선택한 공급자의 모델 목록 API를 호출하고 인증 성공을 반환한 경우에만 연결 완료 상태를 표시합니다.
 
+`file://`로 루트 `index.html`을 직접 실행하는 경우 API 기준 주소는 `http://localhost:5000/api`입니다. HTTP/Vite/Express를 통해 실행하는 경우에는 동일 출처 상대 경로 `/api`를 사용합니다.
+
 ## 2. 실행 연결
 
 Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 결과는 `frontend/dist`에 생성됩니다. Express는 `/api/*`를 먼저 처리하고 나머지 요청에 `frontend/dist/index.html`을 반환합니다.

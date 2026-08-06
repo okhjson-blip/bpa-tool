@@ -864,7 +864,8 @@ async function testAIConnection(){
   status.textContent='선택한 AI 엔진에 연결하고 있습니다.';
 
   try{
-    const response=await fetch('/api/connections/test',{
+    const apiBase=window.location.protocol==='file:'?'http://localhost:5000/api':'/api';
+    const response=await fetch(apiBase+'/connections/test',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({engine,apiKey})
@@ -875,7 +876,10 @@ async function testAIConnection(){
     status.textContent='✓ '+result.message;
   }catch(error){
     status.style.color='var(--d)';
-    status.textContent='✕ '+(error.message||'API 연결에 실패했습니다.');
+    const message=error instanceof TypeError
+      ? '백엔드 서버에 연결할 수 없습니다. npm start로 서버를 실행해 주세요.'
+      : (error.message||'API 연결에 실패했습니다.');
+    status.textContent='✕ '+message;
   }finally{
     button.disabled=false;
     button.textContent='연결 테스트';

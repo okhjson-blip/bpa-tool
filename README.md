@@ -12,6 +12,8 @@
 - `/api` 요청은 개발 환경에서 5000번 백엔드로 프록시됩니다.
 - 프로덕션에서는 Express가 API와 `frontend/dist/index.html`을 같은 주소에서 제공합니다.
 
+루트 `index.html`을 파일 탐색기에서 직접 열 수도 있지만 API 기능을 사용하려면 먼저 `npm start`로 백엔드를 실행해야 합니다. 파일 직접 실행 시 UI는 `http://localhost:5000/api`로 연결됩니다.
+
 ## 설치
 
 ```powershell
