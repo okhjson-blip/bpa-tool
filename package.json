@@ -5,6 +5,8 @@
   "private": true,
   "scripts": {
     "install-all": "npm install",
+    "doctor": "node scripts/check-environment.js",
+    "dev:local": "npm run doctor && node scripts/dev-local.js",
     "build": "vite build --config frontend/vite.config.js",
     "prestart": "npm run build",
     "start": "node backend/src/app.js",

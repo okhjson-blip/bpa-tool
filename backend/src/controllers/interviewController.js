@@ -1,49 +1,6 @@
 import { db } from '../config/database.js';
 import maskSensitiveData from '../middleware/dataMasking.js';
-
-// 모의 LLM 분석 (테스트용)
-const mockAnalyzeInterview = (transcription, level) => {
-  const processes = [
-    {
-      level: 'L4',
-      name: '🗂 SNS 채널 관리',
-      description: '소셜 미디어 채널 운영',
-      execution_time: null,
-      method: null,
-      tool: null
-    },
-    {
-      level: 'L5',
-      name: '게시물 기획',
-      description: '콘텐츠 주제 및 일정 계획',
-      execution_time: null,
-      method: 'manual',
-      tool: 'web'
-    },
-    {
-      level: 'L6',
-      name: '트렌드 키워드를 검색한다',
-      description: '최신 트렌드 조사',
-      execution_time: 10,
-      method: 'manual',
-      tool: 'web'
-    },
-    {
-      level: 'L6',
-      name: '초안을 입력한다',
-      description: '게시물 텍스트 작성',
-      execution_time: 30,
-      method: 'manual',
-      tool: 'document'
-    }
-  ];
-
-  return {
-    processes,
-    analysis_timestamp: new Date().toISOString(),
-    engine_used: 'mock'
-  };
-};
+import LLMService from '../services/llmService.js';
 
 export const createInterview = async (req, res) => {
   const { projectId } = req.params;
@@ -81,6 +38,7 @@ export const createInterview = async (req, res) => {
 
 export const analyzeInterview = async (req, res) => {
   const { projectId, interviewId } = req.params;
+  const { apiKey, taskId } = req.body;
 
   try {
     // 인터뷰 조회
@@ -94,25 +52,67 @@ export const analyzeInterview = async (req, res) => {
     if (!project) {
       return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다' });
     }
+    if (Number(interview.project_id) !== parseInt(projectId)) {
+      return res.status(400).json({ error: '인터뷰와 프로젝트가 일치하지 않습니다' });
+    }
+    if (taskId) {
+      const task = await db.selectOne('tasks', { id: parseInt(taskId) });
+      if (!task || Number(task.project_id) !== parseInt(projectId)) {
+        return res.status(400).json({ error: '과제와 프로젝트가 일치하지 않습니다' });
+      }
+    }
 
     // 텍스트 선택 (마스킹된 버전 우선)
     const textToAnalyze = interview.text_masked || interview.text;
     const transcriptionToAnalyze = interview.transcription_masked || interview.transcription;
     const fullText = textToAnalyze || transcriptionToAnalyze || '';
 
-    // AI 분석 수행 (모의 구현)
-    const analysisResult = mockAnalyzeInterview(fullText, 'L4');
+    if (!fullText.trim()) {
+      return res.status(400).json({ error: 'AI Draft를 생성할 인터뷰 내용이 없습니다' });
+    }
+
+    // 프로젝트에 등록된 AI 엔진으로 실제 분석 수행
+    const analysisResult = await LLMService.analyzeInterview(
+      project.ai_engine,
+      apiKey,
+      fullText,
+      'L4'
+    );
+    const allowedLevels = new Set(['L4', 'L5', 'L6']);
+    const allowedMethods = new Set(['manual', 'system']);
+    const allowedTools = new Set(['email', 'document', 'excel', 'web', 'erp', 'other']);
+    const normalizedProcesses = (analysisResult.processes || [])
+      .filter((proc) => allowedLevels.has(proc.level) && String(proc.name || '').trim())
+      .map((proc) => ({
+        ...proc,
+        name: String(proc.name).trim(),
+        description: String(proc.description || '').trim(),
+        execution_time: Math.max(0, Math.round(Number(proc.execution_time) || 0)),
+        waiting_time: Math.max(0, Number(proc.waiting_time) || 0),
+        approval_waiting_time: Math.max(0, Number(proc.approval_waiting_time) || 0),
+        method: allowedMethods.has(proc.method) ? proc.method : 'manual',
+        tool: allowedTools.has(proc.tool) ? proc.tool : 'other'
+      }));
+    if (!normalizedProcesses.length || !normalizedProcesses.some((proc) => proc.level === 'L6')) {
+      return res.status(502).json({ error: 'AI 엔진이 프로세스 Draft를 반환하지 않았습니다' });
+    }
+
+    // 같은 인터뷰를 재분석할 때 이전 Draft가 중복되지 않도록 교체
+    await db.deleteWhere('processes', { interview_id: parseInt(interviewId) });
 
     // 프로세스 저장
     const processes = [];
-    for (const proc of analysisResult.processes) {
+    for (const proc of normalizedProcesses) {
       const savedProcess = await db.insert('processes', {
         project_id: parseInt(projectId),
         interview_id: parseInt(interviewId),
+        task_id: taskId ? parseInt(taskId) : null,
         level: proc.level,
         name: proc.name,
         description: proc.description,
         execution_time: proc.execution_time,
+        waiting_time: proc.waiting_time,
+        approval_waiting_time: proc.approval_waiting_time,
         method: proc.method,
         tool: proc.tool,
         status: 'draft'
@@ -124,12 +124,15 @@ export const analyzeInterview = async (req, res) => {
       message: 'AI 분석이 완료되었습니다',
       analysis: {
         ...analysisResult,
+        analysis_timestamp: new Date().toISOString(),
+        engine_used: project.ai_engine,
+        model_used: LLMService.getModel(project.ai_engine),
         processes
       }
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'AI 분석 중 오류가 발생했습니다' });
+    res.status(502).json({ error: error.message || 'AI 분석 중 오류가 발생했습니다' });
   }
 };
 
@@ -155,7 +158,9 @@ export const getProcesses = async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    const processes = await db.select('processes', { project_id: parseInt(projectId) });
+    const condition = { project_id: parseInt(projectId) };
+    if (req.query.task_id) condition.task_id = parseInt(req.query.task_id);
+    const processes = await db.select('processes', condition);
 
     res.json(processes);
   } catch (error) {
@@ -166,13 +171,18 @@ export const getProcesses = async (req, res) => {
 
 export const updateProcess = async (req, res) => {
   const { processId } = req.params;
-  const { name, description, execution_time, method, tool, status } = req.body;
+  const {
+    name, description, execution_time, waiting_time,
+    approval_waiting_time, method, tool, status
+  } = req.body;
 
   try {
     const process = await db.update('processes', parseInt(processId), {
       name,
       description,
       execution_time,
+      waiting_time,
+      approval_waiting_time,
       method,
       tool,
       status

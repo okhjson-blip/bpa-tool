@@ -22,6 +22,28 @@ npm run install-all
 
 ## 개발 실행
 
+로컬 테스트는 루트 터미널 하나에서 실행할 수 있습니다.
+
+```powershell
+npm.cmd run dev:local
+```
+
+환경 점검이 성공하면 백엔드와 프런트엔드가 함께 실행됩니다.
+
+- UI: `http://localhost:3000`
+- API/Supabase 상태: `http://localhost:5000/api/health`
+- 종료: 실행 터미널에서 `Ctrl+C`
+
+환경만 먼저 확인하려면 다음 명령을 사용합니다.
+
+```powershell
+npm.cmd run doctor
+```
+
+상세 테스트 순서는 `LOCAL_TEST_GUIDE.md`를 참고하세요.
+
+### 개별 실행
+
 터미널 1:
 
 ```powershell
@@ -55,7 +77,7 @@ npm start
 5. L4~L6 프로세스 수정 및 플로우차트 확인
 6. BDW(Bottleneck, Delay, Waste) 진단
 7. AI FIT 매트릭스와 As-Is/To-Be 비교
-8. FTE 기반 결과 리포트 및 출력 형식 선택
+8. 과제별 AX 성과지표와 선택 섹션 PDF 또는 고정 항목 CSV 출력
 
 ## 디렉터리
 
@@ -83,9 +105,9 @@ bpa-tool/
 - `GET|PUT|DELETE /api/projects/:projectId`
 - `GET|POST /api/projects/:projectId/tasks`
 - `POST /api/connections/test`: 선택한 AI 엔진의 API Key 실제 연결 검증
-- `/api/interviews/*`: 인터뷰와 Draft
+- `/api/interviews/*`: 실제 AI Draft 생성·저장과 작업별 프로세스 수정
 - `/api/domains/*`: 업무 계층
-- `/api/analysis/*`: BDW, AI FIT, To-Be, 리포트
+- `/api/analysis/*`: 작업별 BDW, AI FIT, To-Be, AX 성과지표 리포트
 
 ## 운영 원칙
 
@@ -93,6 +115,8 @@ bpa-tool/
 - 모든 업무 데이터는 `project_id` 및 `task_id` 범위로 격리합니다.
 - Vercel 배포 시 루트 `index.html`을 프런트엔드 빌드 입력으로 사용합니다.
 - 운영 및 로컬 API 데이터베이스는 Supabase PostgreSQL을 사용합니다.
+- AI 분석 모델은 OpenAI `gpt-5.6-sol`, Gemini `gemini-2.5-flash`, Claude `claude-sonnet-5`를 사용합니다.
+- 세 공급자 모두 공식 JSON Schema 구조화 출력을 사용하며 API Key는 Draft·BDW·AI FIT 요청 처리 중에만 백엔드로 전달됩니다.
 
 ## Supabase 설정
 
@@ -109,3 +133,5 @@ Git 저장소를 Vercel 프로젝트에 연결한 후 다음 환경 변수를 Pr
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 Vercel은 `npm run build`로 루트 `index.html`을 빌드하고 `api/index.js`의 Express 앱을 서버리스 함수로 실행합니다. `/api/*`는 Express 함수로, 나머지 경로는 정적 `index.html`로 전달됩니다.
+
+AI Draft, BDW, AI FIT처럼 외부 모델을 호출하는 함수의 제한시간은 `vercel.json`에서 60초로 설정되어 있습니다. 사용하는 Vercel 요금제의 함수 실행시간 한도도 함께 확인해야 합니다.

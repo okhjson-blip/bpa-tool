@@ -14,10 +14,18 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    strictPort: true,
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
-        changeOrigin: true
+        changeOrigin: true,
+        configure(proxy) {
+          proxy.on('error', (_error, _request, response) => {
+            if (!response || response.headersSent) return
+            response.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' })
+            response.end(JSON.stringify({ error: '백엔드 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.' }))
+          })
+        }
       }
     }
   }

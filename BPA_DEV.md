@@ -16,6 +16,14 @@
 
 AI API Key는 브라우저에서 성공으로 가정하지 않습니다. `POST /api/connections/test`가 선택한 공급자의 모델 목록 API를 호출하고 인증 성공을 반환한 경우에만 연결 완료 상태를 표시합니다.
 
+Provider별 운영 모델과 구조화 출력 방식은 다음과 같습니다.
+
+- OpenAI: `gpt-5.6-sol`, Responses API `text.format` JSON Schema
+- Gemini: `gemini-2.5-flash`, `generationConfig.responseSchema`
+- Claude: `claude-sonnet-5`, Messages API `output_config.format` JSON Schema
+
+응답 스키마를 L4/L5/L6 프로세스, BDW, AI FIT 구조로 제한합니다. 저장된 프로세스의 `task_id`와 세션 API Key는 후속 분석 API에도 전달하되 API Key는 브라우저 저장소와 데이터베이스에 저장하지 않습니다. 백엔드는 요청 본문의 엔진명을 신뢰하지 않고 프로젝트의 `ai_engine`으로 Provider를 선택합니다.
+
 `file://`로 루트 `index.html`을 직접 실행하는 경우 API 기준 주소는 `http://localhost:5000/api`입니다. HTTP/Vite/Express를 통해 실행하는 경우에는 동일 출처 상대 경로 `/api`를 사용합니다.
 
 ## 2. 실행 연결
@@ -48,16 +56,19 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 5. LLM 전달 전 개인정보 마스킹 단계를 유지합니다.
 6. API Key, 토큰, `.env`는 저장소에 커밋하지 않습니다.
 7. 프런트엔드 API는 상대 경로 `/api`를 사용합니다.
+8. 편집 테이블과 플로우차트는 동일한 API 응답 상태를 렌더링하며 저장 성공 후 함께 갱신합니다.
 
 ## 5. 핵심 계산식
 
 ```text
 비효율 지수 = 비효율 시간 / 전체 시간 × 100
 자동화율 = A영역 L6 수 / 전체 L6 수 × 100
-연간 절감시간 = 건당 절감시간 × 연간 수행 횟수
+연간 절감시간(h) = 건당 절감시간(분) × 과제별 연간 수행 횟수 / 60
 절감 FTE = 연간 절감시간(h) / 2,248h
 외주 개발비 = A영역 수 × 1.0 M/M × 8,321,500원
 ```
+
+결과 리포트 API는 `project_id`와 `task_id`에 속한 L6, BDW, AI FIT, To-Be 데이터만 집계합니다. PDF 출력은 사용자가 선택한 섹션만 인쇄 문서로 구성하고, CSV 출력은 섹션 선택과 무관하게 프로젝트명·과제명·AS-IS 프로세스·To-Be 프로세스 네 열만 생성합니다.
 
 ## 6. 배포 전 확인
 

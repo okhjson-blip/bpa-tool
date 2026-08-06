@@ -1,5 +1,5 @@
 import express from 'express';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import { validate } from '../middleware/validate.js';
 import * as interviewController from '../controllers/interviewController.js';
 import { dataMaskingMiddleware } from '../middleware/dataMasking.js';
@@ -25,7 +25,9 @@ router.get('/project/:projectId', [
 // 인터뷰 AI 분석 (Draft 생성)
 router.post('/:interviewId/analyze', [
   param('interviewId').isInt(),
-  body('projectId').isInt()
+  body('projectId').isInt(),
+  body('taskId').isInt().optional(),
+  body('apiKey').isString().trim().notEmpty()
 ], validate, (req, res) => {
   req.params.projectId = req.body.projectId;
   interviewController.analyzeInterview(req, res);
@@ -33,7 +35,8 @@ router.post('/:interviewId/analyze', [
 
 // 프로젝트의 모든 프로세스 (L4~L6) 조회
 router.get('/project/:projectId/processes', [
-  param('projectId').isInt()
+  param('projectId').isInt(),
+  query('task_id').isInt().optional()
 ], validate, interviewController.getProcesses);
 
 // 개별 프로세스 업데이트
@@ -42,6 +45,8 @@ router.put('/process/:processId', [
   body('name').trim().optional(),
   body('description').trim().optional(),
   body('execution_time').isInt().optional({ nullable: true }),
+  body('waiting_time').isFloat({ min: 0 }).optional(),
+  body('approval_waiting_time').isFloat({ min: 0 }).optional(),
   body('method').optional(),
   body('tool').optional(),
   body('status').isIn(['draft', 'confirmed', 'optimized']).optional()
