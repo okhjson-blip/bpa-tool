@@ -7,9 +7,9 @@ export const tagBDW = async (req, res) => {
 
   try {
     // 재태깅 시 이전 태그가 남아 조회 결과에 혼선을 주지 않도록 기존 태그 제거 후 저장
-    db.deleteWhere('bdw_tags', { process_id: parseInt(processId) });
+    await db.deleteWhere('bdw_tags', { process_id: parseInt(processId) });
 
-    const bdwTag = db.insert('bdw_tags', {
+    const bdwTag = await db.insert('bdw_tags', {
       process_id: parseInt(processId),
       bdw_type, // 'bottleneck', 'delay', 'waste', 'normal'
       severity: req.body.severity || 'medium'
@@ -27,8 +27,8 @@ export const getBDWDiagnosis = async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    const processes = db.select('processes', { project_id: parseInt(projectId) });
-    const tags = db.select('bdw_tags');
+    const processes = await db.select('processes', { project_id: parseInt(projectId) });
+    const tags = await db.select('bdw_tags');
 
     // 각 프로세스에 태그 연결
     const processesWithTags = processes.map((proc) => {
@@ -71,7 +71,7 @@ export const analyzeAIFit = async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    const processes = db.select('processes', { project_id: parseInt(projectId) });
+    const processes = await db.select('processes', { project_id: parseInt(projectId) });
 
     if (processes.length === 0) {
       return res.status(400).json({ error: '분석할 프로세스가 없습니다. 먼저 인터뷰 및 AI Draft를 생성하세요' });
@@ -108,10 +108,8 @@ export const analyzeAIFit = async (req, res) => {
     });
 
     // 재분석 시 이전 결과가 누적되지 않도록 기존 분석 삭제 후 저장
-    db.deleteWhere('ai_analysis', { project_id: parseInt(projectId) });
-    fitAnalysis.forEach((analysis) => {
-      db.insert('ai_analysis', analysis);
-    });
+    await db.deleteWhere('ai_analysis', { project_id: parseInt(projectId) });
+    await Promise.all(fitAnalysis.map((analysis) => db.insert('ai_analysis', analysis)));
 
     // 통계
     const categoryA = fitAnalysis.filter((a) => a.fit_category === 'A');
@@ -140,17 +138,17 @@ export const createToBe = async (req, res) => {
   const { ai_analysis } = req.body;
 
   try {
-    const processes = db.select('processes', { project_id: parseInt(projectId) });
+    const processes = await db.select('processes', { project_id: parseInt(projectId) });
 
     // 재생성 시 이전 To-Be 결과가 누적되지 않도록 기존 결과 삭제
-    db.deleteWhere('to_be_processes', { project_id: parseInt(projectId) });
+    await db.deleteWhere('to_be_processes', { project_id: parseInt(projectId) });
 
     // 각 프로세스에 대해 To-Be 버전 생성
-    const toBeProcesses = processes.map((proc) => {
+    const toBeProcesses = await Promise.all(processes.map(async (proc) => {
       const analysis = ai_analysis.find((a) => a.process_id === proc.id);
       const executionTime = proc.execution_time || 0;
 
-      return db.insert('to_be_processes', {
+      return await db.insert('to_be_processes', {
         original_process_id: proc.id,
         project_id: parseInt(projectId),
         name: proc.name,
@@ -161,7 +159,7 @@ export const createToBe = async (req, res) => {
           : executionTime,
         automation_method: analysis?.recommended_tech || 'manual'
       });
-    });
+    }));
 
     res.json({
       message: 'To-Be 프로세스가 생성되었습니다',
@@ -189,18 +187,18 @@ export const generateReport = async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    const project = db.selectOne('projects', { id: parseInt(projectId) });
+    const project = await db.selectOne('projects', { id: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ error: '과제를 찾을 수 없습니다' });
     }
 
-    const processes = db.select('processes', { project_id: parseInt(projectId) });
+    const processes = await db.select('processes', { project_id: parseInt(projectId) });
     const processIds = new Set(processes.map((p) => p.id));
 
     // 다른 과제의 데이터가 섞이지 않도록 이 과제의 프로세스에 속한 항목만 필터링
-    const bdwTags = db.select('bdw_tags').filter((t) => processIds.has(t.process_id));
-    const aiAnalysis = db.select('ai_analysis', { project_id: parseInt(projectId) });
-    const toBeProcesses = db.select('to_be_processes', { project_id: parseInt(projectId) });
+    const bdwTags = (await db.select('bdw_tags')).filter((t) => processIds.has(t.process_id));
+    const aiAnalysis = await db.select('ai_analysis', { project_id: parseInt(projectId) });
+    const toBeProcesses = await db.select('to_be_processes', { project_id: parseInt(projectId) });
 
     const asIsTime = processes.reduce((sum, p) => sum + (p.execution_time || 0), 0);
     const toBeTime = toBeProcesses.reduce(

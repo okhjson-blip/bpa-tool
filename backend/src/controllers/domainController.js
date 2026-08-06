@@ -4,8 +4,8 @@ export const getDomainTree = async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    const domains = db
-      .select('domains', { project_id: parseInt(projectId) })
+    const domains = (await db
+      .select('domains', { project_id: parseInt(projectId) }))
       .sort((a, b) => a.level.localeCompare(b.level) || a.sort_order - b.sort_order);
 
     res.json(domains);
@@ -22,7 +22,7 @@ export const addDomain = async (req, res) => {
   try {
     // 부모 도메인 존재 여부 확인
     if (parentId) {
-      const parent = db.selectOne('domains', {
+      const parent = await db.selectOne('domains', {
         id: parseInt(parentId),
         project_id: parseInt(projectId)
       });
@@ -32,12 +32,12 @@ export const addDomain = async (req, res) => {
     }
 
     // 최대 sort_order 조회
-    const projectDomains = db.select('domains', { project_id: parseInt(projectId) });
+    const projectDomains = await db.select('domains', { project_id: parseInt(projectId) });
     const sameLevelDomains = projectDomains.filter((d) => d.level === level);
     const maxSort =
       sameLevelDomains.length > 0 ? Math.max(...sameLevelDomains.map((d) => d.sort_order)) : -1;
 
-    const domain = db.insert('domains', {
+    const domain = await db.insert('domains', {
       project_id: parseInt(projectId),
       parent_id: parentId ? parseInt(parentId) : null,
       level,
@@ -61,13 +61,13 @@ export const updateDomain = async (req, res) => {
   const { name, description } = req.body;
 
   try {
-    const domain = db.selectOne('domains', { id: parseInt(domainId) });
+    const domain = await db.selectOne('domains', { id: parseInt(domainId) });
 
     if (!domain) {
       return res.status(404).json({ error: '도메인을 찾을 수 없습니다' });
     }
 
-    const updated = db.update('domains', parseInt(domainId), { name, description });
+    const updated = await db.update('domains', parseInt(domainId), { name, description });
 
     res.json({
       message: '도메인이 업데이트되었습니다',
@@ -83,7 +83,7 @@ export const deleteDomain = async (req, res) => {
   const { domainId } = req.params;
 
   try {
-    db.delete('domains', parseInt(domainId));
+    await db.delete('domains', parseInt(domainId));
 
     res.json({ message: '도메인이 삭제되었습니다' });
   } catch (error) {

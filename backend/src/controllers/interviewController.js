@@ -50,7 +50,7 @@ export const createInterview = async (req, res) => {
   const { domain_l3_id, text, transcription, interview_type } = req.body;
 
   try {
-    const project = db.selectOne('projects', { id: parseInt(projectId) });
+    const project = await db.selectOne('projects', { id: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ error: '과제를 찾을 수 없습니다' });
     }
@@ -59,7 +59,7 @@ export const createInterview = async (req, res) => {
     const textMasked = text ? maskSensitiveData(text) : null;
     const transcriptionMasked = transcription ? maskSensitiveData(transcription) : null;
 
-    const interview = db.insert('interviews', {
+    const interview = await db.insert('interviews', {
       project_id: parseInt(projectId),
       domain_l3_id: domain_l3_id ? parseInt(domain_l3_id) : null,
       interview_type,
@@ -84,13 +84,13 @@ export const analyzeInterview = async (req, res) => {
 
   try {
     // 인터뷰 조회
-    const interview = db.selectOne('interviews', { id: parseInt(interviewId) });
+    const interview = await db.selectOne('interviews', { id: parseInt(interviewId) });
     if (!interview) {
       return res.status(404).json({ error: '인터뷰를 찾을 수 없습니다' });
     }
 
     // 프로젝트의 AI 엔진 정보 조회
-    const project = db.selectOne('projects', { id: parseInt(projectId) });
+    const project = await db.selectOne('projects', { id: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다' });
     }
@@ -106,7 +106,7 @@ export const analyzeInterview = async (req, res) => {
     // 프로세스 저장
     const processes = [];
     for (const proc of analysisResult.processes) {
-      const savedProcess = db.insert('processes', {
+      const savedProcess = await db.insert('processes', {
         project_id: parseInt(projectId),
         interview_id: parseInt(interviewId),
         level: proc.level,
@@ -137,8 +137,8 @@ export const getInterviews = async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    const interviews = db
-      .select('interviews', { project_id: parseInt(projectId) })
+    const interviews = (await db
+      .select('interviews', { project_id: parseInt(projectId) }))
       .map((int) => {
         const { text_masked, transcription_masked, ...safe } = int;
         return safe;
@@ -155,7 +155,7 @@ export const getProcesses = async (req, res) => {
   const { projectId } = req.params;
 
   try {
-    const processes = db.select('processes', { project_id: parseInt(projectId) });
+    const processes = await db.select('processes', { project_id: parseInt(projectId) });
 
     res.json(processes);
   } catch (error) {
@@ -169,7 +169,7 @@ export const updateProcess = async (req, res) => {
   const { name, description, execution_time, method, tool, status } = req.body;
 
   try {
-    const process = db.update('processes', parseInt(processId), {
+    const process = await db.update('processes', parseInt(processId), {
       name,
       description,
       execution_time,

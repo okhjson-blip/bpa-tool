@@ -25,9 +25,16 @@ const distPath = path.join(__dirname, '../../frontend/dist');
 app.use(express.static(distPath));
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK' });
-});
+const healthHandler = async (req, res) => {
+  try {
+    await initializeDatabase();
+    res.json({ status: 'OK', database: 'supabase' });
+  } catch (error) {
+    res.status(503).json({ status: 'ERROR', database: 'supabase', error: error.message });
+  }
+};
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // Routes
 app.use('/api/projects', projectRoutes);
@@ -40,9 +47,11 @@ app.use('/api/connections', connectionRoutes);
 app.use(errorHandler);
 
 // SPA 라우팅: API가 아닌 모든 요청을 index.html로
-app.get('*', (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
-});
+if (!process.env.VERCEL) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 // Database initialization 및 서버 시작
 const startServer = async () => {
@@ -58,6 +67,8 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
 
 export default app;

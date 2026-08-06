@@ -1,7 +1,8 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
+backend/package-lock.json
+frontend/package-lock.json
 
 # Environment variables
 .env
@@ -47,3 +48,4 @@ Thumbs.db
 tmp/
 temp/
 .cache/
+.vercel/

@@ -67,8 +67,10 @@ bpa-tool/
 │  ├─ vite.config.js          # 루트 index.html 빌드
 │  └─ dist/                   # 프로덕션 산출물
 ├─ backend/
-│  ├─ src/app.js              # API 및 정적 UI 서버
-│  └─ data/db.json            # 현재 로컬 JSON 데이터
+│  └─ src/app.js              # API 및 로컬 정적 UI 서버
+├─ api/index.js               # Vercel Express 함수 진입점
+├─ supabase/migrations/       # Supabase PostgreSQL 스키마
+├─ vercel.json                # Vercel 빌드·라우팅 설정
 └─ ui mokup/                  # 참고용 원본 문서 보관 위치
 ```
 
@@ -88,4 +90,20 @@ bpa-tool/
 - 비밀키와 `.env` 파일은 Git에 커밋하지 않습니다.
 - 모든 업무 데이터는 `project_id` 및 `task_id` 범위로 격리합니다.
 - Vercel 배포 시 루트 `index.html`을 프런트엔드 빌드 입력으로 사용합니다.
-- 운영 데이터베이스 전환 시 Supabase PostgreSQL을 기준으로 구성합니다.
+- 운영 및 로컬 API 데이터베이스는 Supabase PostgreSQL을 사용합니다.
+
+## Supabase 설정
+
+1. Supabase 프로젝트를 생성합니다.
+2. SQL Editor에서 `supabase/migrations/202608060001_initial_schema.sql`을 실행합니다.
+3. `.env.example`을 참고해 로컬 `.env`에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`를 설정합니다.
+4. 서비스 역할 키는 백엔드 전용이며 `VITE_` 접두사를 붙이거나 브라우저 코드에 넣지 않습니다.
+
+## Vercel 배포
+
+Git 저장소를 Vercel 프로젝트에 연결한 후 다음 환경 변수를 Production, Preview, Development에 등록합니다.
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Vercel은 `npm run build`로 루트 `index.html`을 빌드하고 `api/index.js`의 Express 앱을 서버리스 함수로 실행합니다. `/api/*`는 Express 함수로, 나머지 경로는 정적 `index.html`로 전달됩니다.

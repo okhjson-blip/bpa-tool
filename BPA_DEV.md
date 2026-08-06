@@ -4,12 +4,13 @@
 
 - UI 진입점: 저장소 루트 `index.html`
 - 프런트엔드 도구: Vite
-- 백엔드: Node.js + Express
+- 백엔드: Node.js + Express (로컬 서버 및 Vercel Function)
+- 데이터베이스: Supabase PostgreSQL (`@supabase/supabase-js` 서버 전용 클라이언트)
 - 개발 API 주소: `http://localhost:5000/api`
 - 개발 UI 주소: `http://localhost:3000`
 - 프로덕션 주소: `http://localhost:5000`
-- 배포 목표: Vercel 프런트엔드와 서버리스 API 구성을 고려
-- 운영 DB 목표: Supabase PostgreSQL
+- 배포: Vercel 정적 프런트엔드 + Express Function
+- 운영 DB: Supabase PostgreSQL
 
 `ui mokup` 폴더는 디자인 및 요구사항 참고용입니다. 실행 환경은 해당 폴더의 파일을 직접 참조하지 않습니다.
 
@@ -23,7 +24,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 
 ```text
 개발: index.html → Vite :3000 → /api 프록시 → Express :5000
-운영: 브라우저 → Express :5000 → API 또는 frontend/dist/index.html
+운영: Vercel CDN(index.html) → /api/* → Express Function → Supabase
 ```
 
 ## 3. 업무 모델
@@ -65,5 +66,6 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 - 팝업 및 AI FIT 탭
 - 브라우저 콘솔 오류
 - 비밀정보 포함 여부
+- Supabase migration 적용 여부와 Vercel 환경 변수 등록 여부
 
 테스트 실행은 작업 지침에 따라 사용자 승인 후 수행합니다.
