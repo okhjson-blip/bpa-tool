@@ -1,8 +1,17 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
-  plugins: [react()],
+  // The repository-level index.html is the single executable UI entry point.
+  root: path.resolve(__dirname, '..'),
+  publicDir: false,
+  build: {
+    outDir: path.resolve(__dirname, 'dist'),
+    emptyOutDir: true
+  },
   server: {
     port: 3000,
     proxy: {
