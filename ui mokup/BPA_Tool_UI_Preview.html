@@ -1,0 +1,906 @@
+<!doctype html>
+<html>
+<head><meta charset="UTF-8"><title>BPA Tool — UI 프리뷰</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--p:#1428A0;--pl:#e8effd;--s:#2e7d32;--w:#e65100;--d:#c62828;--pu:#6a1b9a;--bd:#e0e6f0;--bg:#f0f3f8;--t:#1a1a2e;--mt:#6b7280}
+body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:var(--t);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.hdr{background:var(--p);color:#fff;height:46px;display:flex;align-items:center;padding:0 16px;gap:11px;flex-shrink:0}
+.hdr-logo{font-size:17px;font-weight:800;letter-spacing:-.3px;cursor:pointer}
+.hdr-sep{width:1px;height:19px;background:rgba(255,255,255,.3)}
+.hdr-brd{font-size:14px;display:flex;align-items:center;gap:4px;opacity:.9}
+.hdr-brd span{cursor:pointer}
+.hdr-brd span:hover{text-decoration:underline}
+.hdr-brd .crumb-sep{opacity:.5;margin:0 2px}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.hdr-save{font-size:12px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer}
+.step-bar{background:#fff;border-bottom:1.5px solid var(--bd);padding:0 16px;display:flex;align-items:center;gap:2px;height:45px;flex-shrink:0;overflow-x:auto}
+.sp{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:18px;cursor:pointer;white-space:nowrap;font-size:14px;font-weight:600;color:var(--mt);transition:all .15s}
+.sp:hover{background:#f5f7ff}
+.sp.active{background:var(--p);color:#fff}
+.sp.done{background:#e8f5e9;color:var(--s)}
+.sp .sn{width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;background:rgba(0,0,0,.1)}
+.sp.active .sn{background:rgba(255,255,255,.25)}
+.sp.done .sn{background:var(--s);color:#fff}
+.sp-arr{color:#ccc;font-size:12px;margin:0 1px}
+.task-ctx{background:#fafbff;border-bottom:1px solid var(--bd);padding:6px 18px;display:none;align-items:center;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.tctx-chip{font-size:11px;padding:2px 8px;border-radius:10px;background:#eef1fa;color:#666;font-weight:700}
+.tctx-chip.cur{background:var(--pl);color:var(--p)}
+.tctx-arr{color:#ccc;font-size:11px}
+.body{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.content{flex:1;overflow-y:auto;padding:14px 16px}
+.foot{background:#fff;border-top:1.5px solid var(--bd);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.foot-info{font-size:12px;color:var(--mt)}
+.foot-btns{display:flex;gap:8px}
+.card{background:#fff;border-radius:9px;border:1px solid var(--bd);padding:13px 14px;margin-bottom:11px}
+.card-title{font-size:16px;font-weight:800;margin-bottom:11px;display:flex;align-items:center;gap:6px;color:var(--t)}
+.ct-b{font-size:11px;padding:2px 6px;border-radius:8px;background:var(--pl);color:var(--p);font-weight:700}
+.ct-g{font-size:11px;padding:2px 6px;border-radius:8px;background:#e8f5e9;color:var(--s);font-weight:700}
+.ct-o{font-size:11px;padding:2px 6px;border-radius:8px;background:#fff3e0;color:var(--w);font-weight:700}
+.ct-r{font-size:11px;padding:2px 6px;border-radius:8px;background:#fce4ec;color:var(--d);font-weight:700}
+.frow{display:flex;gap:10px;margin-bottom:9px}
+.fg{flex:1}
+.fl{font-size:12px;font-weight:700;color:var(--mt);margin-bottom:3px;display:block}
+.req{color:var(--d)}
+.fi{width:100%;border:1px solid var(--bd);border-radius:6px;padding:7px 10px;font-size:14px;color:var(--t);outline:none;background:#fff}
+.fi:focus{border-color:var(--p)}
+.fi.mask{-webkit-text-security:disc;letter-spacing:2px}
+.fi-ta{width:100%;border:1px solid var(--bd);border-radius:6px;padding:8px 10px;font-size:14px;color:var(--t);outline:none;background:#fff;font-family:inherit;resize:vertical;min-height:45px;line-height:1.5}
+.fi-ta:focus{border-color:var(--p)}
+.tree{border:1px solid var(--bd);border-radius:7px;overflow:hidden}
+.tr{display:flex;align-items:center;padding:6px 9px;border-bottom:1px solid #f5f7fb;gap:5px}
+.tr:last-child{border-bottom:none}
+.tr-ind{width:16px;flex-shrink:0}
+.tr-lv{font-size:11px;padding:1px 5px;border-radius:6px;font-weight:700;flex-shrink:0}
+.lv2c{background:#e3f2fd;color:#1565c0}
+.lv3c{background:#e8f5e9;color:var(--s)}
+.tr-val{flex:1;font-size:14px;color:var(--t)}
+.tr-add{font-size:11px;color:var(--p);cursor:pointer;padding:1px 5px;border-radius:4px;border:1px solid var(--bd)}
+.eng-row{display:flex;gap:8px}
+.eng{flex:1;border:2px solid var(--bd);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;transition:all .15s}
+.eng.sel{border-color:var(--p);background:var(--pl)}
+.eng-ic{font-size:24px;margin-bottom:3px}
+.eng-nm{font-size:14px;font-weight:700}
+.eng-ds{font-size:11px;color:#999;margin-top:2px;line-height:1.3}
+.btn{padding:8px 14px;border-radius:6px;border:none;font-size:14px;font-weight:400;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-p{background:var(--p);color:#fff}
+.btn-o{background:#fff;border:1.5px solid var(--bd);color:var(--t)}
+.btn-s{background:var(--s);color:#fff}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:5px}
+.opt-row{display:flex;gap:9px;margin-bottom:12px}
+.opt{flex:1;border:2px solid var(--bd);border-radius:9px;padding:13px 10px;text-align:center;cursor:pointer;transition:all .15s}
+.opt.sel{border-color:var(--p);background:var(--pl)}
+.opt-ic{font-size:24px;margin-bottom:5px}
+.opt-lb{font-size:14px;font-weight:700}
+.opt-ds{font-size:11px;color:#999;margin-top:2px}
+.qcard{border:1px solid var(--bd);border-radius:7px;padding:9px 11px;margin-bottom:7px;display:flex;align-items:flex-start;gap:9px;background:#fff}
+.qnum{width:22px;height:22px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px}
+.qtext{flex:1;font-size:14px;line-height:1.5}
+.qtag{font-size:11px;padding:1px 5px;border-radius:5px;font-weight:700;margin-left:4px;vertical-align:middle}
+.qs{background:var(--pl);color:var(--p)}
+.qb{background:#fce4ec;color:var(--d)}
+.qans{margin:-3px 0 10px 29px}
+.qans-lbl{font-size:11px;color:var(--mt);font-weight:700;margin-bottom:3px}
+.tbox{background:#f8f9fc;border-radius:7px;padding:9px 11px;font-size:12px;color:#555;line-height:1.7;border:1px solid var(--bd)}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:#f8f9fc;font-weight:700;padding:6px 7px;text-align:left;border-bottom:1.5px solid var(--bd);color:#555;white-space:nowrap;font-size:12px}
+.tbl td{padding:5px 7px;border-bottom:1px solid #f2f4f8;vertical-align:middle;font-size:12px}
+.tbl tr:hover td{background:#fafbff}
+.lvc{font-size:11px;padding:1px 5px;border-radius:5px;font-weight:500;white-space:nowrap}
+.lv4{background:#f3e5f5;color:var(--pu)}
+.lv5{background:#fff3e0;color:var(--w)}
+.lv6{background:#fce4ec;color:var(--d)}
+.wc{font-size:11px;padding:2px 6px;border-radius:5px}
+.wm{background:#fff3e0;color:var(--w)}
+.ws{background:#e3f2fd;color:#1565c0}
+.tc{font-size:11px;padding:2px 5px;border-radius:4px;background:#f0f0f0;color:#555}
+.sel-sm{font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--bd);color:#555;cursor:pointer;outline:none;font-family:inherit;width:100%;box-sizing:border-box}
+.sel-sm:focus{border-color:var(--p)}
+.sel-work-m{background:#fff3e0;color:var(--w);min-width:64px}
+.sel-work-s{background:#e3f2fd;color:#1565c0;min-width:64px}
+.sel-tool{background:#f0f0f0;min-width:58px}
+.key-in{width:45px;font-size:12px;padding:2px 4px;border:1px solid var(--bd);border-radius:5px;text-align:right;font-family:inherit;color:var(--t);box-sizing:border-box}
+.key-in:focus{border-color:var(--p);outline:none}
+.key-in::-webkit-inner-spin-button{opacity:.4}
+.bdw-t{font-size:11px;padding:2px 6px;border-radius:7px;font-weight:700}
+.bdwB{background:#fce4ec;color:var(--d)}
+.bdwD{background:#fff9c4;color:#f57f17}
+.bdwW{background:#eee;color:#555}
+.bdwOK{background:#e8f5e9;color:var(--s)}
+.aisc{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:800;color:#fff}
+.sc5{background:var(--s)}.sc4{background:#558b2f}.sc3{background:#f57f17}.sc2{background:var(--w)}.sc1{background:var(--d)}
+.fit-a{background:#e8f5e9;color:var(--s);font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
+.fit-b{background:#fff3e0;color:var(--w);font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
+.fit-c{background:#e3f2fd;color:#1565c0;font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
+.fit-d{background:#f5f5f5;color:#555;font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
+.split{display:flex;gap:12px}
+.sl{flex:1.5;min-width:0}
+.sr{flex:1;min-width:0}
+.split-eq{display:flex;gap:12px}
+.half{flex:1;min-width:0}
+.srow{display:flex;gap:9px;margin-bottom:12px}
+.sc{flex:1;background:#fff;border:1px solid var(--bd);border-radius:8px;padding:10px 12px}
+.sc-lbl{font-size:11px;color:var(--mt);margin-bottom:3px}
+.sc-val{font-size:22px;font-weight:900}
+.sc-sub{font-size:11px;color:#999;margin-top:1px}
+.toolbar{display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 10px;background:#fff;border-radius:7px;border:1px solid var(--bd)}
+.tb-sep{width:1px;height:18px;background:var(--bd);margin:0 2px}
+.tb-btn{font-size:12px;padding:4px 8px;border-radius:5px;border:1px solid var(--bd);background:#fff;cursor:pointer;color:#555;white-space:nowrap}
+.tb-btn:hover{background:#f5f7ff;border-color:var(--p);color:var(--p)}
+.tb-label{font-size:12px;font-weight:700;color:var(--mt);margin-right:4px}
+.fc{background:#fafbff;border-radius:8px;border:1px solid var(--bd);padding:12px;overflow:auto}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.mq{border-radius:8px;padding:10px 11px;border:2px solid}
+.mqA{background:#e8f5e9;border-color:#4caf50}
+.mqB{background:#fff3e0;border-color:#ff9800}
+.mqC{background:#e3f2fd;border-color:#2196f3}
+.mqD{background:#f5f5f5;border-color:#ccc}
+.mq-lbl{font-size:16px;font-weight:900;margin-bottom:5px}
+.mq-item{font-size:11px;display:inline-block;padding:2px 6px;border-radius:8px;background:rgba(255,255,255,.75);margin:2px 2px 0 0}
+.mq-axis{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--mt);margin-top:4px}
+.tabs{display:flex;gap:3px;margin-bottom:12px}
+.tab{padding:5px 13px;border-radius:16px;font-size:14px;font-weight:400;cursor:pointer;border:1.5px solid var(--bd);color:var(--mt);background:#fff;white-space:nowrap}
+.tab.on{background:var(--p);color:#fff;border-color:var(--p)}
+.tv{display:none}
+.tv.on{display:block}
+.rsec{border:1px solid var(--bd);border-radius:7px;overflow:hidden;margin-bottom:7px}
+.rsec-h{padding:9px 13px;background:#fafbff;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bd)}
+.rsec-b{padding:9px 13px;font-size:12px;color:#555;line-height:1.7}
+.ck{width:16px;height:16px;border-radius:3px;border:1.5px solid var(--p);display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--p);flex-shrink:0}
+.ck.on{background:var(--p);color:#fff;border-color:var(--p)}
+.fte-box{background:#1a1a2e;border-radius:9px;padding:14px 16px;color:#fff;text-align:center;margin-bottom:10px}
+.fte-eq{font-size:14px;opacity:.7;margin-bottom:6px}
+.fte-val{font-size:34px;font-weight:900;color:#7dd3fc}
+.fte-unit{font-size:14px;color:#94a3b8;margin-top:2px}
+.fte-sub{font-size:12px;color:#64748b;margin-top:4px}
+.util-row{display:flex;gap:7px;margin-bottom:10px}
+.util{flex:1;border-radius:8px;padding:9px 10px;text-align:center}
+.u1{background:#e8f5e9}.u2{background:#e3f2fd}.u3{background:#fff3e0}
+.util-ic{font-size:22px;margin-bottom:3px}
+.util-lb{font-size:12px;font-weight:700}
+.util-ds{font-size:11px;color:#666;margin-top:2px}
+.dl-row{display:flex;gap:8px}
+.dl-btn{flex:1;padding:7px;border-radius:8px;border:none;font-size:14px;font-weight:400;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+.dl-ppt{background:#b02d00;color:#fff}
+.dl-word{background:#1e4d91;color:#fff}
+.dl-pdf{background:#c62828;color:#fff}
+.dl-web{background:#f0f0f0;color:#333}
+.sv{display:none}
+.sv.on{display:block}
+
+/* 프로젝트/과제 목록 페이지 */
+.pg-brd{font-size:14px;color:var(--mt);margin-bottom:12px;display:flex;align-items:center;gap:4px}
+.pg-brd span{cursor:pointer;color:var(--p);font-weight:700}
+.pg-brd span:hover{text-decoration:underline}
+.pg-brd .crumb-sep{opacity:.4;margin:0 2px;color:#ccc}
+.list-hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.list-title{font-size:19px;font-weight:900}
+.list-sub{font-size:12px;color:var(--mt);margin-top:3px}
+.proj-card,.task-card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:13px 15px;margin-bottom:10px;cursor:pointer;transition:all .15s}
+.proj-card:hover,.task-card:hover{border-color:var(--p);box-shadow:0 2px 10px rgba(20,40,160,.08)}
+.proj-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.proj-name{font-size:16px;font-weight:800}
+.proj-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.proj-chip{font-size:11px;padding:2px 8px;border-radius:8px;background:#f0f3fb;color:#555;font-weight:600}
+.proj-stats{font-size:12px;color:var(--mt)}
+.task-card{display:flex;justify-content:space-between;align-items:center}
+.task-name{font-size:16px;font-weight:800;margin-bottom:3px}
+.task-path{font-size:11px;color:#999}
+.task-r{text-align:right}
+.status-chip{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:700;display:inline-block;margin-bottom:4px}
+.st-done{background:#e8f5e9;color:var(--s)}
+.st-prog{background:#fff3e0;color:var(--w)}
+.st-new{background:#e3f2fd;color:#1565c0}
+.task-date{font-size:11px;color:#bbb}
+.add-card{border:2px dashed var(--bd);border-radius:10px;padding:11px;text-align:center;color:var(--p);font-weight:400;font-size:14px;cursor:pointer;transition:all .15s}
+.add-card:hover{background:var(--pl);border-color:var(--p)}
+
+/* 업무 계층 팝업 */
+.lv-popup-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--p);color:#fff;font-size:10px;font-weight:600;cursor:pointer;border:none;line-height:1;flex-shrink:0;opacity:.75;transition:opacity .15s}
+.lv-popup-btn:hover{opacity:1}
+.popup-overlay{display:none;position:fixed;inset:0;background:rgba(20,40,160,.18);z-index:9000;align-items:center;justify-content:center}
+.popup-overlay.open{display:flex}
+.popup-box{background:#fff;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.18);padding:20px 22px;max-width:420px;width:90%;position:relative;max-height:85vh;overflow-y:auto}
+.popup-close{position:absolute;top:12px;right:14px;font-size:19px;cursor:pointer;color:#999;border:none;background:none;line-height:1}
+.popup-close:hover{color:#333}
+.popup-title{font-size:16px;font-weight:900;color:var(--p);margin-bottom:14px;padding-right:20px}
+.lv-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f0f3f8}
+.lv-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.lv-badge{width:70px;flex-shrink:0;text-align:center}
+.lv-badge-num{font-size:12px;font-weight:900;padding:2px 6px;border-radius:6px;display:block;margin-bottom:2px}
+.lv-badge-nm{font-size:11px;font-weight:700;color:#666}
+.lv-desc{flex:1}
+.lv-def{font-size:12px;font-weight:700;color:var(--t);margin-bottom:2px}
+.lv-sub{font-size:11px;color:var(--mt);line-height:1.5}
+.lv-ex{font-size:11px;color:#888;font-style:italic;margin-top:2px}
+
+.cost-box{background:#e8effd;border:1px solid var(--p);border-radius:8px;padding:10px 11px;margin-top:4px}
+.cost-main{font-size:18px;font-weight:900;color:var(--p);margin:3px 0}
+.cost-formula{font-size:11px;color:#555;line-height:1.8;margin-top:2px}
+.cost-basis{font-size:11px;color:#999;margin-top:4px;padding-top:4px;border-top:1px solid #c9d8f5;line-height:1.6}
+
+/* AI FIT 척도 팝업 */
+.scale-axis-title{font-size:12px;font-weight:900;color:var(--p);margin:10px 0 6px}
+.scale-axis-title:first-child{margin-top:0}
+.scale-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}
+.scale-desc{font-size:12px;color:#555;line-height:1.5;padding-top:1px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <span class="hdr-logo" onclick="openProjectList()">▣ BPA Tool</span>
+  <span class="hdr-sep"></span>
+  <div class="hdr-brd" id="hdrBrd"><span onclick="openProjectList()">프로젝트 목록</span></div>
+  <div class="hdr-r">
+    <button class="hdr-save">💾 임시저장</button>
+    <div class="avatar">HJ</div>
+  </div>
+</div>
+<div class="step-bar" id="stepBar">
+  <div class="sp" id="sp1" onclick="go(1)"><div class="sn">1</div>과제 등록 (L4)</div>
+  <span class="sp-arr">›</span>
+  <div class="sp" id="sp2" onclick="go(2)"><div class="sn">2</div>인터뷰 & Draft</div>
+  <span class="sp-arr">›</span>
+  <div class="sp" id="sp3" onclick="go(3)"><div class="sn">3</div>프로세스 수정</div>
+  <span class="sp-arr">›</span>
+  <div class="sp" id="sp4" onclick="go(4)"><div class="sn">4</div>BDW 진단</div>
+  <span class="sp-arr">›</span>
+  <div class="sp" id="sp5" onclick="go(5)"><div class="sn">5</div>AI FIT 분석</div>
+  <span class="sp-arr">›</span>
+  <div class="sp" id="sp6" onclick="go(6)"><div class="sn">6</div>결과 리포트</div>
+</div>
+<div class="task-ctx" id="taskCtxBar"></div>
+<div class="body">
+<div class="content">
+
+<!-- PAGE: 프로젝트 목록 -->
+<div class="sv" id="pageProjectList">
+  <div class="list-hd">
+    <div><div class="list-title">프로젝트 목록</div><div class="list-sub">진행 중인 AX 프로세스 분석 프로젝트를 확인하고 관리하세요.</div></div>
+    <button class="btn btn-p" onclick="openNewProjectForm()">+ 새 프로젝트</button>
+  </div>
+  <div class="proj-card" onclick="openTaskList('디지털마케팅 콘텐츠 제작 프로세스 분석')">
+    <div class="proj-card-top"><div class="proj-name">디지털마케팅 콘텐츠 제작 프로세스 분석</div><span style="font-size:11px;color:#bbb">최근 수정 2026-07-29</span></div>
+    <div class="proj-meta"><span class="proj-chip">목적: SNS 콘텐츠 운영 프로세스의 AI 자동화 방안 도출</span><span class="proj-chip">기간 2026-07-01~2026-07-31</span><span class="proj-chip">참여자 이한결·김현수·손희정</span></div>
+    <div class="proj-stats">과제 3건 · 진행중 2 · 완료 1</div>
+  </div>
+  <div class="proj-card" onclick="openTaskList('제조 공정 효율화 프로젝트')">
+    <div class="proj-card-top"><div class="proj-name">제조 공정 효율화 프로젝트</div><span style="font-size:11px;color:#bbb">최근 수정 2026-07-10</span></div>
+    <div class="proj-meta"><span class="proj-chip">목적: 제조 공정 병목 구간 진단 및 자동화</span><span class="proj-chip">기간 2026-06-01~2026-06-30</span><span class="proj-chip">참여자 이수민 외 2명</span></div>
+    <div class="proj-stats">과제 1건 · 진행중 1</div>
+  </div>
+  <div class="add-card" onclick="openNewProjectForm()">+ 새 프로젝트 생성하기</div>
+</div>
+
+<!-- PAGE: 새 프로젝트 생성 -->
+<div class="sv" id="pageNewProject">
+  <div class="pg-brd"><span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="color:var(--t);font-weight:700;cursor:default">새 프로젝트 생성</span></div>
+  <div class="card">
+    <div class="card-title">기본 정보 <span class="ct-b">필수</span></div>
+    <div class="frow"><div class="fg"><span class="fl">회사명 <span class="req">*</span></span><input class="fi" id="newCompanyName" value="삼성전자"></div><div class="fg"><span class="fl">부서명</span><input class="fi" id="newDeptName" value="마케팅부문"></div></div>
+    <div class="frow"><div class="fg"><span class="fl">프로젝트명 <span class="req">*</span></span><input class="fi" id="newProjName" value="디지털마케팅 콘텐츠 제작 프로세스 분석"></div><div class="fg" style="max-width:200px"><span class="fl">프로젝트 기간</span><input class="fi" value="2026-07-01 ~ 2026-07-31"></div></div>
+    <div class="frow"><div class="fg"><span class="fl">프로젝트 목적</span><input class="fi" value="SNS 콘텐츠 운영 프로세스의 AI 자동화 방안 도출"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">AI 엔진 설정 <span class="ct-b">필수</span></div>
+    <div class="eng-row" style="margin-bottom:10px">
+      <div class="eng" onclick="selEng(this)"><div class="eng-ic">🔷</div><div class="eng-nm">Gemini</div><div class="eng-ds">Google 멀티모달<br>한국어 강점</div></div>
+      <div class="eng sel" onclick="selEng(this)"><div class="eng-ic">🟢</div><div class="eng-nm">ChatGPT</div><div class="eng-ds">GPT-4o<br>범용 분석 강점</div></div>
+      <div class="eng" onclick="selEng(this)"><div class="eng-ic">🟠</div><div class="eng-nm">Claude</div><div class="eng-ds">Anthropic<br>문서 분석 강점</div></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><span class="fl">API Key <span class="req">*</span></span><input class="fi mask" value="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"></div>
+      <div style="display:flex;align-items:flex-end;padding-bottom:1px"><button class="btn btn-o btn-sm">연결 테스트</button></div>
+    </div>
+    <div style="font-size:12px;color:var(--s);margin-top:-4px">✓ API 연결이 확인되었습니다</div>
+  </div>
+  <div class="card">
+    <div class="card-title">참여자 등록</div>
+    <div class="frow">
+      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="이한결"></div>
+      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="팀장"></div>
+      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option selected>프로젝트 리더</option><option>프로젝트 담당자</option><option>컨설턴트</option></select></div>
+      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hglee@samsung.com"></div>
+    </div>
+    <div class="frow">
+      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="김현수"></div>
+      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="선임"></div>
+      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option>프로젝트 리더</option><option selected>프로젝트 담당자</option><option>컨설턴트</option></select></div>
+      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hskim@samsung.com"></div>
+    </div>
+    <div class="frow">
+      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="손희정"></div>
+      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="책임컨설턴트"></div>
+      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option>프로젝트 리더</option><option>프로젝트 담당자</option><option selected>컨설턴트</option></select></div>
+      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hjson@ax.samsung.com"></div>
+    </div>
+    <div style="text-align:right;margin-top:4px"><button class="btn btn-o btn-sm">+ 참여자 추가</button></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-o" onclick="openProjectList()">취소</button><button class="btn btn-p" onclick="createProject()">프로젝트 생성 →</button></div>
+</div>
+
+<!-- PAGE: 과제 목록 -->
+<div class="sv" id="pageTaskList">
+  <div class="pg-brd"><span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="color:var(--t);font-weight:700;cursor:default" id="tlProjName">디지털마케팅 콘텐츠 제작 프로세스 분석</span></div>
+  <div class="card">
+    <div class="card-title">프로젝트 정보</div>
+    <div class="proj-meta"><span class="proj-chip">삼성전자 · 마케팅부문</span><span class="proj-chip">목적: SNS 콘텐츠 운영 프로세스의 AI 자동화 방안 도출</span><span class="proj-chip">기간 2026-07-01~2026-07-31</span><span class="proj-chip">AI엔진 ChatGPT</span><span class="proj-chip">참여자 이한결(리더)·김현수(담당자)·손희정(컨설턴트)</span></div>
+  </div>
+  <div class="list-hd">
+    <div class="list-title" style="font-size:16px">과제 목록 <span style="font-size:11px;font-weight:600;color:var(--mt)">(L4 단위 등록)</span></div>
+    <button class="btn btn-p btn-sm" onclick="openNewTaskForm()">+ 새 과제 (L4)</button>
+  </div>
+  <div class="task-card" onclick="openTaskFlow('SNS 채널 관리','영업마케팅','디지털마케팅','콘텐츠 제작',6)">
+    <div class="task-l"><div class="task-name">🗂 SNS 채널 관리 <span style="font-size:11px;color:#999;font-weight:400">(L4)</span></div><div class="task-path">영업마케팅 › 디지털마케팅 › 콘텐츠 제작</div></div>
+    <div class="task-r"><span class="status-chip st-done">✓ 리포트 완료</span><div class="task-date">2026-07-29</div></div>
+  </div>
+  <div class="task-card" onclick="openTaskFlow('캠페인 소재 검수','영업마케팅','마케팅기획','캠페인 기획',2)">
+    <div class="task-l"><div class="task-name">🗂 캠페인 소재 검수 <span style="font-size:11px;color:#999;font-weight:400">(L4)</span></div><div class="task-path">영업마케팅 › 마케팅기획 › 캠페인 기획</div></div>
+    <div class="task-r"><span class="status-chip st-prog">진행중 · 인터뷰</span><div class="task-date">2026-07-27</div></div>
+  </div>
+  <div class="task-card" onclick="openTaskFlow('SNS 광고 소재 제작','영업마케팅','디지털마케팅','SNS 채널 운영',1)">
+    <div class="task-l"><div class="task-name">🗂 SNS 광고 소재 제작 <span style="font-size:11px;color:#999;font-weight:400">(L4)</span></div><div class="task-path">영업마케팅 › 디지털마케팅 › SNS 채널 운영</div></div>
+    <div class="task-r"><span class="status-chip st-new">등록 대기</span><div class="task-date">-</div></div>
+  </div>
+  <div class="add-card" onclick="openNewTaskForm()">+ 새 과제 등록하기 (L4 단위)</div>
+</div>
+
+<!-- STEP 1: 과제 등록 (L4) -->
+<div class="sv" id="sv1">
+  <div class="card">
+    <div class="card-title">과제 등록 <span class="ct-b">STATIK L4 단위</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:10px">과제는 STATIK <b>L1 › L2 › L3 › L4</b> 전체 계층을 입력하여 등록·관리됩니다.</div>
+    <div class="frow">
+      <div class="fg"><span class="fl">L1 구분 (조직 기능) <span class="req">*</span></span><input class="fi" id="inpL1" value="영업마케팅" placeholder="예: 영업마케팅"></div>
+      <div class="fg"><span class="fl">L2 대분류 (업무 도메인) <span class="req">*</span></span><input class="fi" id="inpL2" value="디지털마케팅" placeholder="예: 디지털마케팅"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><span class="fl">L3 기능 (핵심 기능) <span class="req">*</span></span><input class="fi" id="inpL3" value="콘텐츠 제작" placeholder="예: 콘텐츠 제작"></div>
+      <div class="fg"><span class="fl">L4 과제명 (모듈) <span class="req">*</span></span><input class="fi" id="inpL4" value="SNS 채널 관리" placeholder="예: SNS 채널 관리"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><span class="fl">과제명 <span class="req">*</span></span><input class="fi" id="inpTaskName" value="SNS 채널 관리 프로세스 분석" placeholder="예: SNS 채널 관리 프로세스 분석"></div>
+      <div class="fg" style="max-width:200px"><span class="fl">과제 기간</span><input class="fi" id="inpTaskPeriod" value="2026-07-01 ~ 2026-07-15"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><span class="fl">과제 목표</span><input class="fi" value="SNS 콘텐츠 운영 프로세스의 AI 자동화 방안 도출"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">참여자 등록</div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:8px">이 과제를 함께 진행할 참여자를 과제리더와 과제담당자로 구분하여 입력하세요.</div>
+    <div class="frow">
+      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="손희정"></div>
+      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="책임컨설턴트"></div>
+      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option selected>과제 리더</option><option>과제 담당자</option></select></div>
+      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hjson@ax.samsung.com"></div>
+    </div>
+    <div class="frow">
+      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="김현수"></div>
+      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="선임"></div>
+      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option>과제 리더</option><option selected>과제 담당자</option></select></div>
+      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hskim@samsung.com"></div>
+    </div>
+    <div style="text-align:right;margin-top:4px"><button class="btn btn-o btn-sm">+ 참여자 추가</button></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-o" onclick="openTaskListCurrent()">취소</button><button class="btn btn-p" onclick="startTaskFlow()">과제 등록 → 인터뷰 시작 →</button></div>
+</div>
+
+<!-- STEP 2 -->
+<div class="sv" id="sv2">
+  <div class="card">
+    <div class="card-title">인터뷰 진행 <span class="ct-g" id="taskChip">SNS 채널 관리 (L4 과제)</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:8px">아래 기본 질문에 대한 담당자의 답변을 입력창에 직접 입력(타이핑)하세요.</div>
+    <div class="qcard"><div class="qnum">1</div><div class="qtext">이 업무는 누가 어떤 순서로 어떻게 진행되고 얼마나 시간이 걸리나요? <span class="qtag qs">L3 흐름</span></div></div>
+    <div class="qans"><div class="qans-lbl">담당자 답변</div><textarea class="fi-ta">SNS 게시물은 담당자 1명이 게시물 기획→제작→승인→발행 순으로 진행하며 주 2회 발행, 건당 약 88분 소요됩니다.</textarea></div>
+    <div class="qcard"><div class="qnum">2</div><div class="qtext">단위 업무 중 반복적으로 수행하거나 항상 쌓이는 단계는? <span class="qtag qb">Bottleneck</span></div></div>
+    <div class="qans"><div class="qans-lbl">담당자 답변</div><textarea class="fi-ta">수정사항 반영이요. 검토자 피드백이 매번 달라서 수정→재검토가 반복돼요. 건당 평균 20분인데 여러 번 반복되면 훨씬 더 걸려요.</textarea></div>
+    <div class="qcard"><div class="qnum">3</div><div class="qtext">승인/검토/확인/전달 때문에 기다리는 시간이 발생하는 구간과 대기시간은? <span class="qtag qb">Delay</span></div></div>
+    <div class="qans"><div class="qans-lbl">담당자 답변</div><textarea class="fi-ta" placeholder="답변을 입력하세요..."></textarea></div>
+    <div class="qcard"><div class="qnum">4</div><div class="qtext">하지 않아도 결과가 크게 달라지지 않는 작업이 있나요? <span class="qtag qb">Waste</span></div></div>
+    <div class="qans"><div class="qans-lbl">담당자 답변</div><textarea class="fi-ta" placeholder="답변을 입력하세요..."></textarea></div>
+    <div class="qcard"><div class="qnum">5</div><div class="qtext">고객/이해관계자는 누구이고 어떤 불편을 겪나요? <span class="qtag qs">고객 관점</span></div></div>
+    <div class="qans"><div class="qans-lbl">담당자 답변</div><textarea class="fi-ta" placeholder="답변을 입력하세요..."></textarea></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+      <button class="btn btn-o btn-sm">+ 질문 추가</button>
+      <button class="btn btn-p" onclick="go(3)">✨ AI Draft 생성 →</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">AI 생성 Draft <span class="ct-b">L5~L6 자동 분해</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button> <span style="font-size:12px;color:var(--s);font-weight:600">✓ 생성 완료</span></div>
+    <table class="tbl">
+      <thead><tr><th>레벨</th><th>단위 업무명</th><th>작업방식</th><th>사용도구</th><th>수행시간(분)</th><th>승인대기(h)</th></tr></thead>
+      <tbody>
+        <tr><td><span class="lvc lv4">L4 모듈</span></td><td><b>🗂 SNS 채널 관리</b></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td style="padding-left:16px"><span class="lvc lv5">L5 단위</span></td><td>게시물 기획</td><td><span class="wc wm">수작업</span></td><td><span class="tc">기타(웹)</span></td><td>—</td><td>—</td></tr>
+        <tr style="background:#fffde7"><td style="padding-left:28px"><span class="lvc lv6">L6 Act</span></td><td>트렌드 키워드를 검색한다</td><td><span class="wc wm">수작업</span></td><td><span class="tc">기타(웹)</span></td><td>10</td><td>—</td></tr>
+        <tr><td style="padding-left:16px"><span class="lvc lv5">L5 단위</span></td><td>게시물 제작</td><td><span class="wc wm">수작업</span></td><td><span class="tc">Doc</span></td><td>—</td><td>—</td></tr>
+        <tr style="background:#fffde7"><td style="padding-left:28px"><span class="lvc lv6">L6 Act</span></td><td>초안을 입력한다</td><td><span class="wc wm">수작업</span></td><td><span class="tc">Doc</span></td><td>30</td><td>—</td></tr>
+        <tr style="background:#fffde7"><td style="padding-left:28px"><span class="lvc lv6">L6 Act</span></td><td>이미지를 선택한다</td><td><span class="wc wm">수작업</span></td><td><span class="tc">기타</span></td><td>15</td><td>—</td></tr>
+        <tr><td style="padding-left:16px"><span class="lvc lv5">L5 단위</span></td><td>게시물 승인</td><td><span class="wc wm">수작업</span></td><td><span class="tc">Doc</span></td><td>—</td><td>—</td></tr>
+        <tr style="background:#fffde7"><td style="padding-left:28px"><span class="lvc lv6">L6 Act</span></td><td>검토 요청 메일을 발송한다</td><td><span class="wc ws">시스템</span></td><td><span class="tc">System</span></td><td>3</td><td><b style="color:var(--d)">24</b></td></tr>
+        <tr style="background:#fffde7"><td style="padding-left:28px"><span class="lvc lv6">L6 Act</span></td><td>수정사항을 반영한다</td><td><span class="wc wm">수작업</span></td><td><span class="tc">Doc</span></td><td>20</td><td>—</td></tr>
+        <tr><td style="padding-left:16px"><span class="lvc lv5">L5 단위</span></td><td>게시물 발행</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr style="background:#fffde7"><td style="padding-left:28px"><span class="lvc lv6">L6 Act</span></td><td>게시물을 업로드한다</td><td><span class="wc ws">시스템</span></td><td><span class="tc">System</span></td><td>5</td><td>—</td></tr>
+        <tr style="background:#fffde7"><td style="padding-left:28px"><span class="lvc lv6">L6 Act</span></td><td>해시태그를 입력한다</td><td><span class="wc wm">수작업</span></td><td><span class="tc">System</span></td><td>5</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <div style="display:flex;justify-content:space-between;margin-top:10px;align-items:center">
+      <div style="font-size:12px;color:var(--mt)">수행시간 합계: <b>88분</b> | 승인 대기: <b>24h</b></div>
+      <button class="btn btn-p" onclick="go(3)">프로세스 수정 단계로 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="sv" id="sv3">
+  <div class="toolbar">
+    <span class="tb-label">편집 도구</span><span class="tb-sep"></span>
+    <button class="tb-btn">＋ 행 추가</button>
+    <button class="tb-btn">⬆ 위로</button>
+    <button class="tb-btn">⬇ 아래로</button>
+    <button class="tb-btn">✕ 삭제</button>
+    <span class="tb-sep"></span>
+    <button class="tb-btn">↕ 레벨 변경</button>
+    <button class="tb-btn">📐 플로우차트 동기화</button>
+    <div style="margin-left:auto;font-size:12px;color:var(--s)">✓ 자동저장됨 14:32</div>
+  </div>
+  <div class="split">
+    <div class="sl">
+      <div class="card" style="padding:10px">
+        <div class="card-title" style="margin-bottom:8px">프로세스 테이블 <span class="ct-b">직접 편집 가능</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
+        <table class="tbl">
+          <thead><tr><th style="width:19px"></th><th style="width:64px">레벨</th><th>단위 업무명</th><th style="width:70px">작업방식</th><th style="width:64px">도구</th><th style="width:53px">수행(분)</th><th style="width:50px">대기(h)</th><th style="width:56px">승인대기(h)</th></tr></thead>
+          <tbody>
+            <tr style="background:#f8f4ff"><td style="color:#bbb;cursor:grab">⋮⋮</td><td><span class="lvc lv4">L4 모듈</span></td><td><b>🗂 SNS 채널 관리</b></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 기획</td><td><select class="sel-sm sel-work-m"><option selected>수작업</option><option>시스템</option></select></td><td><select class="sel-sm sel-tool"><option>System</option><option>Doc</option><option>Excel</option><option>Web</option><option selected>기타</option></select></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+            <tr style="outline:2px solid var(--p);outline-offset:-1px;background:#fafffe"><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>트렌드 키워드를 검색한다</td><td><select class="sel-sm sel-work-m"><option selected>수작업</option><option>시스템</option></select></td><td><select class="sel-sm sel-tool"><option>System</option><option>Doc</option><option>Excel</option><option>Web</option><option selected>기타</option></select></td><td><input type="number" class="key-in" value="10"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 제작</td><td><select class="sel-sm sel-work-m"><option selected>수작업</option><option>시스템</option></select></td><td><select class="sel-sm sel-tool"><option>System</option><option selected>Doc</option><option>Excel</option><option>Web</option><option>기타</option></select></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>초안을 입력한다</td><td><select class="sel-sm sel-work-m"><option selected>수작업</option><option>시스템</option></select></td><td><select class="sel-sm sel-tool"><option>System</option><option selected>Doc</option><option>Excel</option><option>Web</option><option>기타</option></select></td><td><input type="number" class="key-in" value="30"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>이미지를 선택한다</td><td><select class="sel-sm sel-work-m"><option selected>수작업</option><option>시스템</option></select></td><td><select class="sel-sm sel-tool"><option>System</option><option>Doc</option><option>Excel</option><option>Web</option><option selected>기타</option></select></td><td><input type="number" class="key-in" value="15"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 승인</td><td><select class="sel-sm sel-work-m"><option selected>수작업</option><option>시스템</option></select></td><td><select class="sel-sm sel-tool"><option>System</option><option selected>Doc</option><option>Excel</option><option>Web</option><option>기타</option></select></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>검토 요청 메일을 발송한다</td><td><select class="sel-sm sel-work-s"><option>수작업</option><option selected>시스템</option></select></td><td><select class="sel-sm sel-tool"><option selected>System</option><option>Doc</option><option>Excel</option><option>Web</option><option>기타</option></select></td><td><input type="number" class="key-in" value="3"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" value="24" style="color:var(--d);font-weight:700;border-color:var(--d)"></td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>수정사항을 반영한다</td><td><select class="sel-sm sel-work-m"><option selected>수작업</option><option>시스템</option></select></td><td><select class="sel-sm sel-tool"><option>System</option><option selected>Doc</option><option>Excel</option><option>Web</option><option>기타</option></select></td><td><input type="number" class="key-in" value="20"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 발행</td><td><select class="sel-sm sel-work-s"><option>수작업</option><option selected>시스템</option></select></td><td><select class="sel-sm sel-tool"><option selected>System</option><option>Doc</option><option>Excel</option><option>Web</option><option>기타</option></select></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>게시물을 업로드한다</td><td><select class="sel-sm sel-work-s"><option>수작업</option><option selected>시스템</option></select></td><td><select class="sel-sm sel-tool"><option selected>System</option><option>Doc</option><option>Excel</option><option>Web</option><option>기타</option></select></td><td><input type="number" class="key-in" value="5"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+            <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>해시태그를 입력한다</td><td><select class="sel-sm sel-work-m"><option selected>수작업</option><option>시스템</option></select></td><td><select class="sel-sm sel-tool"><option selected>System</option><option>Doc</option><option>Excel</option><option>Web</option><option>기타</option></select></td><td><input type="number" class="key-in" value="5"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;align-items:center">
+          <div style="font-size:12px;color:var(--mt)">수행시간 합계: <b>88분</b> | 승인 대기: <b>24h</b></div>
+          <button class="btn btn-p btn-sm" onclick="go(4)">BDW 진단 →</button>
+        </div>
+      </div>
+    </div>
+    <div class="sr">
+      <div class="card" style="padding:10px">
+        <div class="card-title" style="margin-bottom:6px">플로우차트 <span class="ct-b">양방향 동기화</span></div>
+        <div style="font-size:11px;color:var(--mt);margin-bottom:6px">노드 더블클릭: 편집 | 우클릭: 메뉴 | 드래그: 이동/삽입</div>
+        <div class="fc">
+          <svg viewBox="0 0 264 456" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif" font-size="12">
+            <defs><marker id="ar" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#bbb"/></marker></defs>
+            <rect x="9.6" y="7.2" width="244.8" height="26.4" rx="6" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.8"/><text x="132" y="24" text-anchor="middle" font-weight="700" fill="#6a1b9a">SNS 채널 관리 (L4 모듈)</text>
+            <line x1="132" y1="33.6" x2="132" y2="43.2" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="21.6" y="43.2" width="220.8" height="24" rx="4.8" fill="#fff3e0" stroke="#e65100" stroke-width="1.4"/><text x="132" y="58.8" text-anchor="middle" fill="#e65100">게시물 기획 (L5 단위)</text>
+            <line x1="132" y1="67.2" x2="132" y2="76.8" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="26.4" y="76.8" width="211.2" height="24" rx="4.8" fill="#e8f0fe" stroke="#1428A0" stroke-width="2.4"/><text x="132" y="92.4" text-anchor="middle" fill="#1428A0" font-weight="700">키워드를 검색한다 (10분) · L6 Act</text>
+            <line x1="132" y1="100.8" x2="132" y2="110.4" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="21.6" y="110.4" width="220.8" height="24" rx="4.8" fill="#fff3e0" stroke="#e65100" stroke-width="1.4"/><text x="132" y="126" text-anchor="middle" fill="#e65100">게시물 제작 (L5 단위)</text>
+            <line x1="132" y1="134.4" x2="132" y2="144" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="26.4" y="144" width="211.2" height="24" rx="4.8" fill="#fce4ec" stroke="#c62828" stroke-width="1.4"/><text x="132" y="159.6" text-anchor="middle" fill="#c62828">초안을 입력한다 (30분)</text>
+            <line x1="132" y1="168" x2="132" y2="177.6" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="26.4" y="177.6" width="211.2" height="24" rx="4.8" fill="#fce4ec" stroke="#c62828" stroke-width="1.4"/><text x="132" y="193.2" text-anchor="middle" fill="#c62828">이미지를 선택한다 (15분)</text>
+            <line x1="132" y1="201.6" x2="132" y2="211.2" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="9.6" y="211.2" width="244.8" height="26.4" rx="6" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.8"/><text x="132" y="228" text-anchor="middle" font-weight="700" fill="#6a1b9a">게시물 승인 (L4 모듈)</text>
+            <line x1="132" y1="237.6" x2="132" y2="247.2" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="26.4" y="247.2" width="211.2" height="24" rx="4.8" fill="#fff9c4" stroke="#f57f17" stroke-width="1.8"/><text x="132" y="262.8" text-anchor="middle" fill="#f57f17">검토 발송 (3분) ⏳24h대기</text>
+            <line x1="132" y1="271.2" x2="132" y2="280.8" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="26.4" y="280.8" width="211.2" height="24" rx="4.8" fill="#fce4ec" stroke="#c62828" stroke-width="2.4"/><text x="132" y="296.4" text-anchor="middle" fill="#c62828">수정사항을 반영한다 (20분)</text>
+            <line x1="132" y1="304.8" x2="132" y2="314.4" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="9.6" y="314.4" width="244.8" height="26.4" rx="6" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.8"/><text x="132" y="331.2" text-anchor="middle" font-weight="700" fill="#6a1b9a">게시물 발행 (L4 모듈)</text>
+            <line x1="132" y1="340.8" x2="132" y2="350.4" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="26.4" y="350.4" width="211.2" height="24" rx="4.8" fill="#fce4ec" stroke="#c62828" stroke-width="1.4"/><text x="132" y="366" text-anchor="middle" fill="#c62828">게시물을 업로드한다 (5분)</text>
+            <line x1="132" y1="374.4" x2="132" y2="384" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <rect x="26.4" y="384" width="211.2" height="24" rx="4.8" fill="#fce4ec" stroke="#c62828" stroke-width="1.4"/><text x="132" y="399.6" text-anchor="middle" fill="#c62828">해시태그를 입력한다 (5분)</text>
+            <line x1="132" y1="408" x2="132" y2="417.6" stroke="#bbb" stroke-width="1.8" marker-end="url(#ar)"/>
+            <ellipse cx="132" cy="429.6" rx="40.8" ry="12" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.8"/><text x="132" y="434.4" text-anchor="middle" font-weight="700" fill="#2e7d32">완료</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="sv" id="sv4">
+  <div class="srow">
+    <div class="sc"><div class="sc-lbl">🔴 Bottleneck</div><div class="sc-val" style="color:var(--d)">1개</div><div class="sc-sub">수정사항을 반영한다 (20분) · L5 게시물 승인</div></div>
+    <div class="sc"><div class="sc-lbl">🟡 Delay</div><div class="sc-val" style="color:#f57f17">1개</div><div class="sc-sub">대기 0h + 승인대기 24h</div></div>
+    <div class="sc"><div class="sc-lbl">⚫ Waste</div><div class="sc-val" style="color:#555">0개</div><div class="sc-sub">—</div></div>
+    <div class="sc"><div class="sc-lbl">⏱ 비효율 지수</div><div class="sc-val" style="color:var(--p)">28%</div><div class="sc-sub">88분 중 25분 비효율</div></div>
+  </div>
+  <div class="card" style="padding:10px">
+    <div class="card-title" style="margin-bottom:8px">BDW 태그 부착 <span class="ct-r">Bottleneck · Delay · Waste</span></div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:8px">각 단위 업무의 BDW 유형을 선택하세요. 태그는 플로우차트 노드 테두리에 동시 반영됩니다.</div>
+    <table class="tbl">
+      <thead><tr><th>레벨</th><th>단위 업무명</th><th>수행(분)</th><th>대기(h)</th><th>승인대기(h)</th><th>BDW 태그</th></tr></thead>
+      <tbody>
+        <tr style="background:#f8f4ff"><td><span class="lvc lv4">L4 모듈</span></td><td><b>🗂 SNS 채널 관리</b></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 기획</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>트렌드 키워드를 검색한다</td><td>10</td><td>—</td><td>—</td><td><span class="bdw-t bdwOK">✅ 정상</span></td></tr>
+        <tr><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 제작</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>초안을 입력한다</td><td>30</td><td>—</td><td>—</td><td><span class="bdw-t bdwOK">✅ 정상</span></td></tr>
+        <tr><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>이미지를 선택한다</td><td>15</td><td>—</td><td>—</td><td><span class="bdw-t bdwOK">✅ 정상</span></td></tr>
+        <tr><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 승인</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr style="background:#fff9f0"><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>검토 요청 메일을 발송한다</td><td>3</td><td>—</td><td><b style="color:var(--d)">24</b></td><td><span class="bdw-t bdwD">🟡 Delay</span></td></tr>
+        <tr style="background:#fff5f5"><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>수정사항을 반영한다</td><td>20</td><td>—</td><td>—</td><td><span class="bdw-t bdwB">🔴 Bottleneck</span></td></tr>
+        <tr><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 발행</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>게시물을 업로드한다</td><td>5</td><td>—</td><td>—</td><td><span class="bdw-t bdwOK">✅ 정상</span></td></tr>
+        <tr><td style="padding-left:26px"><span class="lvc lv6">L6 Act</span></td><td>해시태그를 입력한다</td><td>5</td><td>—</td><td>—</td><td><span class="bdw-t bdwOK">✅ 정상</span></td></tr>
+      </tbody>
+    </table>
+    <div style="background:#f8f9fc;border-radius:7px;padding:9px 11px;margin-top:10px;border:1px solid var(--bd);font-size:12px;color:#555;line-height:1.9">
+      <b style="font-size:14px">🔍 BDW 진단 요약</b><br>
+      • <b style="color:var(--d)">Bottleneck</b>: 수정사항 반영 — 수정 요청 빈번, 항상 과부하 (20분/건)<br>
+      • <b style="color:#f57f17">Delay</b>: 검토 요청 발송 — <b>승인 대기 24시간</b> (대기 0h + 승인대기 24h)<br>
+      • <b>핵심</b>: 전체 88분 중 24시간 대기 → 실제 처리보다 기다리는 시간이 압도적으로 큼
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+      <button class="btn btn-o btn-sm">← 돌아가서 수정</button>
+      <button class="btn btn-s" onclick="go(5)">✓ 프로세스 확정 & AI FIT 분석 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="sv" id="sv5">
+  <div class="srow">
+    <div class="sc"><div class="sc-lbl">전체 L6 업무</div><div class="sc-val" style="color:var(--p)">8개</div></div>
+    <div class="sc"><div class="sc-lbl">A영역 (즉시 적용)</div><div class="sc-val" style="color:var(--s)">5개</div></div>
+    <div class="sc"><div class="sc-lbl">예상 자동화율</div><div class="sc-val" style="color:var(--w)">68%</div></div>
+    <div class="sc"><div class="sc-lbl">절감 시간 (건당)</div><div class="sc-val" style="color:var(--d)">60분</div><div class="sc-sub">88분 → 28분</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab on" onclick="swTab(this,'t1')">📋 인라인 분석</div>
+    <div class="tab" onclick="swTab(this,'t2')">📊 매트릭스 뷰</div>
+    <div class="tab" onclick="swTab(this,'t3')">🔄 As-Is vs To-Be</div>
+  </div>
+  <div class="tv on" id="t1">
+    <div class="card" style="padding:10px">
+      <div class="card-title" style="margin-bottom:8px">AI FIT 스코어 <span class="ct-o">AI 적용 가능성 × 비효율성</span> <button class="lv-popup-btn" onclick="openAiFitPopup()" title="점수 척도 설명 보기">?</button></div>
+      <table class="tbl">
+        <thead><tr><th>단위 업무명 (L6)</th><th style="width:67px">AI 가능성</th><th style="width:67px">비효율성</th><th style="width:51px">분류</th><th style="width:176px">추천 AI 기술</th><th style="width:56px">절감(분)</th></tr></thead>
+        <tbody>
+          <tr><td>트렌드 키워드를 검색한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc4">4</span></td><td><span class="fit-a">A</span></td><td>LLM (웹검색 에이전트)</td><td><b>8</b></td></tr>
+          <tr><td>초안을 입력한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc5">5</span></td><td><span class="fit-a">A</span></td><td>LLM (생성 AI)</td><td><b>25</b></td></tr>
+          <tr><td>이미지를 선택한다</td><td><span class="aisc sc4">4</span></td><td><span class="aisc sc3">3</span></td><td><span class="fit-a">A</span></td><td>Vision AI (이미지 추천)</td><td><b>10</b></td></tr>
+          <tr style="background:#fff9f0"><td>검토 요청 메일을 발송한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc5">5</span></td><td><span class="fit-a">A</span></td><td>RPA (메일 자동 발송)</td><td><b>3</b></td></tr>
+          <tr style="background:#fff5f5"><td>수정사항을 반영한다</td><td><span class="aisc sc3">3</span></td><td><span class="aisc sc4">4</span></td><td><span class="fit-a">A</span></td><td>LLM (AI 협업 편집)</td><td><b>12</b></td></tr>
+          <tr><td>게시물을 업로드한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc3">3</span></td><td><span class="fit-c">C</span></td><td>RPA (자동 업로드)</td><td><b>2</b></td></tr>
+          <tr><td>해시태그를 입력한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc4">4</span></td><td><span class="fit-a">A</span></td><td>LLM (해시태그 추천)</td><td><b>4</b></td></tr>
+          <tr style="background:#f8f9fc"><td>게시 주제를 확정한다</td><td><span class="aisc sc2">2</span></td><td><span class="aisc sc2">2</span></td><td><span class="fit-d">D</span></td><td>—</td><td><b>0</b></td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+        <button class="btn btn-o btn-sm">AI 제안 선택 수락</button>
+        <button class="btn btn-p btn-sm">✓ 전체 수락 후 To-Be 반영</button>
+      </div>
+    </div>
+  </div>
+  <div class="tv" id="t2">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px">AI FIT 매트릭스 <span class="ct-b">AI 가능성 × 비효율성</span> <button class="lv-popup-btn" onclick="openAiFitPopup()" title="점수 척도 설명 보기">?</button></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:12px;color:var(--mt);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;flex-shrink:0">← 비효율성 낮음 &nbsp;&nbsp;&nbsp;&nbsp; 높음 →</div>
+        <div style="flex:1">
+          <div class="mgrid">
+            <div class="mq mqB"><div class="mq-lbl" style="color:var(--w)">B 수동 개선 先</div><div style="font-size:11px;color:#888;margin-bottom:4px">AI 가능성↓ + 비효율↑</div></div>
+            <div class="mq mqA"><div class="mq-lbl" style="color:var(--s)">A 즉시 적용</div><div style="font-size:11px;color:#777;margin-bottom:4px">AI 가능성↑ + 비효율↑</div><span class="mq-item">초안 입력</span><span class="mq-item">키워드 검색</span><span class="mq-item">검토 발송</span><span class="mq-item">수정 반영</span><span class="mq-item">해시태그</span></div>
+            <div class="mq mqD"><div class="mq-lbl" style="color:#555">D 현상 유지</div><div style="font-size:11px;color:#888;margin-bottom:4px">AI 가능성↓ + 비효율↓</div><span class="mq-item">주제 확정</span></div>
+            <div class="mq mqC"><div class="mq-lbl" style="color:#1565c0">C 장기 검토</div><div style="font-size:11px;color:#888;margin-bottom:4px">AI 가능성↑ + 비효율↓</div><span class="mq-item">이미지 선택</span><span class="mq-item">게시 업로드</span></div>
+          </div>
+          <div class="mq-axis"><span>← AI 가능성 낮음</span><span>AI 가능성 높음 →</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tv" id="t3">
+    <div class="split-eq">
+      <div class="half"><div class="card" style="padding:10px">
+        <div class="card-title" style="color:var(--d);margin-bottom:8px">As-Is (현재)</div>
+        <svg viewBox="0 0 210 270" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif" font-size="9">
+          <defs><marker id="a4" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#bbb"/></marker></defs>
+          <rect x="5" y="5" width="200" height="26" rx="4" fill="#fce4ec" stroke="#c62828" stroke-width="1.2"/><text x="105" y="22" text-anchor="middle" fill="#c62828">키워드 검색 (10분, 수작업)</text>
+          <line x1="105" y1="31" x2="105" y2="43" stroke="#bbb" stroke-width="1.5" marker-end="url(#a4)"/>
+          <rect x="5" y="43" width="200" height="26" rx="4" fill="#fce4ec" stroke="#c62828" stroke-width="1.2"/><text x="105" y="60" text-anchor="middle" fill="#c62828">초안 작성 (30분, 수작업)</text>
+          <line x1="105" y1="69" x2="105" y2="81" stroke="#bbb" stroke-width="1.5" marker-end="url(#a4)"/>
+          <rect x="5" y="81" width="200" height="26" rx="4" fill="#fce4ec" stroke="#c62828" stroke-width="1.2"/><text x="105" y="98" text-anchor="middle" fill="#c62828">이미지 선택 (15분, 수작업)</text>
+          <line x1="105" y1="107" x2="105" y2="119" stroke="#bbb" stroke-width="1.5" marker-end="url(#a4)"/>
+          <rect x="5" y="119" width="200" height="26" rx="4" fill="#fff9c4" stroke="#f57f17" stroke-width="1.5"/><text x="105" y="131" text-anchor="middle" fill="#f57f17">검토 발송 + ⏳ 승인대기 24h</text><text x="105" y="141" text-anchor="middle" fill="#f57f17">(3분 처리 + 24시간 대기)</text>
+          <line x1="105" y1="145" x2="105" y2="157" stroke="#bbb" stroke-width="1.5" marker-end="url(#a4)"/>
+          <rect x="5" y="157" width="200" height="26" rx="4" fill="#fce4ec" stroke="#c62828" stroke-width="2"/><text x="105" y="174" text-anchor="middle" fill="#c62828">수정 반영 🔴 (20분, Bottleneck)</text>
+          <line x1="105" y1="183" x2="105" y2="195" stroke="#bbb" stroke-width="1.5" marker-end="url(#a4)"/>
+          <rect x="5" y="195" width="200" height="26" rx="4" fill="#fce4ec" stroke="#c62828" stroke-width="1.2"/><text x="105" y="212" text-anchor="middle" fill="#c62828">업로드 + 해시태그 (10분)</text>
+          <text x="105" y="252" text-anchor="middle" font-size="11" font-weight="700" fill="#555">총 88분 + 24h 대기</text>
+        </svg>
+      </div></div>
+      <div class="half"><div class="card" style="padding:10px">
+        <div class="card-title" style="color:var(--s);margin-bottom:8px">To-Be (AI 적용 후)</div>
+        <svg viewBox="0 0 210 270" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif" font-size="9">
+          <defs><marker id="a5" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#2e7d32"/></marker></defs>
+          <rect x="5" y="5" width="200" height="26" rx="4" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/><text x="105" y="17" text-anchor="middle" fill="#2e7d32" font-weight="700">🤖 LLM 자동 트렌드 분석</text><text x="105" y="27" text-anchor="middle" fill="#555">키워드 검색 → 2분 (↓8분)</text>
+          <line x1="105" y1="31" x2="105" y2="43" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#a5)"/>
+          <rect x="5" y="43" width="200" height="26" rx="4" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/><text x="105" y="55" text-anchor="middle" fill="#2e7d32" font-weight="700">🤖 LLM 초안 자동 생성</text><text x="105" y="65" text-anchor="middle" fill="#555">초안 작성 → 5분 (↓25분)</text>
+          <line x1="105" y1="69" x2="105" y2="81" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#a5)"/>
+          <rect x="5" y="81" width="200" height="26" rx="4" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/><text x="105" y="93" text-anchor="middle" fill="#2e7d32" font-weight="700">🤖 Vision AI 이미지 추천</text><text x="105" y="103" text-anchor="middle" fill="#555">이미지 선택 → 5분 (↓10분)</text>
+          <line x1="105" y1="107" x2="105" y2="119" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#a5)"/>
+          <rect x="5" y="119" width="200" height="26" rx="4" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/><text x="105" y="131" text-anchor="middle" fill="#2e7d32" font-weight="700">🤖 RPA 자동 검토 라우팅</text><text x="105" y="141" text-anchor="middle" fill="#555">승인 대기 → 2h (↓22h)</text>
+          <line x1="105" y1="145" x2="105" y2="157" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#a5)"/>
+          <rect x="5" y="157" width="200" height="26" rx="4" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/><text x="105" y="169" text-anchor="middle" fill="#2e7d32" font-weight="700">🤖 LLM 수정 제안 + 인간 확인</text><text x="105" y="179" text-anchor="middle" fill="#555">수정 반영 → 8분 (↓12분)</text>
+          <line x1="105" y1="183" x2="105" y2="195" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#a5)"/>
+          <rect x="5" y="195" width="200" height="26" rx="4" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/><text x="105" y="207" text-anchor="middle" fill="#2e7d32" font-weight="700">🤖 LLM 해시태그 + RPA 업로드</text><text x="105" y="217" text-anchor="middle" fill="#555">게시 → 2분 (↓8분)</text>
+          <text x="105" y="252" text-anchor="middle" font-size="11" font-weight="700" fill="#2e7d32">총 22분 + 2h 대기 🎉</text>
+        </svg>
+      </div></div>
+    </div>
+  </div>
+  <div style="text-align:right;margin-top:4px"><button class="btn btn-p" onclick="go(6)">결과 리포트 생성 →</button></div>
+</div>
+
+<!-- STEP 6 -->
+<div class="sv" id="sv6">
+  <div class="split">
+    <div class="sl">
+      <div class="card">
+        <div class="card-title">리포트 구성 <span class="ct-b">섹션 선택</span></div>
+        <div class="rsec"><div class="rsec-h"><span class="ck on">✓</span><span style="font-size:14px;font-weight:700;margin-left:2px">STATIK 업무 구조 (L1~L3)</span></div></div>
+        <div class="rsec"><div class="rsec-h"><span class="ck on">✓</span><span style="font-size:14px;font-weight:700;margin-left:2px">As-Is 프로세스 (테이블+플로우차트)</span></div></div>
+        <div class="rsec"><div class="rsec-h"><span class="ck on">✓</span><span style="font-size:14px;font-weight:700;margin-left:2px">BDW 진단 결과</span></div><div class="rsec-b">병목 1개 · Delay 1개(승인대기 24h) · Waste 0개</div></div>
+        <div class="rsec"><div class="rsec-h"><span class="ck on">✓</span><span style="font-size:14px;font-weight:700;margin-left:2px">AI FIT 분석 + To-Be 재설계</span></div><div class="rsec-b">A영역 5개 · 예상 자동화율 68%</div></div>
+        <div class="rsec"><div class="rsec-h"><span class="ck on">✓</span><span style="font-size:14px;font-weight:700;margin-left:2px">AX 성과 지표 (FTE 기반)</span></div></div>
+        <div class="rsec"><div class="rsec-h"><span class="ck" style="border-color:#ccc"></span><span style="font-size:14px;font-weight:700;color:#999;margin-left:2px">변경 이력 (선택)</span></div></div>
+        <div style="margin-top:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--mt);margin-bottom:6px">커스터마이징</div>
+          <div class="frow"><div class="fg"><span class="fl">보고서 제목</span><input class="fi" value="마케팅 SNS 운영 AX 분석 결과"></div></div>
+          <div style="font-size:12px;color:var(--mt);margin-bottom:4px">로고 업로드</div>
+          <button class="btn btn-o btn-sm">📁 파일 선택</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">출력 형식 선택</div>
+        <div class="dl-row">
+          <button class="dl-btn dl-ppt">📊 PowerPoint</button>
+          <button class="dl-btn dl-word">📄 Word</button>
+          <button class="dl-btn dl-pdf">📕 PDF</button>
+          <button class="dl-btn dl-web">🔗 웹 링크</button>
+        </div>
+      </div>
+    </div>
+    <div class="sr">
+      <div class="card">
+        <div class="card-title">AX 성과 지표 <span class="ct-r">FTE 기반</span></div>
+        <div class="fte-box">
+          <div class="fte-eq">절감 FTE = AX 절감 시간 ÷ 2,248h (전사 연간 표준)</div>
+          <div class="fte-val">0.8</div>
+          <div class="fte-unit">FTE</div>
+          <div class="fte-sub">연간 절감 1,800h ÷ 2,248 = 0.8 FTE</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div class="sc" style="flex:1"><div class="sc-lbl">절감 시간(건당)</div><div class="sc-val" style="color:var(--w)">60분</div><div class="sc-sub">88→28분</div></div>
+          <div class="sc" style="flex:1"><div class="sc-lbl">FTE 비율</div><div class="sc-val" style="color:var(--p)">8%</div><div class="sc-sub">10인 팀 기준</div></div>
+          <div class="sc" style="flex:1"><div class="sc-lbl">자동화율</div><div class="sc-val" style="color:var(--s)">68%</div><div class="sc-sub">A영역 기준</div></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:5px;color:var(--mt)">FTE 활용 계획 <span style="color:var(--d)">*필수 입력</span></div>
+        <div class="util-row">
+          <div class="util u1"><div class="util-ic">🚀</div><div class="util-lb">새로운 일 확대</div><div class="util-ds">0.5 FTE → 신규 채널 운영</div></div>
+          <div class="util u3"><div class="util-ic">⏱</div><div class="util-lb">잔특근 절감</div><div class="util-ds">0.3 FTE → 근무시간 축소</div></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:5px;color:var(--mt)">보조 지표</div>
+        <div style="font-size:12px;color:#555;line-height:1.9;background:#f8f9fc;border-radius:7px;padding:8px 10px;border:1px solid var(--bd);margin-bottom:7px">
+          🪙 <b>토성비</b>: AI 비용 ₩200K ÷ 0.8 FTE = ₩250K/FTE<br>
+          📐 <b>재설계 수준</b>: L4~L6 구조 변경 (E2E 재설계)<br>
+          👥 <b>Human-AI 비중</b>: Human 32% / AI Augment 45% / AI Auto 23%
+        </div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:5px;color:var(--mt)">🏗️ 외주 개발비 추정 <span style="font-size:11px;font-weight:400;color:#aaa">AI FIT A영역 기반 자동 산출</span></div>
+        <div class="cost-box">
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <div class="cost-main">₩41,607,500</div>
+            <div style="font-size:12px;color:var(--p);font-weight:700">순수 인건비</div>
+          </div>
+          <div class="cost-formula">
+            A영역 <b>5개</b> × <b>1.0 M/M</b>/개 = <b>5.0 M/M</b><br>
+            월 노임 <b>₩8,321,500</b> × 5.0 M/M = <b>₩41,607,500</b>
+          </div>
+          <div class="cost-basis">
+            📌 응용SW개발자 2026년 노임단가 기준<br>
+            일평균 378,250원 × 22일 = 8,321,500원/M · M/M 기준: A영역 1개 = 1.0 M/M (업무 자동화 기본값)
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:700;margin:8px 0 5px;color:var(--mt)">성과 검증 3단계</div>
+        <div style="display:flex;gap:5px">
+          <div style="flex:1;background:#e8f0fe;border-radius:7px;padding:7px 8px;font-size:11px"><b style="color:var(--p)">1. 목표 수립</b><br>FTE 0.8 목표<br>활용 계획 확정</div>
+          <div style="flex:1;background:#f3e5f5;border-radius:7px;padding:7px 8px;font-size:11px"><b style="color:var(--pu)">2. 과제 진행</b><br>AI Agent 개발<br>프로세스 재설계</div>
+          <div style="flex:1;background:#e8f5e9;border-radius:7px;padding:7px 8px;font-size:11px"><b style="color:var(--s)">3. 과제 종료</b><br>FTE 성과 측정<br>ROI 검토</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div></div>
+<div class="foot" id="footBar">
+  <div class="foot-info" id="foot-info">Step 1 / 6 · 과제 등록 · 참여자: 손희정, 김현수</div>
+  <div class="foot-btns">
+    <button class="btn btn-o" onclick="prev()">← 이전</button>
+    <button class="btn btn-o" onclick="openTaskListCurrent()" id="btnTaskList" style="display:none">과제 목록으로</button>
+    <button class="btn btn-p" onclick="next()" id="btnNext">다음 →</button>
+  </div>
+</div>
+<script>
+let cur=1;
+let ctx={project:'',l1:'영업마케팅',l2:'디지털마케팅',l3:'콘텐츠 제작',l4:'SNS 채널 관리'};
+const names=['','과제 등록','인터뷰 & Draft','프로세스 수정','BDW 진단','AI FIT 분석','결과 리포트'];
+
+function show(id){
+  document.querySelectorAll('.sv').forEach(el=>el.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+function hideFlowChrome(){
+  document.getElementById('stepBar').style.display='none';
+  document.getElementById('footBar').style.display='none';
+  document.getElementById('taskCtxBar').style.display='none';
+}
+function showFlowChrome(){
+  document.getElementById('stepBar').style.display='flex';
+  document.getElementById('footBar').style.display='flex';
+  document.getElementById('taskCtxBar').style.display='flex';
+}
+function setHdrSingle(text){
+  document.getElementById('hdrBrd').innerHTML='<span onclick="openProjectList()">'+text+'</span>';
+}
+function setHdrTrail(mid,last){
+  document.getElementById('hdrBrd').innerHTML='<span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span onclick="openTaskListCurrent()">'+mid+'</span>'+(last?'<span class="crumb-sep">›</span><span style="font-weight:800;cursor:default">'+last+'</span>':'');
+}
+
+function openProjectList(){
+  hideFlowChrome();
+  show('pageProjectList');
+  setHdrSingle('프로젝트 목록');
+}
+function openNewProjectForm(){
+  hideFlowChrome();
+  show('pageNewProject');
+  document.getElementById('hdrBrd').innerHTML='<span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="font-weight:800;cursor:default">새 프로젝트 생성</span>';
+}
+function createProject(){
+  const nm=document.getElementById('newProjName').value||'새 프로젝트';
+  openTaskList(nm);
+}
+function openTaskList(name){
+  ctx.project=name;
+  document.getElementById('tlProjName').textContent=name;
+  hideFlowChrome();
+  show('pageTaskList');
+  setHdrTrail(name,'과제 목록');
+}
+function openTaskListCurrent(){ openTaskList(ctx.project||'디지털마케팅 콘텐츠 제작 프로세스 분석'); }
+
+function openNewTaskForm(){
+  showFlowChrome();
+  setHdrTrail(ctx.project||'프로젝트','과제 등록');
+  go(1);
+}
+function openTaskFlow(taskName,l1,l2,l3,atStep){
+  ctx.l4=taskName; ctx.l1=l1; ctx.l2=l2; ctx.l3=l3;
+  showFlowChrome();
+  setHdrTrail(ctx.project||'프로젝트',taskName);
+  go(atStep);
+}
+function startTaskFlow(){
+  ctx.l1=document.getElementById('inpL1').value||ctx.l1;
+  ctx.l2=document.getElementById('inpL2').value||ctx.l2;
+  ctx.l3=document.getElementById('inpL3').value||ctx.l3;
+  ctx.l4=document.getElementById('inpL4').value||'새 과제';
+  setHdrTrail(ctx.project||'프로젝트',ctx.l4);
+  document.getElementById('taskChip').textContent=ctx.l4+' (L4 과제)';
+  go(2);
+}
+function renderTaskCtx(){
+  document.getElementById('taskCtxBar').innerHTML =
+    '<span class="tctx-chip">L1 '+ctx.l1+'</span><span class="tctx-arr">›</span>'+
+    '<span class="tctx-chip">L2 '+ctx.l2+'</span><span class="tctx-arr">›</span>'+
+    '<span class="tctx-chip">L3 '+ctx.l3+'</span><span class="tctx-arr">›</span>'+
+    '<span class="tctx-chip cur">L4(과제) '+ctx.l4+'</span>';
+}
+
+function go(n){
+  cur=n;
+  show('sv'+n);
+  document.querySelectorAll('.sp').forEach((el,i)=>{
+    el.classList.remove('active','done');
+    const sn=el.querySelector('.sn');
+    if(i+1<n){el.classList.add('done');sn.textContent='✓';}
+    else if(i+1===n){el.classList.add('active');sn.textContent=i+1;}
+    else{sn.textContent=i+1;}
+  });
+  document.getElementById('foot-info').textContent='Step '+n+' / 6 · '+names[n]+' · 과제: '+ctx.l4+' · 참여자: 손희정, 김현수';
+  const btnNext=document.getElementById('btnNext');
+  const btnTaskList=document.getElementById('btnTaskList');
+  if(n===6){
+    btnTaskList.style.display='inline-block';
+    btnNext.textContent='프로젝트 목록으로'; btnNext.onclick=function(){ openProjectList(); };
+  } else {
+    btnTaskList.style.display='none';
+    btnNext.textContent='다음 →'; btnNext.onclick=next;
+  }
+  renderTaskCtx();
+}
+function prev(){ if(cur>1) go(cur-1); else openTaskListCurrent(); }
+function next(){ if(cur<6) go(cur+1); }
+function selEng(el){document.querySelectorAll('.eng').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');}
+function selOpt(n){[1,3].forEach(i=>{const e=document.getElementById('opt'+i); if(e) e.classList.remove('sel');}); document.getElementById('opt'+n).classList.add('sel');}
+function swTab(el,tid){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.tv').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById(tid).classList.add('on');}
+
+openProjectList();
+</script>
+
+<!-- 업무 계층별 정의 팝업 -->
+<div class="popup-overlay" id="lvPopup" onclick="if(event.target===this)closeLvPopup()">
+  <div class="popup-box">
+    <button class="popup-close" onclick="closeLvPopup()">✕</button>
+    <div class="popup-title">📋 업무 계층별 정의 (STATIK L1~L6)</div>
+    <div class="lv-row">
+      <div class="lv-badge"><span class="lv-badge-num" style="background:#e3f2fd;color:#1565c0">L1 구분</span><span class="lv-badge-nm">조직 기능</span></div>
+      <div class="lv-desc"><div class="lv-def">기업 밸류체인 영역</div><div class="lv-sub">이 일이 속한 큰 조직 기능 단위</div><div class="lv-ex">예: 연구개발, 제조, 영업마케팅, 경영지원</div></div>
+    </div>
+    <div class="lv-row">
+      <div class="lv-badge"><span class="lv-badge-num" style="background:#e8eaf6;color:#3949ab">L2 대분류</span><span class="lv-badge-nm">업무 도메인</span></div>
+      <div class="lv-desc"><div class="lv-def">도메인별 핵심 프로세스</div><div class="lv-sub">L1 내에서 구분되는 업무 도메인</div><div class="lv-ex">예: S/W개발, 공정관리, 마케팅기획, 인사</div></div>
+    </div>
+    <div class="lv-row">
+      <div class="lv-badge"><span class="lv-badge-num" style="background:#e8f5e9;color:#2e7d32">L3 기능</span><span class="lv-badge-nm">핵심 기능</span></div>
+      <div class="lv-desc"><div class="lv-def">목적별 세부 기능</div><div class="lv-sub">분석 단위가 되는 핵심 기능 영역</div><div class="lv-ex">예: 프런트엔드 개발, 품질검사, 콘텐츠 제작, 채용</div></div>
+    </div>
+    <div class="lv-row">
+      <div class="lv-badge"><span class="lv-badge-num" style="background:#f3e5f5;color:#6a1b9a">L4 모듈</span><span class="lv-badge-nm">업무 묶음</span></div>
+      <div class="lv-desc"><div class="lv-def">실제로 관리·인식되는 관련 업무의 묶음</div><div class="lv-sub">담당자가 "이 업무 담당한다"고 말하는 단위 · <b>과제 등록 단위</b></div><div class="lv-ex">예: UI 구현, SMT 공정, SNS 채널 관리</div></div>
+    </div>
+    <div class="lv-row">
+      <div class="lv-badge"><span class="lv-badge-num" style="background:#fff3e0;color:#e65100">L5 단위</span><span class="lv-badge-nm">독립 업무</span></div>
+      <div class="lv-desc"><div class="lv-def">"이 일을 했다"고 말할 수 있는 독립적 결과물</div><div class="lv-sub">완료 여부를 명확히 확인할 수 있는 단위</div><div class="lv-ex">예: 게시물 기획, 게시물 제작, 게시물 승인, 게시물 발행</div></div>
+    </div>
+    <div class="lv-row">
+      <div class="lv-badge"><span class="lv-badge-num" style="background:#fce4ec;color:#c62828">L6 Act</span><span class="lv-badge-nm">최소 행위</span></div>
+      <div class="lv-desc"><div class="lv-def">더 이상 쪼갤 수 없는 사람의 실제 행동 단위</div><div class="lv-sub">수행 시간(분) 필수 입력 · BDW 진단 기준 단위</div><div class="lv-ex">예: 트렌드 키워드를 검색한다, 초안을 작성한다, 게시물을 업로드한다</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI FIT 점수 척도 안내 팝업 -->
+<div class="popup-overlay" id="aiFitPopup" onclick="if(event.target===this)closeAiFitPopup()">
+  <div class="popup-box">
+    <button class="popup-close" onclick="closeAiFitPopup()">✕</button>
+    <div class="popup-title">📊 AI FIT 스코어 척도 안내</div>
+    <div class="scale-axis-title">AI 적용 가능성 (1~5)</div>
+    <div class="scale-row"><span class="aisc sc1">1</span><div class="scale-desc"><b>적용 어려움</b> — 고도의 인적 판단·창의성·대면 커뮤니케이션이 필요해 AI로 대체하기 어려움</div></div>
+    <div class="scale-row"><span class="aisc sc2">2</span><div class="scale-desc"><b>부분 보조 가능</b> — 정보 탐색 등 일부만 보조 가능, 핵심 판단은 사람이 수행</div></div>
+    <div class="scale-row"><span class="aisc sc3">3</span><div class="scale-desc"><b>조건부 가능</b> — 정형화 여지는 있으나 예외 처리·검수가 필요</div></div>
+    <div class="scale-row"><span class="aisc sc4">4</span><div class="scale-desc"><b>대부분 자동화 가능</b> — 규칙·패턴이 명확해 AI가 초안·결과물 대부분을 생성</div></div>
+    <div class="scale-row"><span class="aisc sc5">5</span><div class="scale-desc"><b>완전 자동화 가능</b> — 규칙 기반의 반복적 정형 작업으로 AI가 전체를 수행</div></div>
+    <div class="scale-axis-title">비효율성 (1~5)</div>
+    <div class="scale-row"><span class="aisc sc1">1</span><div class="scale-desc"><b>효율적</b> — 소요시간이 짧고 대기·재작업이 없음</div></div>
+    <div class="scale-row"><span class="aisc sc2">2</span><div class="scale-desc"><b>경미한 비효율</b> — 약간의 대기 또는 반복이 존재</div></div>
+    <div class="scale-row"><span class="aisc sc3">3</span><div class="scale-desc"><b>보통</b> — 일부 대기·재작업으로 시간 손실 발생</div></div>
+    <div class="scale-row"><span class="aisc sc4">4</span><div class="scale-desc"><b>비효율적</b> — 반복적 재작업 또는 상당한 대기시간 발생 (Bottleneck·Delay 해당)</div></div>
+    <div class="scale-row" style="margin-bottom:0"><span class="aisc sc5">5</span><div class="scale-desc"><b>매우 비효율적</b> — 병목·장시간 대기·낭비가 겹쳐 전체 프로세스 지연의 핵심 원인</div></div>
+    <div style="font-size:11px;color:#999;margin-top:12px;padding-top:10px;border-top:1px solid #f0f3f8;line-height:1.6">📌 두 점수의 조합으로 A(즉시 적용)·B(수동 개선 先)·C(장기 검토)·D(현상 유지) 4개 영역으로 자동 분류됩니다.</div>
+  </div>
+</div>
+<script>
+function openLvPopup(){document.getElementById('lvPopup').classList.add('open')}
+function closeLvPopup(){document.getElementById('lvPopup').classList.remove('open')}
+function openAiFitPopup(){document.getElementById('aiFitPopup').classList.add('open')}
+function closeAiFitPopup(){document.getElementById('aiFitPopup').classList.remove('open')}
+</script>
+</body></html>

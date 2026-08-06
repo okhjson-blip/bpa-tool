@@ -1,27 +1,38 @@
 import { db } from '../config/database.js';
 
 export const createProject = async (req, res) => {
-  const { name, description, l1_domain, analysis_goal, analysis_period, ai_engine } = req.body;
+  const {
+    name, description, l1_domain, analysis_goal, analysis_period, ai_engine,
+    company_name, department_name, start_date, end_date, participants = []
+  } = req.body;
 
   try {
     const project = db.insert('projects', {
       name,
+      company_name,
+      department_name,
       description,
       l1_domain,
       analysis_goal,
       analysis_period,
       ai_engine: ai_engine || 'chatgpt',
+      start_date,
+      end_date,
+      participants,
+      status: 'active',
       created_by: 1,
       tenant_id: 1
     });
 
     // L1 도메인 자동 생성
-    db.insert('domains', {
-      project_id: project.id,
-      level: 'L1',
-      name: l1_domain,
-      sort_order: 0
-    });
+    if (l1_domain) {
+      db.insert('domains', {
+        project_id: project.id,
+        level: 'L1',
+        name: l1_domain,
+        sort_order: 0
+      });
+    }
 
     // 과제 멤버 추가 (고정 사용자 1)
     db.insert('project_members', {
@@ -48,7 +59,15 @@ export const getProjects = async (req, res) => {
 
     const projects = db.select('projects').filter((p) => projectIds.includes(p.id));
 
-    res.json(projects);
+    res.json(projects.map((project) => {
+      const tasks = db.select('tasks', { project_id: project.id });
+      return {
+        ...project,
+        task_count: tasks.length,
+        in_progress_count: tasks.filter((task) => task.status !== 'completed').length,
+        completed_count: tasks.filter((task) => task.status === 'completed').length
+      };
+    }));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: '과제 조회 중 오류가 발생했습니다' });
@@ -103,4 +122,26 @@ export const deleteProject = async (req, res) => {
     console.error(error);
     res.status(500).json({ error: '과제 삭제 중 오류가 발생했습니다' });
   }
+};
+
+export const getTasks = async (req, res) => {
+  const projectId = parseInt(req.params.projectId);
+  const project = db.selectOne('projects', { id: projectId });
+  if (!project) return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다' });
+  res.json(db.select('tasks', { project_id: projectId }));
+};
+
+export const createTask = async (req, res) => {
+  const projectId = parseInt(req.params.projectId);
+  const project = db.selectOne('projects', { id: projectId });
+  if (!project) return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다' });
+
+  const { name, l1, l2, l3, l4, goal, start_date, end_date, participants = [] } = req.body;
+  const task = db.insert('tasks', {
+    project_id: projectId,
+    name, l1, l2, l3, l4, goal, start_date, end_date, participants,
+    status: 'registered',
+    current_step: 1
+  });
+  res.status(201).json({ message: '과제가 등록되었습니다', task });
 };

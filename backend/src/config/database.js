@@ -11,6 +11,8 @@ class SimpleDB {
     this.data = {
       users: [],
       projects: [],
+      tasks: [],
+      task_members: [],
       domains: [],
       project_members: [],
       password_reset_tokens: [],
@@ -23,6 +25,8 @@ class SimpleDB {
     this.nextIds = {
       users: 1,
       projects: 1,
+      tasks: 1,
+      task_members: 1,
       domains: 1,
       project_members: 1,
       password_reset_tokens: 1,
