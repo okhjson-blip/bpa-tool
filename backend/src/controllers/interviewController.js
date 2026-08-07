@@ -1,6 +1,7 @@
 import { db } from '../config/database.js';
 import maskSensitiveData from '../middleware/dataMasking.js';
 import LLMService from '../services/llmService.js';
+import { getCompanyApiKey } from '../services/companyCredentialService.js';
 
 export const createInterview = async (req, res) => {
   const { projectId } = req.params;
@@ -38,7 +39,7 @@ export const createInterview = async (req, res) => {
 
 export const analyzeInterview = async (req, res) => {
   const { projectId, interviewId } = req.params;
-  const { apiKey, taskId } = req.body;
+  const { taskId } = req.body;
 
   try {
     // 인터뷰 조회
@@ -73,6 +74,7 @@ export const analyzeInterview = async (req, res) => {
     }
 
     // 프로젝트에 등록된 AI 엔진으로 실제 분석 수행
+    const apiKey = await getCompanyApiKey(req.auth.companyId, project.ai_engine);
     const analysisResult = await LLMService.analyzeInterview(
       project.ai_engine,
       apiKey,

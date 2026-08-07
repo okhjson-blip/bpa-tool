@@ -12,7 +12,7 @@
 - `/api` 요청은 개발 환경에서 5000번 백엔드로 프록시됩니다.
 - 프로덕션에서는 Express가 API와 `frontend/dist/index.html`을 같은 주소에서 제공합니다.
 
-루트 `index.html`을 파일 탐색기에서 직접 열 수도 있지만 API 기능을 사용하려면 먼저 `npm start`로 백엔드를 실행해야 합니다. 파일 직접 실행 시 UI는 `http://localhost:5000/api`로 연결됩니다.
+루트 `index.html`은 Vite 또는 Express를 통해 실행해야 합니다. Supabase Auth 모듈과 API 프록시가 필요하므로 `file://` 직접 열기는 지원하지 않습니다.
 
 ## 설치
 
@@ -70,14 +70,16 @@ npm start
 
 ## 주요 화면
 
-1. 접속 첫 화면에서 회사명과 외부 AI API 연결 등록
-2. 등록 회사명 기준 프로젝트 목록, L1~L3 프로젝트 생성·수정, 참여자 확인
-3. 프로젝트 계층과 연동된 과제(L4) 등록
-4. 인터뷰 답변과 AI Draft 생성
-5. L4~L6 프로세스 수정 및 플로우차트 확인
-6. BDW(Bottleneck, Delay, Waste) 진단
-7. AI FIT 매트릭스와 As-Is/To-Be 비교
-8. 과제별 AX 성과지표 전체 PDF 또는 과제당 한 행의 과제정보 CSV 출력
+1. 관리자가 등록한 협력사를 선택하고 이름·이메일 매직링크로 자유 가입
+2. Supabase 로그인 세션 자동 복원 및 로그인 사용자의 활성 협력사 멤버십 확인
+3. 협력사별로 격리된 프로젝트 목록, L1~L3 프로젝트 생성·수정, 참여자 확인
+4. 프로젝트 계층과 연동된 과제(L4) 등록
+5. 인터뷰 답변과 AI Draft 생성
+6. L4~L6 프로세스 수정 및 플로우차트 확인
+7. BDW(Bottleneck, Delay, Waste) 진단
+8. AI FIT 매트릭스와 As-Is/To-Be 비교
+9. 과제별 AX 성과지표 전체 PDF 또는 과제당 한 행의 과제정보 CSV 출력
+10. 관리자 모드에서 전체 협력사의 프로젝트·과제 조회 및 협력사 활성/중지
 
 ## 디렉터리
 
@@ -101,10 +103,19 @@ bpa-tool/
 ## 주요 API
 
 - `GET /health`
+- `GET /api/auth/companies`: 가입 가능한 활성 협력사 목록
+- `GET /api/auth/me`: 현재 사용자·프로필·멤버십
+- `POST /api/auth/complete-profile`: 최초 담당자 가입 완료
+- `GET /api/admin/overview`: 전체 협력사 프로젝트·과제 조회(관리자)
+- `POST /api/admin/companies`: 협력사 등록(관리자)
+- `PATCH /api/admin/companies/:companyId/status`: 협력사 활성/중지(관리자)
 - `GET|POST /api/projects`
 - `GET|PUT|DELETE /api/projects/:projectId`
 - `GET|POST /api/projects/:projectId/tasks`
-- `POST /api/connections/test`: 선택한 AI 엔진의 API Key 실제 연결 검증
+- `GET /api/connections`: 로그인 협력사의 AI 엔진 등록 상태 조회(Key 원문 제외)
+- `PUT /api/connections/:engine`: 실제 연결 검증 후 협력사 Key 암호화 저장
+- `PUT /api/connections/:engine/default`: 새 프로젝트 기본 AI 엔진 지정
+- `DELETE /api/connections/:engine`: 협력사 AI API Key 삭제
 - `/api/interviews/*`: 실제 AI Draft 생성·저장과 작업별 프로세스 수정
 - `/api/domains/*`: 업무 계층
 - `/api/analysis/*`: 작업별 BDW, AI FIT, To-Be, AX 성과지표 리포트
@@ -112,11 +123,12 @@ bpa-tool/
 ## 운영 원칙
 
 - 비밀키와 `.env` 파일은 Git에 커밋하지 않습니다.
-- 모든 업무 데이터는 `project_id` 및 `task_id` 범위로 격리합니다.
+- 모든 업무 데이터는 Supabase Auth 사용자, `company_memberships.company_id`, RLS를 기준으로 격리합니다.
+- 서비스 역할 키는 사용자 인증 확인·최초 멤버십 생성·감사 로그에만 사용하고, 업무 데이터 API는 사용자 JWT가 적용된 Supabase 클라이언트로 RLS를 통과해야 합니다.
 - Vercel 배포 시 루트 `index.html`을 프런트엔드 빌드 입력으로 사용합니다.
 - 운영 및 로컬 API 데이터베이스는 Supabase PostgreSQL을 사용합니다.
 - AI 분석 모델은 OpenAI `gpt-5-nano`, Gemini `gemini-3.5-flash-lite`, Claude `claude-sonnet-5`를 사용합니다. OpenAI와 Gemini 모델은 각각 `OPENAI_MODEL`, `GEMINI_MODEL` 환경변수로 교체할 수 있습니다.
-- 세 공급자 모두 공식 JSON Schema 구조화 출력을 사용하며 API Key는 Draft·BDW·AI FIT 요청 처리 중에만 백엔드로 전달됩니다.
+- 세 공급자 모두 공식 JSON Schema 구조화 출력을 사용합니다. 협력사 API Key는 연결 확인 후 AES-256-GCM으로 암호화해 저장하며 Draft·BDW·AI FIT 실행 시 백엔드에서만 복호화합니다.
 - 프로젝트 계층은 `department_name=L1`, `description=L2`, `name=L3`로 저장하고 API에서는 L2를 `business_name` 별칭으로 제공합니다.
 - 프로젝트 및 과제 등록은 기간과 필수 역할 참여자를 프런트엔드와 API에서 이중 검증합니다.
 - AI FIT 제안은 L6 단위 업무별로 사용자가 수락한 항목만 To-Be에 반영하며, 서버에 저장된 분석 결과를 기준으로 생성합니다.
@@ -128,8 +140,11 @@ bpa-tool/
 
 1. Supabase 프로젝트를 생성합니다.
 2. SQL Editor에서 `supabase/migrations/202608060001_initial_schema.sql`을 실행합니다.
-3. `.env.example`을 참고해 로컬 `.env`에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`를 설정합니다.
-4. 서비스 역할 키는 백엔드 전용이며 `VITE_` 접두사를 붙이거나 브라우저 코드에 넣지 않습니다.
+3. 이어서 `supabase/migrations/202608070001_multitenant_auth_rls.sql`과 `202608070002_company_ai_credentials.sql`을 순서대로 실행합니다. 기존 프로젝트의 회사명을 이관하고 멤버십·RLS·협력사 AI 자격증명 저장소를 생성합니다.
+4. Supabase Authentication의 Email 공급자를 활성화하고 Site URL과 Redirect URL에 로컬 `http://localhost:3000/` 및 배포 주소를 등록합니다.
+5. `.env.example`을 참고해 로컬 `.env`에 서버용·브라우저용 Supabase 변수를 설정합니다.
+6. `BPA_ADMIN_EMAILS`에는 관리자 모드 사용 이메일을 쉼표로 구분해 등록합니다. 해당 이메일이 처음 로그인할 때 `super_admin` 프로필이 생성됩니다.
+7. 서비스 역할 키는 백엔드 전용이며 `VITE_` 접두사를 붙이거나 브라우저 코드에 넣지 않습니다. Publishable Key만 브라우저에 노출할 수 있습니다.
 
 ## Vercel 배포
 
@@ -137,7 +152,14 @@ Git 저장소를 Vercel 프로젝트에 연결한 후 다음 환경 변수를 Pr
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `BPA_ADMIN_EMAILS`
+- `BPA_CREDENTIAL_ENCRYPTION_KEY`
 
 Vercel은 `npm run build`로 루트 `index.html`을 빌드하고 `api/index.js`의 Express 앱을 서버리스 함수로 실행합니다. `/api/*`는 Express 함수로, 나머지 경로는 정적 `index.html`로 전달됩니다.
+
+`BPA_CREDENTIAL_ENCRYPTION_KEY`는 32자 이상의 무작위 값으로 설정하고 운영 중 임의로 변경하지 마세요. 값을 변경하면 기존에 저장된 협력사 API Key는 복호화할 수 없으며 각 협력사가 다시 등록해야 합니다.
 
 AI Draft, BDW, AI FIT처럼 외부 모델을 호출하는 함수의 제한시간은 `vercel.json`에서 60초로 설정되어 있습니다. 사용하는 Vercel 요금제의 함수 실행시간 한도도 함께 확인해야 합니다.

@@ -2,20 +2,20 @@ import express from 'express';
 import { param, body, query } from 'express-validator';
 import { validate } from '../middleware/validate.js';
 import * as bdwController from '../controllers/bdwController.js';
+import { requireCompanyWrite } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // BDW 태그 부착
-router.post('/process/:processId/bdw', [
+router.post('/process/:processId/bdw', requireCompanyWrite, [
   param('processId').isInt(),
   body('bdw_type').isIn(['bottleneck', 'delay', 'waste', 'normal'])
 ], validate, bdwController.tagBDW);
 
 // 등록된 프로젝트 AI 엔진으로 BDW 진단 실행
-router.post('/project/:projectId/bdw/analyze', [
+router.post('/project/:projectId/bdw/analyze', requireCompanyWrite, [
   param('projectId').isInt(),
-  body('taskId').isInt(),
-  body('apiKey').isString().trim().notEmpty()
+  body('taskId').isInt()
 ], validate, bdwController.analyzeBDW);
 
 // BDW 진단 조회
@@ -25,14 +25,13 @@ router.get('/project/:projectId/bdw', [
 ], validate, bdwController.getBDWDiagnosis);
 
 // AI FIT 분석
-router.post('/project/:projectId/ai-fit', [
+router.post('/project/:projectId/ai-fit', requireCompanyWrite, [
   param('projectId').isInt(),
-  body('taskId').isInt(),
-  body('apiKey').isString().trim().notEmpty()
+  body('taskId').isInt()
 ], validate, bdwController.analyzeAIFit);
 
 // To-Be 프로세스 생성
-router.post('/project/:projectId/to-be', [
+router.post('/project/:projectId/to-be', requireCompanyWrite, [
   param('projectId').isInt(),
   body('taskId').isInt(),
   body('accepted_process_ids').isArray({ min: 1 }),

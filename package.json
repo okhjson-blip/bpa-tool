@@ -12,7 +12,8 @@
     "start": "node backend/src/app.js",
     "dev": "vite --config frontend/vite.config.js",
     "dev:frontend": "vite --config frontend/vite.config.js",
-    "dev:backend": "node --watch backend/src/app.js"
+    "dev:backend": "node --watch backend/src/app.js",
+    "test:multitenancy": "node scripts/test-multitenancy.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.55.0",

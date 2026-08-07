@@ -10,6 +10,9 @@ import domainRoutes from './routes/domains.js';
 import interviewRoutes from './routes/interviews.js';
 import analysisRoutes from './routes/analysis.js';
 import connectionRoutes from './routes/connections.js';
+import authRoutes from './routes/auth.js';
+import adminRoutes from './routes/admin.js';
+import { authenticate, requireCompanyUser } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -37,11 +40,13 @@ app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
 // Routes
-app.use('/api/projects', projectRoutes);
-app.use('/api/domains', domainRoutes);
-app.use('/api/interviews', interviewRoutes);
-app.use('/api/analysis', analysisRoutes);
-app.use('/api/connections', connectionRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/projects', authenticate, requireCompanyUser, projectRoutes);
+app.use('/api/domains', authenticate, requireCompanyUser, domainRoutes);
+app.use('/api/interviews', authenticate, requireCompanyUser, interviewRoutes);
+app.use('/api/analysis', authenticate, requireCompanyUser, analysisRoutes);
+app.use('/api/connections', authenticate, requireCompanyUser, connectionRoutes);
 
 // Error handler
 app.use(errorHandler);

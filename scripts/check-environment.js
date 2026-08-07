@@ -13,7 +13,7 @@ const envPath = path.join(projectRoot, '.env');
 if (!fs.existsSync(envPath)) {
   failures.push('.env 파일이 없습니다. .env.example을 참고해 생성하세요.');
 } else {
-  const env = Object.fromEntries(
+  const fileEnv = Object.fromEntries(
     fs.readFileSync(envPath, 'utf8')
       .split(/\r?\n/)
       .map((line) => line.trim())
@@ -23,11 +23,23 @@ if (!fs.existsSync(envPath)) {
         return [line.slice(0, index).trim(), line.slice(index + 1).trim()];
       })
   );
-  for (const key of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']) {
-    if (!env[key] || /your-|placeholder/i.test(env[key])) failures.push(`.env의 ${key} 값이 필요합니다.`);
+  const env = { ...fileEnv, ...process.env };
+  for (const key of [
+    'SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'SUPABASE_PUBLISHABLE_KEY',
+    'VITE_SUPABASE_URL',
+    'VITE_SUPABASE_PUBLISHABLE_KEY',
+    'BPA_CREDENTIAL_ENCRYPTION_KEY'
+  ]) {
+    if (!env[key] || /your-|placeholder|replace-with/i.test(env[key])) failures.push(`.env의 ${key} 값이 필요합니다.`);
   }
   if (env.SUPABASE_URL && !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(env.SUPABASE_URL)) {
     failures.push('SUPABASE_URL 형식이 올바르지 않습니다.');
+  }
+  if (!env.BPA_ADMIN_EMAILS) notes.push('BPA_ADMIN_EMAILS가 비어 있어 관리자 모드는 사용할 수 없습니다.');
+  if (env.BPA_CREDENTIAL_ENCRYPTION_KEY && env.BPA_CREDENTIAL_ENCRYPTION_KEY.length < 32) {
+    failures.push('BPA_CREDENTIAL_ENCRYPTION_KEY는 32자 이상이어야 합니다.');
   }
   if (!failures.some((message) => message.includes('.env'))) notes.push('Supabase 환경 변수 형식 확인');
 }
@@ -52,4 +64,4 @@ console.log('환경 점검 완료');
 notes.forEach((message) => console.log(`- ${message}`));
 console.log('- UI: http://localhost:3000');
 console.log('- API 상태: http://localhost:5000/api/health');
-console.log('- 외부 AI API Key는 UI 첫 화면에서 입력하세요.');
+console.log('- 외부 AI API Key는 로그인 후 상단 AI API 관리에서 등록하세요.');

@@ -1,13 +1,13 @@
 import express from 'express';
-import { body, param, query } from 'express-validator';
+import { body, param } from 'express-validator';
 import { validate } from '../middleware/validate.js';
 import * as projectController from '../controllers/projectController.js';
+import { requireCompanyWrite } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/', [
+router.post('/', requireCompanyWrite, [
   body('name').trim().notEmpty(),
-  body('company_name').trim().notEmpty(),
   body('department_name').trim().notEmpty(),
   body('business_name').trim().notEmpty(),
   body('analysis_goal').trim().notEmpty(),
@@ -17,18 +17,15 @@ router.post('/', [
   body('participants').isArray()
 ], validate, projectController.createProject);
 
-router.get('/', [
-  query('company_name').optional().trim().notEmpty()
-], validate, projectController.getProjects);
+router.get('/', projectController.getProjects);
 
 router.get('/:projectId', [
   param('projectId').isInt()
 ], validate, projectController.getProject);
 
-router.put('/:projectId', [
+router.put('/:projectId', requireCompanyWrite, [
   param('projectId').isInt(),
   body('name').trim().optional(),
-  body('company_name').trim().optional(),
   body('department_name').trim().optional(),
   body('business_name').trim().optional(),
   body('analysis_goal').trim().optional(),
@@ -37,13 +34,13 @@ router.put('/:projectId', [
   body('participants').isArray().optional()
 ], validate, projectController.updateProject);
 
-router.delete('/:projectId', [
+router.delete('/:projectId', requireCompanyWrite, [
   param('projectId').isInt()
 ], validate, projectController.deleteProject);
 
 router.get('/:projectId/tasks', [param('projectId').isInt()], validate, projectController.getTasks);
 
-router.post('/:projectId/tasks', [
+router.post('/:projectId/tasks', requireCompanyWrite, [
   param('projectId').isInt(),
   body('name').trim().notEmpty(),
   body('l4').trim().notEmpty(),

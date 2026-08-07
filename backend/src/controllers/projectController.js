@@ -111,18 +111,27 @@ function validateProject(project) {
 
 export const createProject = async (req, res) => {
   try {
-    const values = projectPayload(req.body);
+    if (!req.auth.company.default_ai_provider) {
+      return res.status(400).json({
+        error: '협력사 기본 AI 엔진을 먼저 설정해 주세요.',
+        issues: ['상단 AI API 관리에서 Key를 등록하고 새 프로젝트 기본 엔진을 지정해 주세요.']
+      });
+    }
+    const values = projectPayload({
+      ...req.body,
+      company_name: req.auth.company.name,
+      ai_engine: req.auth.company.default_ai_provider
+    });
     const issues = validateProject(values);
     if (issues.length) return res.status(400).json({ error: '프로젝트 정보를 보완해 주세요.', issues });
 
     const project = await db.insert('projects', {
       ...values,
+      company_id: req.auth.companyId,
       status: 'active',
-      created_by: 1,
-      tenant_id: 1
+      created_by_user_id: req.auth.user.id
     });
     await syncProjectHierarchy(project.id, values.department_name, values.description, values.name);
-    await db.insert('project_members', { project_id: project.id, user_id: 1, role: 'owner' });
 
     res.status(201).json({ message: '프로젝트가 생성되었습니다.', project: projectView(project) });
   } catch (error) {
@@ -133,11 +142,7 @@ export const createProject = async (req, res) => {
 
 export const getProjects = async (req, res) => {
   try {
-    const companyName = cleanText(req.query.company_name);
-    const members = await db.select('project_members', { user_id: 1 });
-    const projectIds = new Set(members.map((member) => Number(member.project_id)));
-    const projects = (await db.select('projects', companyName ? { company_name: companyName } : null))
-      .filter((project) => projectIds.has(Number(project.id)));
+    const projects = await db.select('projects', { company_id: req.auth.companyId });
 
     res.json(await Promise.all(projects.map(async (project) => {
       const tasks = await db.select('tasks', { project_id: project.id });
@@ -170,7 +175,11 @@ export const updateProject = async (req, res) => {
   try {
     const existing = await db.selectOne('projects', { id: projectId });
     if (!existing) return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다.' });
-    const values = projectPayload(req.body, existing);
+    const values = projectPayload({
+      ...req.body,
+      company_name: req.auth.company.name,
+      ai_engine: existing.ai_engine
+    }, existing);
     const issues = validateProject(values);
     if (issues.length) return res.status(400).json({ error: '프로젝트 정보를 보완해 주세요.', issues });
 

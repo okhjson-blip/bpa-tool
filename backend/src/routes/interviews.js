@@ -3,13 +3,14 @@ import { body, param, query } from 'express-validator';
 import { validate } from '../middleware/validate.js';
 import * as interviewController from '../controllers/interviewController.js';
 import { dataMaskingMiddleware } from '../middleware/dataMasking.js';
+import { requireCompanyWrite } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.use(dataMaskingMiddleware);
 
 // 인터뷰 생성
-router.post('/project/:projectId', [
+router.post('/project/:projectId', requireCompanyWrite, [
   param('projectId').isInt(),
   body('interview_type').isIn(['voice', 'text', 'upload']),
   body('text').trim().optional(),
@@ -23,11 +24,10 @@ router.get('/project/:projectId', [
 ], validate, interviewController.getInterviews);
 
 // 인터뷰 AI 분석 (Draft 생성)
-router.post('/:interviewId/analyze', [
+router.post('/:interviewId/analyze', requireCompanyWrite, [
   param('interviewId').isInt(),
   body('projectId').isInt(),
-  body('taskId').isInt().optional(),
-  body('apiKey').isString().trim().notEmpty()
+  body('taskId').isInt().optional()
 ], validate, (req, res) => {
   req.params.projectId = req.body.projectId;
   interviewController.analyzeInterview(req, res);
@@ -40,7 +40,7 @@ router.get('/project/:projectId/processes', [
 ], validate, interviewController.getProcesses);
 
 // 개별 프로세스 업데이트
-router.put('/process/:processId', [
+router.put('/process/:processId', requireCompanyWrite, [
   param('processId').isInt(),
   body('name').trim().optional(),
   body('description').trim().optional(),

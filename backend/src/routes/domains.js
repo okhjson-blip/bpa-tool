@@ -2,6 +2,7 @@ import express from 'express';
 import { body, param } from 'express-validator';
 import { validate } from '../middleware/validate.js';
 import * as domainController from '../controllers/domainController.js';
+import { requireCompanyWrite } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -9,7 +10,7 @@ router.get('/project/:projectId', [
   param('projectId').isInt()
 ], validate, domainController.getDomainTree);
 
-router.post('/project/:projectId', [
+router.post('/project/:projectId', requireCompanyWrite, [
   param('projectId').isInt(),
   body('level').isIn(['L1', 'L2', 'L3']),
   body('name').trim().notEmpty(),
@@ -17,13 +18,13 @@ router.post('/project/:projectId', [
   body('parentId').isInt().optional({ nullable: true })
 ], validate, domainController.addDomain);
 
-router.put('/:domainId', [
+router.put('/:domainId', requireCompanyWrite, [
   param('domainId').isInt(),
   body('name').trim().optional(),
   body('description').trim().optional()
 ], validate, domainController.updateDomain);
 
-router.delete('/:domainId', [
+router.delete('/:domainId', requireCompanyWrite, [
   param('domainId').isInt()
 ], validate, domainController.deleteDomain);
 

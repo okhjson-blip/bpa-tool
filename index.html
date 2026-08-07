@@ -14,6 +14,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .hdr-brd .crumb-sep{opacity:.5;margin:0 2px}
 .hdr-r{margin-left:auto;display:flex;align-items:center;gap:10px}
 .hdr-company{font-size:13px;font-weight:800;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);padding:5px 11px;border-radius:16px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdr-logout{border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;padding:5px 9px;border-radius:6px;font-family:inherit;font-size:12px;cursor:pointer}
 .step-bar{background:#fff;border-bottom:1.5px solid var(--bd);padding:0 16px;display:flex;align-items:center;gap:2px;height:45px;flex-shrink:0;overflow-x:auto}
 .sp{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:18px;cursor:pointer;white-space:nowrap;font-size:14px;font-weight:600;color:var(--mt);transition:all .15s}
 .sp:hover{background:#f5f7ff}
@@ -119,6 +120,23 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .fte-help{border:0;cursor:pointer;font-family:inherit}
 .frequency-grid{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:end}
 .frequency-preview{font-size:11px;color:var(--p);font-weight:700;margin-top:5px}
+.auth-tabs{display:flex;gap:6px;margin-bottom:14px;padding:4px;background:#f1f3f8;border-radius:8px}
+.auth-tab{flex:1;border:0;background:transparent;padding:8px;border-radius:6px;font-family:inherit;font-weight:700;color:var(--mt);cursor:pointer}
+.auth-tab.on{background:#fff;color:var(--p);box-shadow:0 1px 5px rgba(6,15,69,.12)}
+.auth-session{display:none;align-items:center;justify-content:space-between;gap:10px;background:#eef7ef;border:1px solid #c8e6c9;padding:10px 12px;border-radius:8px;margin-bottom:13px;color:var(--s)}
+.admin-company{background:#fff;border:1px solid var(--bd);border-radius:9px;margin-bottom:9px;overflow:hidden}
+.admin-company-hd{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer}
+.admin-company-name{font-size:15px;font-weight:800;flex:1}
+.admin-company-body{display:none;border-top:1px solid var(--bd);padding:10px 13px;background:#fafbfe}
+.admin-company.open .admin-company-body{display:block}
+.admin-project{padding:8px 9px;background:#fff;border:1px solid #e9edf4;border-radius:7px;margin-bottom:6px}
+.admin-task-list{font-size:12px;color:var(--mt);margin-top:5px;line-height:1.6}
+.ai-setting-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ai-setting-card{border:1px solid var(--bd);border-radius:10px;padding:15px;background:#fff}
+.ai-setting-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.ai-setting-name{font-size:16px;font-weight:900;color:var(--p)}
+.ai-setting-meta{min-height:38px;font-size:11px;color:var(--mt);line-height:1.6;margin-bottom:9px}
+@media(max-width:900px){.ai-setting-grid{grid-template-columns:1fr}}
 .fit-a{background:#e8f5e9;color:var(--s);font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
 .fit-b{background:#fff3e0;color:var(--w);font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
 .fit-c{background:#e3f2fd;color:#1565c0;font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
@@ -285,14 +303,17 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .scale-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}
 .scale-desc{font-size:12px;color:#555;line-height:1.5;padding-top:1px}
 </style>
+<script type="module" src="/frontend/src/auth.js"></script>
 </head>
 <body>
 <div class="hdr">
-  <span class="hdr-logo" onclick="openProjectList()">▣ BPA Tool</span>
+  <span class="hdr-logo" onclick="openHome()">▣ BPA Tool</span>
   <span class="hdr-sep"></span>
   <div class="hdr-brd" id="hdrBrd"><span onclick="openProjectList()">프로젝트 목록</span></div>
   <div class="hdr-r">
     <div class="hdr-company" id="headerCompany">회사 미등록</div>
+    <button class="hdr-logout" id="btnAISettings" type="button" onclick="openAISettings()">AI API 관리</button>
+    <button class="hdr-logout" id="btnLogout" type="button" onclick="logoutApplication()">로그아웃</button>
   </div>
 </div>
 <div class="step-bar" id="stepBar">
@@ -317,33 +338,59 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="welcome-page">
     <div class="welcome-shell">
       <h1 class="welcome-title">Business Process Analysis Too for AX</h1>
-      <p class="welcome-sub">회사를 등록하고 외부 AI 엔진을 연결한 뒤<br>우리 회사의 업무 프로세스 분석을 시작하세요.</p>
+      <p class="welcome-sub">협력사 담당자 또는 관리자로 로그인한 뒤<br>업무 프로세스 분석을 시작하세요.</p>
       <div class="welcome-card">
         <section class="welcome-section">
-          <div class="welcome-section-title">1. 회사명 등록</div>
-          <div class="welcome-section-desc">등록한 회사명과 일치하는 프로젝트만 목록에 표시됩니다.</div>
-          <div class="welcome-row">
-            <div class="fg"><label class="fl" for="welcomeCompanyName">회사명 <span class="req">*</span></label><input class="fi" id="welcomeCompanyName" autocomplete="organization" placeholder="예: 삼성전자"></div>
-            <button class="btn btn-o register-btn" type="button" onclick="registerCompany()">회사명 등록</button>
+          <div class="welcome-section-title">1. 협력사 담당자 로그인</div>
+          <div class="welcome-section-desc">관리자가 등록한 활성 협력사를 선택하고 이메일 매직링크로 자유 가입합니다.</div>
+          <div class="auth-tabs">
+            <button class="auth-tab on" id="partnerAuthTab" type="button" onclick="setAuthMode('partner')">협력사 담당자</button>
+            <button class="auth-tab" id="adminAuthTab" type="button" onclick="setAuthMode('admin')">관리자</button>
           </div>
-          <div class="welcome-status" id="companyRegisterStatus" role="status" aria-live="polite"></div>
-        </section>
-        <section class="welcome-section">
-          <div class="welcome-section-title">2. 외부 AI API 등록</div>
-          <div class="welcome-section-desc">AI 엔진을 드롭다운에서 선택하고 실제 API 연결을 확인합니다. API Key는 브라우저에 저장하지 않습니다.</div>
-          <div class="welcome-row">
-            <div class="fg" style="max-width:210px"><label class="fl" for="welcomeAiEngine">AI 엔진 <span class="req">*</span></label><div class="dropdown-wrap"><select class="fi dropdown-select" id="welcomeAiEngine" onchange="resetWelcomeAIStatus()"><option value="gemini">Gemini</option><option value="chatgpt">ChatGPT</option><option value="claude">Claude</option></select></div></div>
-            <div class="fg"><label class="fl" for="welcomeApiKey">API Key <span class="req">*</span></label><input class="fi mask" id="welcomeApiKey" type="password" autocomplete="off" placeholder="선택한 AI 엔진의 API Key"></div>
-            <button class="btn btn-o register-btn" id="btnRegisterAI" type="button" onclick="registerWelcomeAI()">AI API 등록</button>
+          <div class="auth-session" id="authSessionBox"><span id="authSessionText"></span><button class="btn btn-o btn-sm" type="button" onclick="logoutApplication()">다른 계정 사용</button></div>
+          <div id="partnerAuthFields">
+            <div class="frow"><div class="fg"><label class="fl" for="welcomeCompanySelect">협력사 <span class="req">*</span></label><select class="fi" id="welcomeCompanySelect"><option value="">협력사를 선택하세요</option></select></div><div class="fg"><label class="fl" for="welcomeUserName">담당자 이름 <span class="req">*</span></label><input class="fi" id="welcomeUserName" autocomplete="name" placeholder="예: 홍길동"></div></div>
           </div>
-          <div class="welcome-status" id="welcomeAIStatus" role="status" aria-live="polite"></div>
+          <div class="welcome-row">
+            <div class="fg"><label class="fl" for="welcomeUserEmail">이메일 주소 <span class="req">*</span></label><input class="fi" id="welcomeUserEmail" type="email" autocomplete="email" placeholder="name@company.com"></div>
+            <button class="btn btn-o register-btn" id="btnSendLoginLink" type="button" onclick="sendLoginLink()">로그인 이메일 받기</button>
+          </div>
+          <div class="welcome-status" id="authStatus" role="status" aria-live="polite"></div>
         </section>
         <div class="start-wrap">
           <button class="btn btn-p start-btn" type="button" onclick="startApplication()">시작하기 →</button>
-          <div class="start-hint">회사명과 AI API 연결을 등록하면 프로젝트 목록으로 이동합니다.</div>
+          <div class="start-hint">로그인 후 협력사 설정에서 외부 AI API Key를 등록할 수 있습니다.</div>
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- PAGE: 관리자 모드 -->
+<div class="sv" id="pageAdmin">
+  <div class="list-hd">
+    <div><div class="list-title">관리자 모드</div><div class="list-sub">전체 협력사의 프로젝트와 과제를 조회하고 협력사 상태를 관리합니다.</div></div>
+    <button class="btn btn-o" type="button" onclick="logoutApplication()">로그아웃</button>
+  </div>
+  <div class="card">
+    <div class="card-title">협력사 등록 <span class="ct-b">계정 선택 목록에 즉시 반영</span></div>
+    <div class="welcome-row"><div class="fg"><span class="fl">협력사명 <span class="req">*</span></span><input class="fi" id="adminCompanyName" placeholder="예: ABC 컨설팅"></div><div class="fg"><span class="fl">사업자등록번호</span><input class="fi" id="adminBusinessNumber" placeholder="선택 입력"></div><button class="btn btn-p register-btn" type="button" onclick="adminCreateCompany()">협력사 등록</button></div>
+    <div class="inline-status" id="adminCompanyStatus">등록된 협력사는 담당자 가입 화면에서 선택할 수 있습니다.</div>
+  </div>
+  <div class="srow" id="adminSummaryCards"></div>
+  <div id="adminCompanyList"></div>
+</div>
+
+<!-- PAGE: 협력사 AI API 설정 -->
+<div class="sv" id="pageAISettings">
+  <div class="list-hd">
+    <div><div class="list-title">외부 AI API 관리</div><div class="list-sub"><span id="aiSettingsCompany">협력사</span> 전용 API Key를 연결하고 안전하게 관리합니다.</div></div>
+    <button class="btn btn-o" type="button" onclick="openProjectList()">프로젝트 목록으로</button>
+  </div>
+  <div class="card">
+    <div class="card-title">협력사별 AI 엔진 <span class="ct-b">AES-256-GCM 암호화 저장</span></div>
+    <div style="font-size:12px;color:var(--mt);line-height:1.7;margin-bottom:14px">연결 확인에 성공한 Key만 저장되며, 저장 후 원문은 화면이나 API 응답에 다시 표시하지 않습니다. 프로젝트에 지정된 엔진의 Key가 자동으로 사용됩니다.</div>
+    <div class="ai-setting-grid" id="aiSettingsGrid"></div>
   </div>
 </div>
 
@@ -754,7 +801,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <script>
 let cur=1;
 let ctx={project:'',projectId:null,projectData:null,projectEngine:null,taskId:null,taskParticipants:[],interviewId:null,processes:[],bdw:null,bdwMeta:null,aiResult:null,acceptedAiProcessIds:[],toBeApplied:false,report:null,l1:'',l2:'',l3:'',l4:''};
-const appState={companyName:'',companyRegistered:false,aiConnected:false,aiEngine:'gemini',aiModel:null,apiKey:''};
+const appState={authenticated:false,user:null,profile:null,membership:null,isAdmin:false,authMode:'partner',companyId:null,companyName:'',companyRegistered:false,aiEngine:'gemini',aiConnections:{}};
 let companyProjects=[];
 let editingProjectId=null;
 let editingProjectEngine=null;
@@ -765,7 +812,10 @@ function escapeHtml(value){
   return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
 }
 async function apiRequest(path,options={}){
-  const response=await fetch(apiBase+path,options);
+  const headers=new Headers(options.headers||{});
+  const accessToken=await window.bpaAuth?.getAccessToken?.();
+  if(accessToken)headers.set('Authorization','Bearer '+accessToken);
+  const response=await fetch(apiBase+path,{...options,headers});
   const text=await response.text();
   let result={};
   try{result=text?JSON.parse(text):{};}catch{result={error:text||'서버 응답을 해석할 수 없습니다.'};}
@@ -774,55 +824,143 @@ async function apiRequest(path,options={}){
 }
 function setHeaderVisible(visible){
   document.querySelector('.hdr').style.display=visible?'flex':'none';
+  document.getElementById('btnAISettings').style.display=visible&&!appState.isAdmin?'inline-block':'none';
 }
 function showWelcome(){
   hideFlowChrome();
   setHeaderVisible(false);
   show('pageWelcome');
 }
-function registerCompany(){
-  const input=document.getElementById('welcomeCompanyName');
-  const status=document.getElementById('companyRegisterStatus');
-  const companyName=input.value.trim();
-  if(!companyName){status.style.color='var(--d)';status.textContent='회사명을 입력해 주세요.';return;}
-  appState.companyName=companyName;
-  appState.companyRegistered=true;
-  localStorage.setItem('bpaCompanyName',companyName);
-  document.getElementById('headerCompany').textContent=companyName;
-  document.getElementById('newCompanyName').value=companyName;
-  status.style.color='var(--s)';
-  status.textContent='✓ '+companyName+' 회사가 등록되었습니다.';
+function openHome(){return appState.isAdmin?openAdminDashboard():openProjectList();}
+function setAuthMode(mode){
+  appState.authMode=mode;
+  document.getElementById('partnerAuthTab').classList.toggle('on',mode==='partner');
+  document.getElementById('adminAuthTab').classList.toggle('on',mode==='admin');
+  document.getElementById('partnerAuthFields').style.display=mode==='partner'?'block':'none';
+  document.getElementById('authStatus').textContent='';
 }
-function resetWelcomeAIStatus(){
-  appState.aiConnected=false;
-  appState.aiModel=null;
-  document.getElementById('welcomeAIStatus').textContent='';
-}
-async function registerWelcomeAI(){
-  const engine=document.getElementById('welcomeAiEngine').value;
-  const apiKey=document.getElementById('welcomeApiKey').value.trim();
-  const button=document.getElementById('btnRegisterAI');
-  const status=document.getElementById('welcomeAIStatus');
-  appState.aiConnected=false;
-  status.style.color='var(--d)';
-  if(!apiKey){status.textContent='API Key를 입력해 주세요.';return;}
-  button.disabled=true;button.textContent='연결 확인 중...';
-  status.style.color='var(--mt)';status.textContent='선택한 AI 엔진에 실제 연결하고 있습니다.';
+async function loadActiveCompanies(){
+  const select=document.getElementById('welcomeCompanySelect');
   try{
-    const result=await apiRequest('/connections/test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({engine,apiKey})});
-    if(!result.connected) throw new Error(result.error||'API 연결에 실패했습니다.');
-    appState.aiConnected=true;appState.aiEngine=engine;appState.aiModel=result.model;appState.apiKey=apiKey;
-    status.style.color='var(--s)';status.textContent='✓ '+result.message;
-  }catch(error){
-    status.style.color='var(--d)';
-    status.textContent='✕ '+(error instanceof TypeError?'백엔드 서버에 연결할 수 없습니다.':(error.message||'API 연결에 실패했습니다.'));
-  }finally{button.disabled=false;button.textContent='AI API 등록';}
+    const companies=await apiRequest('/auth/companies');
+    select.innerHTML='<option value="">협력사를 선택하세요</option>'+companies.map(company=>'<option value="'+Number(company.id)+'">'+escapeHtml(company.name)+'</option>').join('');
+  }catch(error){document.getElementById('authStatus').textContent='✕ '+error.message;}
+}
+function validEmail(email){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);}
+async function sendLoginLink(){
+  const email=document.getElementById('welcomeUserEmail').value.trim();
+  const name=document.getElementById('welcomeUserName').value.trim();
+  const companyId=Number(document.getElementById('welcomeCompanySelect').value);
+  const status=document.getElementById('authStatus');const button=document.getElementById('btnSendLoginLink');
+  if(!validEmail(email)){status.style.color='var(--d)';status.textContent='올바른 이메일 주소 형식으로 입력해 주세요.';return;}
+  if(appState.authMode==='partner'&&(!name||!Number.isInteger(companyId))){status.style.color='var(--d)';status.textContent='협력사와 담당자 이름을 입력해 주세요.';return;}
+  if(!window.bpaAuth?.configured){status.style.color='var(--d)';status.textContent='Supabase Auth 환경변수가 설정되지 않았습니다.';return;}
+  button.disabled=true;button.textContent='이메일 전송 중...';
+  try{
+    await window.bpaAuth.sendMagicLink(email,appState.authMode==='partner'?{name,company_id:companyId,auth_mode:'partner'}:{auth_mode:'admin'});
+    status.style.color='var(--s)';status.textContent='✓ 로그인 이메일을 전송했습니다. 이메일의 링크를 열어 주세요.';
+  }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
+  finally{button.disabled=false;button.textContent='로그인 이메일 받기';}
+}
+function applyPartnerSession(me){
+  const membership=(me.memberships||[]).find(item=>item.status==='active'&&item.company?.status==='active');
+  if(!membership)throw new Error('활성 협력사 멤버십이 없습니다. 관리자에게 협력사 상태를 확인해 주세요.');
+  appState.authenticated=true;appState.user=me.user;appState.profile=me.profile;appState.membership=membership;appState.isAdmin=false;
+  appState.companyId=Number(membership.company_id);appState.companyName=membership.company.name;appState.companyRegistered=true;
+  document.getElementById('headerCompany').textContent=appState.companyName;
+  document.getElementById('newCompanyName').value=appState.companyName;
+  document.getElementById('authSessionText').textContent=appState.profile.name+' · '+appState.companyName;
+  document.getElementById('authSessionBox').style.display='flex';
+}
+async function restoreAuthenticatedSession(){
+  if(!window.bpaAuth?.configured){showWelcome();document.getElementById('authStatus').textContent='Supabase Auth 환경변수가 설정되지 않았습니다.';return;}
+  const session=await window.bpaAuth.getSession();
+  if(!session){showWelcome();await loadActiveCompanies();return;}
+  try{
+    let me=await apiRequest('/auth/me');
+    if(!me.profile&&session.user.user_metadata?.auth_mode==='partner'){
+      await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:session.user.user_metadata.name,company_id:session.user.user_metadata.company_id})});
+      me=await apiRequest('/auth/me');
+    }
+    appState.authenticated=true;appState.user=me.user;appState.profile=me.profile;
+    if(me.profile?.app_role==='super_admin'){
+      appState.isAdmin=true;document.getElementById('headerCompany').textContent='시스템 관리자';setHeaderVisible(true);hideFlowChrome();await openAdminDashboard();return;
+    }
+    applyPartnerSession(me);await refreshAIConnectionState();showWelcome();await loadActiveCompanies();
+  }catch(error){showWelcome();await loadActiveCompanies();document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='✕ '+error.message;}
+}
+async function logoutApplication(){
+  await window.bpaAuth?.signOut?.();
+  Object.assign(appState,{authenticated:false,user:null,profile:null,membership:null,isAdmin:false,companyId:null,companyName:'',companyRegistered:false,aiEngine:'gemini',aiConnections:{}});
+  ctx.projectId=null;ctx.taskId=null;document.getElementById('authSessionBox').style.display='none';showWelcome();await loadActiveCompanies();
 }
 async function startApplication(){
-  if(!appState.companyRegistered){document.getElementById('companyRegisterStatus').style.color='var(--d)';document.getElementById('companyRegisterStatus').textContent='회사명을 먼저 등록해 주세요.';return;}
-  if(!appState.aiConnected){document.getElementById('welcomeAIStatus').style.color='var(--d)';document.getElementById('welcomeAIStatus').textContent='외부 AI API를 등록하고 연결을 확인해 주세요.';return;}
+  if(!appState.authenticated){document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='이메일 로그인을 먼저 완료해 주세요.';return;}
+  if(appState.isAdmin){await openAdminDashboard();return;}
+  if(!appState.companyRegistered){document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='활성 협력사 멤버십이 필요합니다.';return;}
   setHeaderVisible(true);
   await openProjectList();
+}
+
+const aiEngineLabels={gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude'};
+async function refreshAIConnectionState(){
+  if(!appState.authenticated||appState.isAdmin){appState.aiConnections={};return [];}
+  const connections=await apiRequest('/connections');
+  appState.aiConnections=Object.fromEntries(connections.map(item=>[item.engine,item]));
+  const preferred=connections.find(item=>item.configured&&item.is_default)?.engine||['gemini','chatgpt','claude'].find(engine=>appState.aiConnections[engine]?.configured);
+  if(preferred)appState.aiEngine=preferred;
+  return connections;
+}
+function renderAISettings(){
+  const grid=document.getElementById('aiSettingsGrid');
+  grid.innerHTML=['gemini','chatgpt','claude'].map(engine=>{const item=appState.aiConnections[engine];const configured=Boolean(item?.configured);const isDefault=Boolean(item?.is_default);return '<div class="ai-setting-card"><div class="ai-setting-head"><div class="ai-setting-name">'+aiEngineLabels[engine]+'</div><span class="status-chip '+(configured?'st-done':'st-new')+'">'+(isDefault?'기본 엔진':configured?'연결됨':'미등록')+'</span></div><div class="ai-setting-meta">'+(configured?'Key '+escapeHtml(item.key_hint)+'<br>모델 '+escapeHtml(item.model||'확인됨'):'협력사 전용 API Key를 등록해 주세요.')+'</div><input class="fi mask" id="aiKey_'+engine+'" type="password" autocomplete="new-password" placeholder="새 API Key 입력"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-p btn-sm" id="aiSave_'+engine+'" type="button" onclick="saveAIConnection(\''+engine+'\')">연결 확인 및 저장</button>'+(configured&&!isDefault?'<button class="btn btn-o btn-sm" type="button" onclick="setDefaultAIConnection(\''+engine+'\')">기본 엔진 설정</button>':'')+(configured?'<button class="btn btn-o btn-sm" type="button" onclick="deleteAIConnection(\''+engine+'\')">삭제</button>':'')+'</div><div class="inline-status" id="aiStatus_'+engine+'" style="margin-top:8px"></div></div>';}).join('');
+}
+async function openAISettings(){
+  if(!appState.companyRegistered||appState.isAdmin){showWelcome();return;}
+  setHeaderVisible(true);hideFlowChrome();show('pageAISettings');setHdrSingle('외부 AI API 관리');
+  document.getElementById('aiSettingsCompany').textContent=appState.companyName;
+  document.getElementById('aiSettingsGrid').innerHTML='<div class="loading-state">AI API 설정을 불러오는 중입니다...</div>';
+  try{await refreshAIConnectionState();renderAISettings();}
+  catch(error){document.getElementById('aiSettingsGrid').innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
+}
+async function saveAIConnection(engine){
+  const input=document.getElementById('aiKey_'+engine);const button=document.getElementById('aiSave_'+engine);const status=document.getElementById('aiStatus_'+engine);const apiKey=input.value.trim();
+  if(!apiKey){status.style.color='var(--d)';status.textContent='API Key를 입력해 주세요.';return;}
+  button.disabled=true;button.textContent='연결 확인 중...';status.style.color='var(--mt)';status.textContent='실제 API 연결을 확인한 뒤 암호화 저장합니다.';
+  try{const result=await apiRequest('/connections/'+engine,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey})});input.value='';await refreshAIConnectionState();renderAISettings();const nextStatus=document.getElementById('aiStatus_'+engine);nextStatus.style.color='var(--s)';nextStatus.textContent='✓ '+result.message;}
+  catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;button.disabled=false;button.textContent='연결 확인 및 저장';}
+}
+async function deleteAIConnection(engine){
+  if(!confirm(aiEngineLabels[engine]+' API Key를 삭제하시겠습니까? 해당 엔진 프로젝트의 AI 분석을 실행할 수 없게 됩니다.'))return;
+  try{await apiRequest('/connections/'+engine,{method:'DELETE'});await refreshAIConnectionState();renderAISettings();}
+  catch(error){alert(error.message);}
+}
+async function setDefaultAIConnection(engine){
+  try{await apiRequest('/connections/'+engine+'/default',{method:'PUT'});await refreshAIConnectionState();renderAISettings();const status=document.getElementById('aiStatus_'+engine);status.style.color='var(--s)';status.textContent='✓ 새 프로젝트 기본 엔진으로 설정했습니다.';}
+  catch(error){alert(error.message);}
+}
+
+async function openAdminDashboard(){
+  if(!appState.isAdmin){showWelcome();return;}
+  setHeaderVisible(true);hideFlowChrome();show('pageAdmin');setHdrSingle('관리자 모드');
+  const list=document.getElementById('adminCompanyList');list.innerHTML='<div class="loading-state">전체 협력사 현황을 불러오는 중입니다...</div>';
+  try{
+    const companies=await apiRequest('/admin/overview');
+    const projectCount=companies.reduce((sum,company)=>sum+Number(company.project_count||0),0);const taskCount=companies.reduce((sum,company)=>sum+Number(company.task_count||0),0);
+    document.getElementById('adminSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">전체 협력사</div><div class="sc-val" style="color:var(--p)">'+companies.length+'</div></div><div class="sc"><div class="sc-lbl">활성 협력사</div><div class="sc-val" style="color:var(--s)">'+companies.filter(company=>company.status==='active').length+'</div></div><div class="sc"><div class="sc-lbl">전체 프로젝트</div><div class="sc-val" style="color:var(--w)">'+projectCount+'</div></div><div class="sc"><div class="sc-lbl">전체 과제</div><div class="sc-val" style="color:var(--d)">'+taskCount+'</div></div>';
+    list.innerHTML=companies.map(company=>{const nextStatus=company.status==='active'?'suspended':'active';const projects=(company.projects||[]).map(project=>'<div class="admin-project"><b>'+escapeHtml(project.name)+'</b><span style="font-size:11px;color:var(--mt);margin-left:8px">'+escapeHtml(formatPeriod(project))+'</span><div class="admin-task-list">'+((project.tasks||[]).length?(project.tasks||[]).map(task=>'과제 · '+escapeHtml(task.name||task.l4)).join('<br>'):'등록된 과제 없음')+'</div></div>').join('');return '<div class="admin-company" id="adminCompany'+Number(company.id)+'"><div class="admin-company-hd" onclick="toggleAdminCompany('+Number(company.id)+')"><span class="status-chip '+(company.status==='active'?'st-done':'st-prog')+'">'+(company.status==='active'?'활성':'중지')+'</span><div class="admin-company-name">'+escapeHtml(company.name)+'</div><span style="font-size:12px;color:var(--mt)">프로젝트 '+Number(company.project_count||0)+' · 과제 '+Number(company.task_count||0)+'</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();adminChangeCompanyStatus('+Number(company.id)+',\''+nextStatus+'\')">'+(nextStatus==='active'?'활성화':'중지')+'</button></div><div class="admin-company-body">'+(projects||'<div class="empty-state">등록된 프로젝트가 없습니다.</div>')+'</div></div>';}).join('')||'<div class="empty-state">등록된 협력사가 없습니다.</div>';
+  }catch(error){list.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
+}
+function toggleAdminCompany(companyId){document.getElementById('adminCompany'+companyId)?.classList.toggle('open');}
+async function adminCreateCompany(){
+  const name=document.getElementById('adminCompanyName').value.trim();const businessNumber=document.getElementById('adminBusinessNumber').value.trim();const status=document.getElementById('adminCompanyStatus');
+  if(!name){status.style.color='var(--d)';status.textContent='협력사명을 입력해 주세요.';return;}
+  try{const result=await apiRequest('/admin/companies',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,business_number:businessNumber})});status.style.color='var(--s)';status.textContent='✓ '+result.message;document.getElementById('adminCompanyName').value='';document.getElementById('adminBusinessNumber').value='';await openAdminDashboard();}
+  catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
+}
+async function adminChangeCompanyStatus(companyId,status){
+  try{await apiRequest('/admin/companies/'+companyId+'/status',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});await openAdminDashboard();}
+  catch(error){alert(error.message);}
 }
 
 const participantRoles={
@@ -877,7 +1015,7 @@ async function loadCompanyProjects(){
   const container=document.getElementById('projectListContainer');
   container.innerHTML='<div class="loading-state">'+escapeHtml(appState.companyName)+' 프로젝트를 불러오는 중입니다...</div>';
   try{
-    const projects=await apiRequest('/projects?company_name='+encodeURIComponent(appState.companyName));companyProjects=projects;
+    const projects=await apiRequest('/projects');companyProjects=projects;
     if(!projects.length){container.innerHTML='<div class="empty-state"><b>'+escapeHtml(appState.companyName)+'</b>에 등록된 프로젝트가 없습니다.<br>새 프로젝트를 생성해 주세요.</div>';return;}
     container.innerHTML='';
     projects.forEach(project=>{
@@ -933,6 +1071,9 @@ function resetProjectForm(){
 }
 function openNewProjectForm(){
   if(!appState.companyRegistered){showWelcome();return;}
+  if(!Object.values(appState.aiConnections).some(item=>item.configured&&item.is_default)){
+    showValidationPopup('AI API 설정 필요',['새 프로젝트를 생성하려면 협력사 AI API Key를 등록하고 기본 엔진을 설정해 주세요.']);return;
+  }
   resetProjectForm();
   hideFlowChrome();
   show('pageNewProject');
@@ -950,8 +1091,8 @@ async function openEditProjectForm(projectId){
 }
 async function saveProject(){
   const participants=collectParticipants('project');const startDate=document.getElementById('newStartDate').value;const endDate=document.getElementById('newEndDate').value;
-  const body={name:document.getElementById('newProjName').value.trim(),company_name:appState.companyName,department_name:document.getElementById('newDeptName').value.trim(),business_name:document.getElementById('newBusinessName').value.trim(),analysis_goal:document.getElementById('newAnalysisGoal').value.trim(),start_date:startDate,end_date:endDate,ai_engine:editingProjectEngine||appState.aiEngine,participants};
-  const issues=[];if(!body.company_name)issues.push('회사명을 등록해 주세요.');if(!body.department_name)issues.push('부서명(L1 구분)을 입력해 주세요.');if(!body.business_name)issues.push('업무명(L2 대분류)을 입력해 주세요.');if(!body.name)issues.push('프로젝트명(L3 기능)을 입력해 주세요.');if(!body.analysis_goal)issues.push('프로젝트 목적을 입력해 주세요.');issues.push(...validateDateRange(startDate,endDate,'프로젝트 기간'),...validateParticipants('project',participants));
+  const body={name:document.getElementById('newProjName').value.trim(),department_name:document.getElementById('newDeptName').value.trim(),business_name:document.getElementById('newBusinessName').value.trim(),analysis_goal:document.getElementById('newAnalysisGoal').value.trim(),start_date:startDate,end_date:endDate,participants};
+  const issues=[];if(!body.department_name)issues.push('부서명(L1 구분)을 입력해 주세요.');if(!body.business_name)issues.push('업무명(L2 대분류)을 입력해 주세요.');if(!body.name)issues.push('프로젝트명(L3 기능)을 입력해 주세요.');if(!body.analysis_goal)issues.push('프로젝트 목적을 입력해 주세요.');issues.push(...validateDateRange(startDate,endDate,'프로젝트 기간'),...validateParticipants('project',participants));
   if(issues.length){showValidationPopup(editingProjectId?'프로젝트 수정 보완사항':'프로젝트 생성 보완사항',issues);return;}
   try{
     const result=await apiRequest(editingProjectId?'/projects/'+editingProjectId:'/projects',{method:editingProjectId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -983,12 +1124,7 @@ async function openTaskList(name,projectId=ctx.projectId){
 function openTaskListCurrent(){ openTaskList(ctx.project||'',ctx.projectId); }
 
 function ensureProjectAIConnection(){
-  if(!appState.aiConnected||!appState.apiKey){alert('접속 첫 화면에서 AI API를 등록해 주세요.');return false;}
-  if(ctx.projectEngine&&ctx.projectEngine!==appState.aiEngine){
-    const labels={gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude'};
-    alert('이 프로젝트는 '+labels[ctx.projectEngine]+' 엔진으로 등록되어 있습니다. 첫 화면에서 같은 엔진의 API Key를 등록해 주세요.');
-    return false;
-  }
+  if(!appState.aiConnections[ctx.projectEngine]?.configured){alert('이 프로젝트의 '+(aiEngineLabels[ctx.projectEngine]||ctx.projectEngine)+' API Key가 협력사 설정에 없습니다. 상단의 AI API 관리에서 등록해 주세요.');return false;}
   return true;
 }
 
@@ -1070,7 +1206,7 @@ async function generateAIDraft(){
   try{
     const interview=await apiRequest('/interviews/project/'+ctx.projectId,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({interview_type:'text',text:answers.join('\n')})});
     ctx.interviewId=interview.interview.id;
-    const draft=await apiRequest('/interviews/'+ctx.interviewId+'/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectId:ctx.projectId,taskId:ctx.taskId,apiKey:appState.apiKey})});
+    const draft=await apiRequest('/interviews/'+ctx.interviewId+'/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectId:ctx.projectId,taskId:ctx.taskId})});
     ctx.processes=draft.analysis.processes||[];
     renderDraftTable();
     status.style.color='var(--s)';status.textContent='✓ '+draft.analysis.model_used+' Draft '+ctx.processes.length+'건 생성·저장 완료';
@@ -1134,7 +1270,7 @@ async function openBDWStep(){
   if(!await syncProcesses(true)) return;
   const button=document.getElementById('btnRunBDW');button.disabled=true;button.textContent='AI BDW 진단 중...';
   try{
-    ctx.bdwMeta=await apiRequest('/analysis/project/'+ctx.projectId+'/bdw/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId,apiKey:appState.apiKey})});
+    ctx.bdwMeta=await apiRequest('/analysis/project/'+ctx.projectId+'/bdw/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId})});
     await loadBDW();go(4);
   }catch(error){alert(error.message);}finally{button.disabled=false;button.textContent='BDW 진단 →';}
 }
@@ -1196,7 +1332,7 @@ async function runAIFit(){
   if(!ctx.bdw){alert('BDW 진단을 먼저 완료해 주세요.');return;}
   const button=document.getElementById('btnRunAIFit');button.disabled=true;button.textContent='AI FIT 분석 중...';
   try{
-    const result=await apiRequest('/analysis/project/'+ctx.projectId+'/ai-fit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId,apiKey:appState.apiKey})});
+    const result=await apiRequest('/analysis/project/'+ctx.projectId+'/ai-fit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId})});
     ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;renderAIFit(result);go(5);
   }catch(error){alert(error.message);}finally{button.disabled=false;button.textContent='✓ 프로세스 확정 & AI FIT 분석 →';}
 }
@@ -1311,9 +1447,18 @@ function next(){ if(cur<6) navigateStep(cur+1); }
 function selOpt(n){[1,3].forEach(i=>{const e=document.getElementById('opt'+i); if(e) e.classList.remove('sel');}); document.getElementById('opt'+n).classList.add('sel');}
 function swTab(el,tid){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.tv').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById(tid).classList.add('on');}
 
-const savedCompany=localStorage.getItem('bpaCompanyName');
-if(savedCompany) document.getElementById('welcomeCompanyName').value=savedCompany;
-showWelcome();
+async function bootstrapApplication(){
+  showWelcome();
+  if(!window.bpaAuth){
+    await new Promise(resolve=>window.addEventListener('bpa-auth-ready',resolve,{once:true}));
+  }
+  await restoreAuthenticatedSession();
+  window.bpaAuth?.onAuthStateChange?.((event)=>{
+    if(event==='SIGNED_IN')restoreAuthenticatedSession();
+    if(event==='SIGNED_OUT')showWelcome();
+  });
+}
+bootstrapApplication();
 </script>
 
 <!-- 업무 계층별 정의 팝업 -->

@@ -1,5 +1,6 @@
 import { db } from '../config/database.js';
 import LLMService from '../services/llmService.js';
+import { getCompanyApiKey } from '../services/companyCredentialService.js';
 
 async function getTaskL6Processes(projectId, taskId) {
   const condition = { project_id: parseInt(projectId) };
@@ -45,7 +46,7 @@ export const tagBDW = async (req, res) => {
 
 export const analyzeBDW = async (req, res) => {
   const { projectId } = req.params;
-  const { taskId, apiKey } = req.body;
+  const { taskId } = req.body;
 
   try {
     const project = await db.selectOne('projects', { id: parseInt(projectId) });
@@ -55,6 +56,7 @@ export const analyzeBDW = async (req, res) => {
       return res.status(400).json({ error: 'BDW 진단을 수행할 L6 프로세스가 없습니다.' });
     }
 
+    const apiKey = await getCompanyApiKey(req.auth.companyId, project.ai_engine);
     const result = await LLMService.analyzeBDW(project.ai_engine, apiKey, processes);
     const diagnosesById = requireCompleteAnalysis(result.diagnoses, processes, 'BDW');
     const diagnoses = await Promise.all(processes.map(async (process) => {
@@ -139,7 +141,7 @@ export const getBDWDiagnosis = async (req, res) => {
 // AI FIT 분석
 export const analyzeAIFit = async (req, res) => {
   const { projectId } = req.params;
-  const { taskId, apiKey } = req.body;
+  const { taskId } = req.body;
 
   try {
     const project = await db.selectOne('projects', { id: parseInt(projectId) });
@@ -150,6 +152,7 @@ export const analyzeAIFit = async (req, res) => {
       return res.status(400).json({ error: '분석할 프로세스가 없습니다. 먼저 인터뷰 및 AI Draft를 생성하세요' });
     }
 
+    const apiKey = await getCompanyApiKey(req.auth.companyId, project.ai_engine);
     const aiResult = await LLMService.analyzeAIFit(project.ai_engine, apiKey, processes);
     const analysisById = requireCompleteAnalysis(aiResult.analysis, processes, 'AI FIT');
     const fitAnalysis = processes.map((proc) => {
