@@ -43,7 +43,16 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .fl{font-size:12px;font-weight:700;color:var(--mt);margin-bottom:3px;display:block}
 .req{color:var(--d)}
 .fi{width:100%;border:1px solid var(--bd);border-radius:6px;padding:7px 10px;font-size:14px;color:var(--t);outline:none;background:#fff}
+.fi[type="date"]{font-family:inherit;font-size:14px;font-weight:400;line-height:1.4;color:var(--t)}
+.fi[type="date"]::-webkit-datetime-edit,.fi[type="date"]::-webkit-datetime-edit-fields-wrapper{font-family:inherit;font-size:14px;font-weight:400}
 .fi:focus{border-color:var(--p)}
+.fi[readonly]{background:#f4f6fa;color:#5f6675;cursor:not-allowed}
+.form-title-actions{display:flex;align-items:center;gap:6px;margin-left:auto}
+.participant-row{align-items:flex-end;border-bottom:1px solid #eef1f6;padding-bottom:9px}
+.participant-row:last-child{border-bottom:none}
+.participant-remove{flex:0 0 auto;width:30px;height:30px;padding:0;margin-bottom:1px}
+.date-range{display:grid;grid-template-columns:1fr 18px 1fr;align-items:end;gap:6px}
+.date-sep{text-align:center;padding-bottom:8px;color:var(--mt);font-weight:700}
 .fi.mask{-webkit-text-security:disc;letter-spacing:2px}
 .fi-ta{width:100%;border:1px solid var(--bd);border-radius:6px;padding:8px 10px;font-size:14px;color:var(--t);outline:none;background:#fff;font-family:inherit;resize:vertical;min-height:45px;line-height:1.5}
 .fi-ta:focus{border-color:var(--p)}
@@ -103,6 +112,13 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .bdwOK{background:#e8f5e9;color:var(--s)}
 .aisc{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:800;color:#fff}
 .sc5{background:var(--s)}.sc4{background:#558b2f}.sc3{background:#f57f17}.sc2{background:var(--w)}.sc1{background:var(--d)}
+.ineff-1{background:var(--s)}.ineff-2{background:#558b2f}.ineff-3{background:#f57f17}.ineff-4{background:var(--w)}.ineff-5{background:var(--d)}
+.ai-accept{width:17px;height:17px;accent-color:var(--p);cursor:pointer}
+.ai-accepted td{background:#edf8ee!important}
+.selection-status{font-size:12px;color:var(--mt);margin-right:auto;align-self:center}
+.fte-help{border:0;cursor:pointer;font-family:inherit}
+.frequency-grid{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:end}
+.frequency-preview{font-size:11px;color:var(--p);font-weight:700;margin-top:5px}
 .fit-a{background:#e8f5e9;color:var(--s);font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
 .fit-b{background:#fff3e0;color:var(--w);font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
 .fit-c{background:#e3f2fd;color:#1565c0;font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
@@ -126,6 +142,18 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .flow-stack{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:260px;padding:6px}
 .flow-node{width:min(100%,340px);padding:9px 12px;border-radius:8px;border:2px solid var(--p);background:#fff;text-align:center;font-size:12px;font-weight:700;line-height:1.4}
 .flow-node.l4{border-color:var(--pu);background:#f8f1fb;color:var(--pu);font-size:14px}
+.comparison-flow-grid{display:grid;grid-template-columns:1fr 34px 1fr;gap:12px;align-items:start}
+.comparison-flow-title{text-align:center;font-size:14px;font-weight:800;margin-bottom:10px}
+.comparison-flow{display:flex;flex-direction:column;align-items:center;min-width:0}
+.comparison-node{width:100%;max-width:360px;border:1.5px solid var(--bd);border-radius:8px;background:#fff;padding:9px 11px;text-align:center;font-size:12px;line-height:1.45}
+.comparison-node.asis{border-color:#9aa5bd;background:#f8f9fc}
+.comparison-node.applied{border-color:var(--s);background:#edf8ee}
+.comparison-node.manual{border-color:#9aa5bd;background:#f8f9fc}
+.comparison-node-name{font-weight:800;margin-bottom:2px;overflow-wrap:anywhere}
+.comparison-node-meta{font-size:11px;color:var(--mt)}
+.comparison-arrow{color:#aeb6c5;font-size:18px;line-height:1;margin:3px 0}
+.comparison-center-arrow{align-self:center;text-align:center;color:var(--p);font-size:24px;font-weight:900;padding-top:48px}
+@media(max-width:760px){.comparison-flow-grid{grid-template-columns:1fr}.comparison-center-arrow{padding:0;transform:rotate(90deg)}}
 .flow-node.l5{border-color:var(--w);background:#fff8ee;color:var(--w)}
 .flow-node.l6{border-color:var(--p);background:var(--pl);color:var(--p)}
 .flow-node.bottleneck{border-color:var(--d);background:#fff0f1;color:var(--d)}
@@ -193,7 +221,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .start-hint{font-size:11px;color:#999;margin-top:8px}
 .empty-state{background:#fff;border:1px dashed var(--bd);border-radius:10px;padding:28px;text-align:center;color:var(--mt);margin-bottom:10px}
 .loading-state{padding:24px;text-align:center;color:var(--mt)}
-@media(max-width:620px){.welcome-row{align-items:stretch;flex-direction:column}.register-btn{width:100%}.welcome-card{padding:18px}.welcome-title{letter-spacing:-1px}}
+@media(max-width:620px){.welcome-row,.frow{align-items:stretch;flex-direction:column}.register-btn{width:100%}.welcome-card{padding:18px}.welcome-title{letter-spacing:-1px}.date-range{grid-template-columns:1fr}.date-sep{display:none}.participant-remove{width:100%}}
 
 /* 프로젝트/과제 목록 페이지 */
 .pg-brd{font-size:14px;color:var(--mt);margin-bottom:12px;display:flex;align-items:center;gap:4px}
@@ -207,9 +235,12 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .proj-card:hover,.task-card:hover{border-color:var(--p);box-shadow:0 2px 10px rgba(6,15,69,.08)}
 .proj-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
 .proj-name{font-size:16px;font-weight:800}
+.proj-actions{display:flex;align-items:center;gap:8px}
+.proj-edit{font-size:11px;padding:4px 9px}
 .proj-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
 .proj-chip{font-size:11px;padding:2px 8px;border-radius:8px;background:#f0f3fb;color:#555;font-weight:600}
 .proj-stats{font-size:12px;color:var(--mt)}
+.proj-participants{font-size:11px;color:#666;line-height:1.55;margin:6px 0;padding:7px 9px;background:#fafbfe;border-radius:7px}
 .task-card{display:flex;justify-content:space-between;align-items:center}
 .task-name{font-size:16px;font-weight:800;margin-bottom:3px}
 .task-path{font-size:11px;color:#999}
@@ -231,6 +262,8 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .popup-close{position:absolute;top:12px;right:14px;font-size:19px;cursor:pointer;color:#999;border:none;background:none;line-height:1}
 .popup-close:hover{color:#333}
 .popup-title{font-size:16px;font-weight:900;color:var(--p);margin-bottom:14px;padding-right:20px}
+.validation-list{margin:0;padding-left:20px;color:#4d5567;font-size:13px;line-height:1.8}
+.validation-list li::marker{color:var(--d)}
 .lv-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f0f3f8}
 .lv-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
 .lv-badge{width:70px;flex-shrink:0;text-align:center}
@@ -326,36 +359,20 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 
 <!-- PAGE: 새 프로젝트 생성 -->
 <div class="sv" id="pageNewProject">
-  <div class="pg-brd"><span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="color:var(--t);font-weight:700;cursor:default">새 프로젝트 생성</span></div>
+  <div class="pg-brd"><span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="color:var(--t);font-weight:700;cursor:default" id="projectFormBreadcrumb">새 프로젝트 생성</span></div>
   <div class="card">
-    <div class="card-title">기본 정보 <span class="ct-b">필수</span></div>
-    <div class="frow"><div class="fg"><span class="fl">회사명 <span class="req">*</span></span><input class="fi" id="newCompanyName" readonly></div><div class="fg"><span class="fl">부서명</span><input class="fi" id="newDeptName" placeholder="예: 마케팅부문"></div></div>
-    <div class="frow"><div class="fg"><span class="fl">프로젝트명 <span class="req">*</span></span><input class="fi" id="newProjName" placeholder="프로젝트명을 입력하세요"></div><div class="fg" style="max-width:240px"><span class="fl">프로젝트 기간</span><input class="fi" id="newAnalysisPeriod" placeholder="예: 2026-07-01 ~ 2026-07-31"></div></div>
-    <div class="frow"><div class="fg"><span class="fl">프로젝트 목적</span><input class="fi" id="newAnalysisGoal" placeholder="프로젝트 목적을 입력하세요"></div></div>
+    <div class="card-title"><span id="projectFormTitle">기본 정보</span> <span class="ct-b">필수</span><span class="form-title-actions"><button class="btn btn-o btn-sm" type="button" onclick="openLvPopup()">STATIK L1~L3 단위</button><button class="lv-popup-btn" type="button" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></span></div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:10px">프로젝트는 <b>L1 부서 › L2 업무 › L3 기능</b> 계층으로 등록되며 과제의 L1~L3에 자동 연결됩니다.</div>
+    <div class="frow"><div class="fg"><span class="fl">회사명 <span class="req">*</span></span><input class="fi" id="newCompanyName" readonly></div><div class="fg"><span class="fl">부서명 (L1 구분) <span class="req">*</span></span><input class="fi" id="newDeptName" placeholder="예: 영업마케팅"></div></div>
+    <div class="frow"><div class="fg"><span class="fl">업무명 (L2 대분류) <span class="req">*</span></span><input class="fi" id="newBusinessName" placeholder="예: 디지털마케팅"></div><div class="fg"><span class="fl">프로젝트명 (L3 기능) <span class="req">*</span></span><input class="fi" id="newProjName" placeholder="예: 콘텐츠 제작"></div></div>
+    <div class="frow"><div class="fg"><span class="fl">프로젝트 기간 <span class="req">*</span></span><div class="date-range"><input class="fi" id="newStartDate" type="date" aria-label="프로젝트 시작일"><span class="date-sep">~</span><input class="fi" id="newEndDate" type="date" aria-label="프로젝트 종료일"></div></div><div class="fg"><span class="fl">프로젝트 목적 <span class="req">*</span></span><input class="fi" id="newAnalysisGoal" placeholder="프로젝트 목적을 입력하세요"></div></div>
   </div>
   <div class="card">
-    <div class="card-title">참여자 등록</div>
-    <div class="frow">
-      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="이한결"></div>
-      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="팀장"></div>
-      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option selected>프로젝트 리더</option><option>프로젝트 담당자</option><option>컨설턴트</option></select></div>
-      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hglee@samsung.com"></div>
-    </div>
-    <div class="frow">
-      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="김현수"></div>
-      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="선임"></div>
-      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option>프로젝트 리더</option><option selected>프로젝트 담당자</option><option>컨설턴트</option></select></div>
-      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hskim@samsung.com"></div>
-    </div>
-    <div class="frow">
-      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="손희정"></div>
-      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="책임컨설턴트"></div>
-      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option>프로젝트 리더</option><option>프로젝트 담당자</option><option selected>컨설턴트</option></select></div>
-      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hjson@ax.samsung.com"></div>
-    </div>
-    <div style="text-align:right;margin-top:4px"><button class="btn btn-o btn-sm">+ 참여자 추가</button></div>
+    <div class="card-title">참여자 등록 <span class="ct-b">리더·담당자·컨설턴트 필수</span></div>
+    <div id="projectParticipantRows"></div>
+    <div style="text-align:right;margin-top:4px"><button class="btn btn-o btn-sm" type="button" onclick="addParticipantRow('project')">+ 참여자 추가</button></div>
   </div>
-  <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-o" onclick="openProjectList()">취소</button><button class="btn btn-p" onclick="createProject()">프로젝트 생성 →</button></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-o" onclick="openProjectList()">취소</button><button class="btn btn-p" id="btnSaveProject" onclick="saveProject()">프로젝트 생성 →</button></div>
 </div>
 
 <!-- PAGE: 과제 목록 -->
@@ -379,37 +396,26 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="card-title">과제 등록 <span class="ct-b">STATIK L4 단위</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:10px">과제는 STATIK <b>L1 › L2 › L3 › L4</b> 전체 계층을 입력하여 등록·관리됩니다.</div>
     <div class="frow">
-      <div class="fg"><span class="fl">L1 구분 (조직 기능) <span class="req">*</span></span><input class="fi" id="inpL1" value="영업마케팅" placeholder="예: 영업마케팅"></div>
-      <div class="fg"><span class="fl">L2 대분류 (업무 도메인) <span class="req">*</span></span><input class="fi" id="inpL2" value="디지털마케팅" placeholder="예: 디지털마케팅"></div>
+      <div class="fg"><span class="fl">L1 구분 (프로젝트 연동) <span class="req">*</span></span><input class="fi" id="inpL1" readonly></div>
+      <div class="fg"><span class="fl">L2 대분류 (프로젝트 연동) <span class="req">*</span></span><input class="fi" id="inpL2" readonly></div>
     </div>
     <div class="frow">
-      <div class="fg"><span class="fl">L3 기능 (핵심 기능) <span class="req">*</span></span><input class="fi" id="inpL3" value="콘텐츠 제작" placeholder="예: 콘텐츠 제작"></div>
-      <div class="fg"><span class="fl">L4 과제명 (모듈) <span class="req">*</span></span><input class="fi" id="inpL4" value="SNS 채널 관리" placeholder="예: SNS 채널 관리"></div>
+      <div class="fg"><span class="fl">L3 기능 (프로젝트 연동) <span class="req">*</span></span><input class="fi" id="inpL3" readonly></div>
+      <div class="fg"><span class="fl">L4 과제명 (모듈) <span class="req">*</span></span><input class="fi" id="inpL4" placeholder="예: SNS 채널 관리"></div>
     </div>
     <div class="frow">
-      <div class="fg"><span class="fl">과제명 <span class="req">*</span></span><input class="fi" id="inpTaskName" value="SNS 채널 관리 프로세스 분석" placeholder="예: SNS 채널 관리 프로세스 분석"></div>
-      <div class="fg" style="max-width:200px"><span class="fl">과제 기간</span><input class="fi" id="inpTaskPeriod" value="2026-07-01 ~ 2026-07-15"></div>
+      <div class="fg"><span class="fl">과제명 <span class="req">*</span></span><input class="fi" id="inpTaskName" placeholder="예: SNS 채널 관리 프로세스 분석"></div>
+      <div class="fg"><span class="fl">과제 기간 <span class="req">*</span></span><div class="date-range"><input class="fi" id="inpTaskStartDate" type="date" aria-label="과제 시작일"><span class="date-sep">~</span><input class="fi" id="inpTaskEndDate" type="date" aria-label="과제 종료일"></div></div>
     </div>
     <div class="frow">
-      <div class="fg"><span class="fl">과제 목표</span><input class="fi" id="inpTaskGoal" value="SNS 콘텐츠 운영 프로세스의 AI 자동화 방안 도출"></div>
+      <div class="fg"><span class="fl">과제 목표 <span class="req">*</span></span><input class="fi" id="inpTaskGoal" placeholder="과제 목표를 입력하세요"></div>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">참여자 등록</div>
-    <div style="font-size:12px;color:var(--mt);margin-bottom:8px">이 과제를 함께 진행할 참여자를 과제리더와 과제담당자로 구분하여 입력하세요.</div>
-    <div class="frow">
-      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="손희정"></div>
-      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="책임컨설턴트"></div>
-      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option selected>과제 리더</option><option>과제 담당자</option></select></div>
-      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hjson@ax.samsung.com"></div>
-    </div>
-    <div class="frow">
-      <div class="fg" style="flex:1"><span class="fl">이름</span><input class="fi" value="김현수"></div>
-      <div class="fg" style="flex:0.8"><span class="fl">직급</span><input class="fi" value="선임"></div>
-      <div class="fg" style="flex:1.15"><span class="fl">역할</span><select class="fi"><option>과제 리더</option><option selected>과제 담당자</option></select></div>
-      <div class="fg" style="flex:1.5"><span class="fl">이메일</span><input class="fi" value="hskim@samsung.com"></div>
-    </div>
-    <div style="text-align:right;margin-top:4px"><button class="btn btn-o btn-sm">+ 참여자 추가</button></div>
+    <div class="card-title">참여자 등록 <span class="ct-b">과제 리더·담당자 필수</span></div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:8px">과제 리더와 과제 담당자를 최소 1명씩 등록하세요.</div>
+    <div id="taskParticipantRows"></div>
+    <div style="text-align:right;margin-top:4px"><button class="btn btn-o btn-sm" type="button" onclick="addParticipantRow('task')">+ 참여자 추가</button></div>
   </div>
   <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-o" onclick="openTaskListCurrent()">취소</button><button class="btn btn-p" onclick="startTaskFlow()">과제 등록 → 인터뷰 시작 →</button></div>
 </div>
@@ -597,21 +603,15 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="card" style="padding:10px">
       <div class="card-title" style="margin-bottom:8px">AI FIT 스코어 <span class="ct-o">AI 적용 가능성 × 비효율성</span> <button class="lv-popup-btn" onclick="openAiFitPopup()" title="점수 척도 설명 보기">?</button></div>
       <table class="tbl">
-        <thead><tr><th>단위 업무명 (L6)</th><th style="width:67px">AI 가능성</th><th style="width:67px">비효율성</th><th style="width:51px">분류</th><th style="width:176px">추천 AI 기술</th><th style="width:56px">절감(분)</th></tr></thead>
+        <thead><tr><th style="width:42px;text-align:center">수락</th><th>단위 업무명 (L6)</th><th style="width:67px">AI 가능성</th><th style="width:67px">비효율성</th><th style="width:51px">분류</th><th style="width:176px">추천 AI 기술</th><th style="width:56px">절감(분)</th></tr></thead>
         <tbody id="aiFitBody">
-          <tr><td>트렌드 키워드를 검색한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc4">4</span></td><td><span class="fit-a">A</span></td><td>LLM (웹검색 에이전트)</td><td><b>8</b></td></tr>
-          <tr><td>초안을 입력한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc5">5</span></td><td><span class="fit-a">A</span></td><td>LLM (생성 AI)</td><td><b>25</b></td></tr>
-          <tr><td>이미지를 선택한다</td><td><span class="aisc sc4">4</span></td><td><span class="aisc sc3">3</span></td><td><span class="fit-a">A</span></td><td>Vision AI (이미지 추천)</td><td><b>10</b></td></tr>
-          <tr style="background:#fff9f0"><td>검토 요청 메일을 발송한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc5">5</span></td><td><span class="fit-a">A</span></td><td>RPA (메일 자동 발송)</td><td><b>3</b></td></tr>
-          <tr style="background:#fff5f5"><td>수정사항을 반영한다</td><td><span class="aisc sc3">3</span></td><td><span class="aisc sc4">4</span></td><td><span class="fit-a">A</span></td><td>LLM (AI 협업 편집)</td><td><b>12</b></td></tr>
-          <tr><td>게시물을 업로드한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc3">3</span></td><td><span class="fit-c">C</span></td><td>RPA (자동 업로드)</td><td><b>2</b></td></tr>
-          <tr><td>해시태그를 입력한다</td><td><span class="aisc sc5">5</span></td><td><span class="aisc sc4">4</span></td><td><span class="fit-a">A</span></td><td>LLM (해시태그 추천)</td><td><b>4</b></td></tr>
-          <tr style="background:#f8f9fc"><td>게시 주제를 확정한다</td><td><span class="aisc sc2">2</span></td><td><span class="aisc sc2">2</span></td><td><span class="fit-d">D</span></td><td>—</td><td><b>0</b></td></tr>
+          <tr><td colspan="7" class="empty-state">AI FIT 분석을 실행하면 단위 업무별 수락 항목이 표시됩니다.</td></tr>
         </tbody>
       </table>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
-        <button class="btn btn-o btn-sm">AI 제안 선택 수락</button>
-        <button class="btn btn-p btn-sm">✓ 전체 수락 후 To-Be 반영</button>
+        <span class="selection-status" id="aiFitAcceptanceStatus">수락할 단위 업무를 선택해 주세요.</span>
+        <button class="btn btn-o btn-sm ai-apply-btn" type="button" onclick="applySelectedAISuggestions()">AI 제안 선택 수락 후 To-Be 반영</button>
+        <button class="btn btn-p btn-sm ai-apply-btn" type="button" onclick="applyAllAISuggestions()">AI 제안 전체 수락 후 To-Be 반영</button>
       </div>
     </div>
   </div>
@@ -633,6 +633,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     </div>
   </div>
   <div class="tv" id="t3">
+    <div class="card" id="toBeDynamicComparison" style="display:none"></div>
     <div class="split-eq">
       <div class="half"><div class="card" style="padding:10px">
         <div class="card-title" style="color:var(--d);margin-bottom:8px">As-Is (현재)</div>
@@ -680,29 +681,28 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="split">
     <div class="sl">
       <div class="card">
-        <div class="card-title">리포트 구성 <span class="ct-b">섹션 선택</span></div>
-        <label class="rsec"><div class="rsec-h"><input type="checkbox" class="report-section" value="hierarchy" checked><span style="font-size:14px;font-weight:700;margin-left:6px">STATIK 업무 구조</span></div></label>
-        <label class="rsec"><div class="rsec-h"><input type="checkbox" class="report-section" value="asis" checked><span style="font-size:14px;font-weight:700;margin-left:6px">AS-IS 프로세스</span></div></label>
-        <label class="rsec"><div class="rsec-h"><input type="checkbox" class="report-section" value="bdw" checked><span style="font-size:14px;font-weight:700;margin-left:6px">BDW 진단 결과</span></div><div class="rsec-b" id="reportBDWSummary">과제 기준 진단 결과</div></label>
-        <label class="rsec"><div class="rsec-h"><input type="checkbox" class="report-section" value="aifit" checked><span style="font-size:14px;font-weight:700;margin-left:6px">AI FIT 분석 + To-Be 프로세스</span></div><div class="rsec-b" id="reportAIFitSummary">과제 기준 분석 결과</div></label>
-        <label class="rsec"><div class="rsec-h"><input type="checkbox" class="report-section" value="ax" checked><span style="font-size:14px;font-weight:700;margin-left:6px">AX 성과지표</span></div></label>
-        <div style="margin-top:10px">
-          <div style="font-size:12px;font-weight:700;color:var(--mt);margin-bottom:6px">커스터마이징</div>
-          <div class="frow"><div class="fg"><span class="fl">보고서 제목</span><input class="fi" id="reportTitle" value="AX 프로세스 분석 결과"></div><div class="fg" style="max-width:150px"><span class="fl">연간 수행 횟수</span><input class="fi" id="reportAnnualFrequency" type="number" min="1" max="10000" value="52" onchange="openReportStep()"></div></div>
+        <div class="card-title">리포트 수행 빈도 <span class="ct-b">연간 자동 환산</span></div>
+        <div>
+          <span class="fl">수행 빈도</span>
+          <div class="frequency-grid">
+            <select class="fi" id="reportFrequencyUnit" onchange="updateFrequencyPreview(true)"><option value="day">일</option><option value="week" selected>주</option><option value="month">월</option></select>
+            <input class="fi" id="reportFrequencyCount" type="number" min="1" max="10000" value="1" inputmode="numeric" aria-label="기간당 수행 횟수" onchange="updateFrequencyPreview(true)" oninput="updateFrequencyPreview(false)">
+          </div>
+          <div class="frequency-preview" id="reportFrequencyPreview">주 1회 · 연간 52회로 환산</div>
         </div>
       </div>
       <div class="card">
         <div class="card-title">출력 형식 선택</div>
         <div class="dl-row">
-          <button class="dl-btn dl-pdf" onclick="exportReportPDF()">📕 선택 섹션 PDF 출력</button>
-          <button class="dl-btn dl-word" onclick="exportReportCSV()">📑 고정 항목 CSV 출력</button>
+          <button class="dl-btn dl-pdf" onclick="exportReportPDF()">📕 전체 리포트 PDF 출력</button>
+          <button class="dl-btn dl-word" onclick="exportReportCSV()">📑 과제정보 CSV 출력</button>
         </div>
-        <div class="inline-status" id="reportStatus">PDF는 위에서 선택한 섹션만, CSV는 프로젝트명·과제명·AS-IS·To-Be만 출력합니다.</div>
+        <div class="inline-status" id="reportStatus">PDF는 전체 분석 리포트를 출력하고, CSV는 현재 과제를 한 행으로 출력합니다.</div>
       </div>
     </div>
     <div class="sr">
       <div class="card">
-        <div class="card-title">AX 성과 지표 <span class="ct-r">FTE 기반</span></div>
+        <div class="card-title">AX 성과 지표 <button class="ct-r fte-help" type="button" onclick="openFtePopup()" title="FTE 산출 기준 보기">FTE 기반 ?</button></div>
         <div class="fte-box">
           <div class="fte-eq">절감 FTE = AX 절감 시간 ÷ 2,248h (전사 연간 표준)</div>
           <div class="fte-val" id="reportFTE">0</div>
@@ -710,25 +710,25 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
           <div class="fte-sub" id="reportFTEDetail">과제 데이터를 불러오는 중입니다.</div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <div class="sc" style="flex:1"><div class="sc-lbl">절감 시간(건당)</div><div class="sc-val" style="color:var(--w)" id="reportSaving">0분</div><div class="sc-sub" id="reportTimeCompare">0→0분</div></div>
+          <div class="sc" style="flex:1"><div class="sc-lbl">연간 AX 절감 시간</div><div class="sc-val" style="color:var(--w)" id="reportSaving">0h</div><div class="sc-sub" id="reportTimeCompare">건당 0분</div></div>
           <div class="sc" style="flex:1"><div class="sc-lbl">시간 절감률</div><div class="sc-val" style="color:var(--p)" id="reportSavingRate">0%</div><div class="sc-sub">AS-IS 대비</div></div>
-          <div class="sc" style="flex:1"><div class="sc-lbl">자동화율</div><div class="sc-val" style="color:var(--s)" id="reportAutomationRate">0%</div><div class="sc-sub">AI FIT A영역 기준</div></div>
+          <div class="sc" style="flex:1"><div class="sc-lbl">자동화율</div><div class="sc-val" style="color:var(--s)" id="reportAutomationRate">0%</div><div class="sc-sub">AI 제안 수락 기준</div></div>
         </div>
         <div style="font-size:12px;color:#555;line-height:1.8;background:#f8f9fc;border-radius:7px;padding:8px 10px;border:1px solid var(--bd);margin-bottom:7px" id="reportMetricBasis">
-          과제의 L6 프로세스와 AI FIT 결과를 기준으로 산출합니다. 연간 반복 횟수 기본값은 52회입니다.
+          과제의 L6 프로세스와 사용자가 수락한 AI 제안을 기준으로 산출합니다. 수행 빈도는 연간 횟수로 환산합니다.
         </div>
-        <div style="font-size:12px;font-weight:700;margin-bottom:5px;color:var(--mt)">🏗️ 외주 개발비 추정 <span style="font-size:11px;font-weight:400;color:#aaa">AI FIT A영역 기반 자동 산출</span></div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:5px;color:var(--mt)">🏗️ 외주 개발비 추정 <span style="font-size:11px;font-weight:400;color:#aaa">수락·반영한 AI 제안 기반 자동 산출</span></div>
         <div class="cost-box">
           <div style="display:flex;align-items:baseline;gap:6px">
             <div class="cost-main" id="reportDevCost">₩0</div>
             <div style="font-size:12px;color:var(--p);font-weight:700">순수 인건비</div>
           </div>
           <div class="cost-formula">
-            <span id="reportCostFormula">A영역 0개 × 1.0 M/M/개</span>
+            <span id="reportCostFormula">수락·반영 0개 × 1.0 M/M/개</span>
           </div>
           <div class="cost-basis">
             📌 응용SW개발자 2026년 노임단가 기준<br>
-            일평균 378,250원 × 22일 = 8,321,500원/M · M/M 기준: A영역 1개 = 1.0 M/M (업무 자동화 기본값)
+            일평균 378,250원 × 22일 = 8,321,500원/M · M/M 기준: 수락·반영 1개 = 1.0 M/M (업무 자동화 기본값)
           </div>
         </div>
         <div style="font-size:12px;font-weight:700;margin:8px 0 5px;color:var(--mt)">성과 검증 3단계</div>
@@ -753,8 +753,11 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 </div>
 <script>
 let cur=1;
-let ctx={project:'',projectId:null,projectEngine:null,taskId:null,interviewId:null,processes:[],bdw:null,bdwMeta:null,aiResult:null,report:null,l1:'영업마케팅',l2:'디지털마케팅',l3:'콘텐츠 제작',l4:'SNS 채널 관리'};
+let ctx={project:'',projectId:null,projectData:null,projectEngine:null,taskId:null,taskParticipants:[],interviewId:null,processes:[],bdw:null,bdwMeta:null,aiResult:null,acceptedAiProcessIds:[],toBeApplied:false,report:null,l1:'',l2:'',l3:'',l4:''};
 const appState={companyName:'',companyRegistered:false,aiConnected:false,aiEngine:'gemini',aiModel:null,apiKey:''};
+let companyProjects=[];
+let editingProjectId=null;
+let editingProjectEngine=null;
 const names=['','과제 등록','인터뷰 & Draft','프로세스 수정','BDW 진단','AI FIT 분석','결과 리포트'];
 const apiBase=window.location.protocol==='file:'?'http://localhost:5000/api':'/api';
 
@@ -766,7 +769,7 @@ async function apiRequest(path,options={}){
   const text=await response.text();
   let result={};
   try{result=text?JSON.parse(text):{};}catch{result={error:text||'서버 응답을 해석할 수 없습니다.'};}
-  if(!response.ok) throw new Error(result.error||('서버가 빈 오류 응답을 반환했습니다. (HTTP '+response.status+')'));
+  if(!response.ok){const error=new Error(result.error||('서버가 빈 오류 응답을 반환했습니다. (HTTP '+response.status+')'));error.issues=result.issues||(result.errors||[]).map(item=>item.msg||String(item));throw error;}
   return result;
 }
 function setHeaderVisible(visible){
@@ -822,13 +825,59 @@ async function startApplication(){
   await openProjectList();
 }
 
+const participantRoles={
+  project:['프로젝트 리더','프로젝트 담당자','컨설턴트'],
+  task:['과제 리더','과제 담당자']
+};
+function showValidationPopup(title,issues){
+  const normalized=[...new Set((issues||[]).filter(Boolean))];
+  document.getElementById('validationPopupTitle').textContent=title;
+  document.getElementById('validationPopupList').innerHTML=normalized.map(issue=>'<li>'+escapeHtml(issue)+'</li>').join('');
+  document.getElementById('validationPopup').classList.add('open');
+}
+function closeValidationPopup(){document.getElementById('validationPopup').classList.remove('open');}
+function addParticipantRow(kind,participant={}){
+  const container=document.getElementById(kind+'ParticipantRows');
+  const row=document.createElement('div');row.className='frow participant-row';
+  const roles=participantRoles[kind];const selected=roles.includes(participant.role)?participant.role:roles[0];
+  row.innerHTML='<div class="fg" style="flex:1"><span class="fl">이름 <span class="req">*</span></span><input class="fi participant-name" value="'+escapeHtml(participant.name||'')+'"></div><div class="fg" style="flex:.8"><span class="fl">직급 <span class="req">*</span></span><input class="fi participant-position" value="'+escapeHtml(participant.position||'')+'"></div><div class="fg" style="flex:1.15"><span class="fl">역할 <span class="req">*</span></span><select class="fi participant-role">'+roles.map(role=>'<option '+(role===selected?'selected':'')+'>'+escapeHtml(role)+'</option>').join('')+'</select></div><div class="fg" style="flex:1.35"><span class="fl">이메일</span><input class="fi participant-email" type="email" value="'+escapeHtml(participant.email||'')+'"></div><button class="btn btn-o participant-remove" type="button" title="참여자 삭제">✕</button>';
+  row.querySelector('.participant-remove').addEventListener('click',()=>row.remove());
+  container.appendChild(row);
+}
+function setParticipantRows(kind,participants=[]){
+  const container=document.getElementById(kind+'ParticipantRows');container.innerHTML='';
+  const defaults=kind==='project'
+    ? [{role:'프로젝트 리더'},{role:'프로젝트 담당자'},{role:'컨설턴트'}]
+    : [{role:'과제 리더'},{role:'과제 담당자'}];
+  (participants.length?participants:defaults).forEach(participant=>addParticipantRow(kind,participant));
+}
+function collectParticipants(kind){
+  return [...document.querySelectorAll('#'+kind+'ParticipantRows .participant-row')].map(row=>({
+    name:row.querySelector('.participant-name').value.trim(),
+    position:row.querySelector('.participant-position').value.trim(),
+    role:row.querySelector('.participant-role').value,
+    email:row.querySelector('.participant-email').value.trim()
+  })).filter(participant=>participant.name||participant.position||participant.email);
+}
+function validateParticipants(kind,participants){
+  const label=kind==='project'?'프로젝트 참여자':'과제 참여자';const issues=[];
+  participants.forEach((participant,index)=>{
+    if(!participant.name) issues.push(label+' '+(index+1)+'의 이름을 입력해 주세요.');
+    if(!participant.position) issues.push(label+' '+(index+1)+'의 직급을 입력해 주세요.');
+  });
+  participantRoles[kind].forEach(role=>{if(!participants.some(participant=>participant.role===role)) issues.push(role+'를 최소 1명 등록해 주세요.');});
+  return issues;
+}
+function formatPeriod(project){return project.start_date&&project.end_date?project.start_date+' ~ '+project.end_date:(project.analysis_period||'기간 미등록');}
+function validateDateRange(startDate,endDate,label){
+  const issues=[];if(!startDate) issues.push(label+' 시작일을 선택해 주세요.');if(!endDate) issues.push(label+' 종료일을 선택해 주세요.');if(startDate&&endDate&&startDate>endDate) issues.push(label+' 종료일은 시작일 이후여야 합니다.');return issues;
+}
+
 async function loadCompanyProjects(){
   const container=document.getElementById('projectListContainer');
   container.innerHTML='<div class="loading-state">'+escapeHtml(appState.companyName)+' 프로젝트를 불러오는 중입니다...</div>';
   try{
-    const response=await fetch(apiBase+'/projects?company_name='+encodeURIComponent(appState.companyName));
-    const projects=await response.json();
-    if(!response.ok) throw new Error(projects.error||'프로젝트 목록을 불러오지 못했습니다.');
+    const projects=await apiRequest('/projects?company_name='+encodeURIComponent(appState.companyName));companyProjects=projects;
     if(!projects.length){container.innerHTML='<div class="empty-state"><b>'+escapeHtml(appState.companyName)+'</b>에 등록된 프로젝트가 없습니다.<br>새 프로젝트를 생성해 주세요.</div>';return;}
     container.innerHTML='';
     projects.forEach(project=>{
@@ -836,8 +885,9 @@ async function loadCompanyProjects(){
       card.className='proj-card';
       const updated=project.updated_at||project.created_at;
       const date=updated?new Date(updated).toLocaleDateString('ko-KR'):'-';
-      const period=project.analysis_period||[project.start_date,project.end_date].filter(Boolean).join(' ~ ')||'기간 미등록';
-      card.innerHTML='<div class="proj-card-top"><div class="proj-name">'+escapeHtml(project.name)+'</div><span style="font-size:11px;color:#bbb">최근 수정 '+escapeHtml(date)+'</span></div><div class="proj-meta"><span class="proj-chip">목적: '+escapeHtml(project.analysis_goal||project.description||'미등록')+'</span><span class="proj-chip">'+escapeHtml(period)+'</span></div><div class="proj-stats">과제 '+Number(project.task_count||0)+'건 · 진행중 '+Number(project.in_progress_count||0)+' · 완료 '+Number(project.completed_count||0)+'</div>';
+      const participants=(project.participants||[]).map(person=>[person.name,person.position,person.role].filter(Boolean).join(' / '));
+      card.innerHTML='<div class="proj-card-top"><div><div class="proj-name">'+escapeHtml(project.name)+'</div><div class="task-path">'+[project.department_name,project.business_name||project.description,project.name].filter(Boolean).map(escapeHtml).join(' › ')+'</div></div><div class="proj-actions"><span style="font-size:11px;color:#bbb">최근 수정 '+escapeHtml(date)+'</span><button class="btn btn-o proj-edit" type="button">정보 수정</button></div></div><div class="proj-meta"><span class="proj-chip">L1 '+escapeHtml(project.department_name||'미등록')+'</span><span class="proj-chip">L2 '+escapeHtml(project.business_name||project.description||'미등록')+'</span><span class="proj-chip">목적: '+escapeHtml(project.analysis_goal||'미등록')+'</span><span class="proj-chip">'+escapeHtml(formatPeriod(project))+'</span></div><div class="proj-participants">참여자: '+(participants.length?participants.map(escapeHtml).join(' · '):'미등록')+'</div><div class="proj-stats">과제 '+Number(project.task_count||0)+'건 · 진행중 '+Number(project.in_progress_count||0)+' · 완료 '+Number(project.completed_count||0)+'</div>';
+      card.querySelector('.proj-edit').addEventListener('click',event=>{event.stopPropagation();openEditProjectForm(project.id);});
       card.addEventListener('click',()=>openTaskList(project.name,project.id));
       container.appendChild(card);
     });
@@ -873,23 +923,40 @@ async function openProjectList(){
   setHdrSingle('프로젝트 목록');
   await loadCompanyProjects();
 }
+function resetProjectForm(){
+  editingProjectId=null;editingProjectEngine=null;
+  document.getElementById('projectFormBreadcrumb').textContent='새 프로젝트 생성';
+  document.getElementById('projectFormTitle').textContent='기본 정보';
+  document.getElementById('btnSaveProject').textContent='프로젝트 생성 →';
+  ['newDeptName','newBusinessName','newProjName','newStartDate','newEndDate','newAnalysisGoal'].forEach(id=>document.getElementById(id).value='');
+  setParticipantRows('project');
+}
 function openNewProjectForm(){
   if(!appState.companyRegistered){showWelcome();return;}
+  resetProjectForm();
   hideFlowChrome();
   show('pageNewProject');
   document.getElementById('newCompanyName').value=appState.companyName;
   document.getElementById('hdrBrd').innerHTML='<span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="font-weight:800;cursor:default">새 프로젝트 생성</span>';
 }
-async function createProject(){
-  const name=document.getElementById('newProjName').value.trim();
-  if(!name){alert('프로젝트명을 입력해 주세요.');return;}
-  const body={name,company_name:appState.companyName,department_name:document.getElementById('newDeptName').value.trim(),analysis_period:document.getElementById('newAnalysisPeriod').value.trim(),analysis_goal:document.getElementById('newAnalysisGoal').value.trim(),ai_engine:appState.aiEngine,participants:[]};
+async function openEditProjectForm(projectId){
   try{
-    const response=await fetch(apiBase+'/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const result=await response.json();
-    if(!response.ok) throw new Error(result.error||'프로젝트 생성에 실패했습니다.');
-    openTaskList(result.project.name,result.project.id);
-  }catch(error){alert(error.message);}
+    const project=await apiRequest('/projects/'+projectId);editingProjectId=project.id;editingProjectEngine=project.ai_engine;
+    hideFlowChrome();show('pageNewProject');
+    document.getElementById('projectFormBreadcrumb').textContent='프로젝트 정보 수정';document.getElementById('projectFormTitle').textContent='프로젝트 기본 정보 수정';document.getElementById('btnSaveProject').textContent='수정사항 저장';
+    document.getElementById('newCompanyName').value=project.company_name||appState.companyName;document.getElementById('newDeptName').value=project.department_name||project.l1_domain||'';document.getElementById('newBusinessName').value=project.business_name||project.description||'';document.getElementById('newProjName').value=project.name||'';document.getElementById('newStartDate').value=project.start_date||'';document.getElementById('newEndDate').value=project.end_date||'';document.getElementById('newAnalysisGoal').value=project.analysis_goal||'';setParticipantRows('project',project.participants||[]);
+    document.getElementById('hdrBrd').innerHTML='<span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="font-weight:800;cursor:default">프로젝트 정보 수정</span>';
+  }catch(error){showValidationPopup('프로젝트 정보를 불러오지 못했습니다',[error.message]);}
+}
+async function saveProject(){
+  const participants=collectParticipants('project');const startDate=document.getElementById('newStartDate').value;const endDate=document.getElementById('newEndDate').value;
+  const body={name:document.getElementById('newProjName').value.trim(),company_name:appState.companyName,department_name:document.getElementById('newDeptName').value.trim(),business_name:document.getElementById('newBusinessName').value.trim(),analysis_goal:document.getElementById('newAnalysisGoal').value.trim(),start_date:startDate,end_date:endDate,ai_engine:editingProjectEngine||appState.aiEngine,participants};
+  const issues=[];if(!body.company_name)issues.push('회사명을 등록해 주세요.');if(!body.department_name)issues.push('부서명(L1 구분)을 입력해 주세요.');if(!body.business_name)issues.push('업무명(L2 대분류)을 입력해 주세요.');if(!body.name)issues.push('프로젝트명(L3 기능)을 입력해 주세요.');if(!body.analysis_goal)issues.push('프로젝트 목적을 입력해 주세요.');issues.push(...validateDateRange(startDate,endDate,'프로젝트 기간'),...validateParticipants('project',participants));
+  if(issues.length){showValidationPopup(editingProjectId?'프로젝트 수정 보완사항':'프로젝트 생성 보완사항',issues);return;}
+  try{
+    const result=await apiRequest(editingProjectId?'/projects/'+editingProjectId:'/projects',{method:editingProjectId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    await openTaskList(result.project.name,result.project.id);
+  }catch(error){showValidationPopup(editingProjectId?'프로젝트 수정 보완사항':'프로젝트 생성 보완사항',error.issues?.length?error.issues:[error.message]);}
 }
 async function openTaskList(name,projectId=ctx.projectId){
   let project=null;
@@ -897,19 +964,23 @@ async function openTaskList(name,projectId=ctx.projectId){
     project=projectId?await apiRequest('/projects/'+projectId):null;
     ctx.project=project?.name||name;
     ctx.projectId=projectId;
+    ctx.projectData=project;
+    ctx.l1=project?.department_name||project?.l1_domain||'';
+    ctx.l2=project?.business_name||project?.description||'';
+    ctx.l3=project?.name||'';
     ctx.projectEngine=project?.ai_engine||ctx.projectEngine||appState.aiEngine;
   }catch(error){alert(error.message);return;}
   document.getElementById('tlProjName').textContent=ctx.project;
   document.getElementById('taskProjectCompany').textContent=appState.companyName;
-  document.getElementById('taskProjectGoal').textContent='목적: '+(project?.analysis_goal||'미등록');
-  document.getElementById('taskProjectPeriod').textContent='기간: '+(project?.analysis_period||'미등록');
+  document.getElementById('taskProjectGoal').textContent='L1~L3: '+[ctx.l1,ctx.l2,ctx.l3].filter(Boolean).join(' › ');
+  document.getElementById('taskProjectPeriod').textContent='기간: '+(project?formatPeriod(project):'미등록');
   document.getElementById('taskProjectEngine').textContent='AI엔진 '+({gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude'}[ctx.projectEngine]||ctx.projectEngine);
   hideFlowChrome();
   show('pageTaskList');
   setHdrTrail(ctx.project,'과제 목록');
   await loadProjectTasks();
 }
-function openTaskListCurrent(){ openTaskList(ctx.project||'디지털마케팅 콘텐츠 제작 프로세스 분석'); }
+function openTaskListCurrent(){ openTaskList(ctx.project||'',ctx.projectId); }
 
 function ensureProjectAIConnection(){
   if(!appState.aiConnected||!appState.apiKey){alert('접속 첫 화면에서 AI API를 등록해 주세요.');return false;}
@@ -922,6 +993,10 @@ function ensureProjectAIConnection(){
 }
 
 function openNewTaskForm(){
+  if(!ctx.projectData){showValidationPopup('과제 등록 안내',['프로젝트 정보를 먼저 선택해 주세요.']);return;}
+  document.getElementById('inpL1').value=ctx.l1;document.getElementById('inpL2').value=ctx.l2;document.getElementById('inpL3').value=ctx.l3;
+  ['inpL4','inpTaskName','inpTaskStartDate','inpTaskEndDate','inpTaskGoal'].forEach(id=>document.getElementById(id).value='');
+  setParticipantRows('task');ctx.taskId=null;ctx.l4='';ctx.taskParticipants=[];ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;
   showFlowChrome();
   setHdrTrail(ctx.project||'프로젝트','과제 등록');
   go(1);
@@ -943,32 +1018,32 @@ async function loadProjectTasks(){
 }
 async function openTaskFlow(task){
   ctx.taskId=task.id;ctx.l4=task.l4||task.name;ctx.l1=task.l1;ctx.l2=task.l2;ctx.l3=task.l3;
-  ctx.interviewId=null;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.report=null;
+  ctx.taskParticipants=task.participants||[];
+  ctx.interviewId=null;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
   try{ctx.processes=await apiRequest('/interviews/project/'+ctx.projectId+'/processes?task_id='+ctx.taskId);}catch(error){alert(error.message);return;}
   showFlowChrome();setHdrTrail(ctx.project||'프로젝트',ctx.l4);
   document.getElementById('taskChip').textContent=ctx.l4+' (L4 과제)';
   if(ctx.processes.length){renderDraftTable();renderProcessEditor();renderFlowchart();go(3);}else go(2);
 }
 async function startTaskFlow(){
-  if(!ctx.projectId){alert('프로젝트를 먼저 선택해 주세요.');return;}
-  ctx.l1=document.getElementById('inpL1').value||ctx.l1;
-  ctx.l2=document.getElementById('inpL2').value||ctx.l2;
-  ctx.l3=document.getElementById('inpL3').value||ctx.l3;
-  ctx.l4=document.getElementById('inpL4').value||'새 과제';
-  const taskName=document.getElementById('inpTaskName').value.trim()||ctx.l4+' 프로세스 분석';
+  if(!ctx.projectId){showValidationPopup('과제 등록 보완사항',['프로젝트를 먼저 선택해 주세요.']);return;}
+  ctx.l1=document.getElementById('inpL1').value.trim();ctx.l2=document.getElementById('inpL2').value.trim();ctx.l3=document.getElementById('inpL3').value.trim();ctx.l4=document.getElementById('inpL4').value.trim();
+  const taskName=document.getElementById('inpTaskName').value.trim();const goal=document.getElementById('inpTaskGoal').value.trim();const startDate=document.getElementById('inpTaskStartDate').value;const endDate=document.getElementById('inpTaskEndDate').value;const participants=collectParticipants('task');
+  const issues=[];if(!ctx.l1||!ctx.l2||!ctx.l3)issues.push('프로젝트의 L1~L3 정보를 먼저 완성해 주세요.');if(!ctx.l4)issues.push('L4 과제명을 입력해 주세요.');if(!taskName)issues.push('과제명을 입력해 주세요.');if(!goal)issues.push('과제 목표를 입력해 주세요.');issues.push(...validateDateRange(startDate,endDate,'과제 기간'),...validateParticipants('task',participants));
+  if(issues.length){showValidationPopup('과제 등록 보완사항',issues);return;}
   try{
     const result=await apiRequest('/projects/'+ctx.projectId+'/tasks',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name:taskName,l1:ctx.l1,l2:ctx.l2,l3:ctx.l3,l4:ctx.l4,goal:document.getElementById('inpTaskGoal').value.trim(),participants:[]})
+      body:JSON.stringify({name:taskName,l4:ctx.l4,goal,start_date:startDate,end_date:endDate,participants})
     });
-    ctx.taskId=result.task.id;ctx.processes=[];ctx.interviewId=null;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.report=null;
+    ctx.taskId=result.task.id;ctx.taskParticipants=result.task.participants||participants;ctx.processes=[];ctx.interviewId=null;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
     setHdrTrail(ctx.project||'프로젝트',ctx.l4);
     document.getElementById('taskChip').textContent=ctx.l4+' (L4 과제)';
     document.getElementById('draftBody').innerHTML='';
     document.getElementById('draftStatus').textContent='인터뷰 답변을 입력하고 생성하세요.';
     document.getElementById('draftSummary').textContent='AI Draft 생성 전입니다.';
     go(2);
-  }catch(error){alert(error.message);}
+  }catch(error){showValidationPopup('과제 등록 보완사항',error.issues?.length?error.issues:[error.message]);}
 }
 
 function renderDraftTable(){
@@ -1007,7 +1082,7 @@ function optionList(options,selected){return options.map(item=>'<option value="'
 function setProcessValue(index,field,value){
   if(['execution_time','waiting_time','approval_waiting_time'].includes(field)) value=Number(value)||0;
   ctx.processes[index][field]=value;
-  ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.report=null;
+  ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
   document.getElementById('syncStatus').style.color='var(--w)';
   document.getElementById('syncStatus').textContent='저장되지 않은 변경사항이 있습니다.';
 }
@@ -1067,9 +1142,54 @@ function renderAIFit(result){
   const analysis=result.analysis||[];const summary=result.summary||{};ctx.aiResult=result;
   const totalSaving=analysis.reduce((sum,item)=>sum+Number(item.estimated_time_savings||0),0);
   document.getElementById('fitSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">전체 L6 업무</div><div class="sc-val" style="color:var(--p)">'+analysis.length+'개</div><div class="sc-sub">'+escapeHtml(result.model_used||'AI')+'</div></div><div class="sc"><div class="sc-lbl">A영역 (즉시 적용)</div><div class="sc-val" style="color:var(--s)">'+Number(summary.immediate_application_count||0)+'개</div></div><div class="sc"><div class="sc-lbl">예상 자동화율</div><div class="sc-val" style="color:var(--w)">'+Number(summary.automation_rate||0)+'%</div></div><div class="sc"><div class="sc-lbl">예상 절감</div><div class="sc-val" style="color:var(--d)">'+totalSaving+'분</div></div>';
-  document.getElementById('aiFitBody').innerHTML=analysis.map(item=>'<tr><td>'+escapeHtml(item.name)+'</td><td><span class="aisc sc'+Math.max(1,Math.round(item.ai_possibility))+'">'+item.ai_possibility+'</span></td><td><span class="aisc sc'+Math.max(1,Math.round(item.inefficiency))+'">'+item.inefficiency+'</span></td><td><span class="fit-'+item.fit_category.toLowerCase()+'">'+item.fit_category+'</span></td><td>'+escapeHtml(item.recommended_tech||'—')+'</td><td><b>'+Number(item.estimated_time_savings||0)+'</b></td></tr>').join('');
+  const acceptedIds=new Set((ctx.acceptedAiProcessIds||[]).map(Number));
+  document.getElementById('aiFitBody').innerHTML=analysis.map(item=>{const processId=Number(item.process_id);const accepted=acceptedIds.has(processId);const score=Math.max(1,Math.min(5,Math.round(Number(item.inefficiency)||1)));const category=String(item.fit_category||'D').toLowerCase();return '<tr class="'+(accepted?'ai-accepted':'')+'"><td style="text-align:center"><input class="ai-accept" type="checkbox" value="'+processId+'" '+(accepted?'checked':'')+' onchange="onAISuggestionCheckChange()" aria-label="'+escapeHtml(item.name)+' AI 제안 수락"></td><td>'+escapeHtml(item.name)+'</td><td><span class="aisc sc'+Math.max(1,Math.min(5,Math.round(Number(item.ai_possibility)||1)))+'">'+Number(item.ai_possibility||0)+'</span></td><td><span class="aisc ineff-'+score+'">'+Number(item.inefficiency||0)+'</span></td><td><span class="fit-'+category+'">'+escapeHtml(item.fit_category||'D')+'</span></td><td>'+escapeHtml(item.recommended_tech||'—')+'</td><td><b>'+Number(item.estimated_time_savings||0)+'</b></td></tr>';}).join('');
   const grouped={A:[],B:[],C:[],D:[]};analysis.forEach(item=>grouped[item.fit_category]?.push(item));
   document.getElementById('aiFitMatrix').innerHTML=['B','A','D','C'].map(category=>'<div class="mq mq'+category+'"><div class="mq-lbl">'+category+'</div>'+grouped[category].map(item=>'<span class="mq-item">'+escapeHtml(item.name)+'</span>').join('')+'</div>').join('');
+  updateAIAcceptanceStatus();
+}
+function selectedAISuggestionIds(){return [...document.querySelectorAll('.ai-accept:checked')].map(input=>Number(input.value)).filter(Number.isInteger);}
+function updateAIAcceptanceStatus(message){
+  const status=document.getElementById('aiFitAcceptanceStatus');if(!status)return;
+  const acceptedCount=(ctx.acceptedAiProcessIds||[]).length;
+  status.textContent=message||(acceptedCount?acceptedCount+'개 제안 수락 완료 · To-Be 반영 가능':'수락할 단위 업무를 선택해 주세요.');
+  status.style.color=acceptedCount?'var(--s)':'var(--mt)';
+}
+function onAISuggestionCheckChange(){
+  ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
+  document.querySelectorAll('#aiFitBody tr').forEach(row=>row.classList.remove('ai-accepted'));
+  updateAIAcceptanceStatus('선택이 변경되었습니다. AI 제안 선택 수락을 눌러 확정해 주세요.');
+}
+async function applySelectedAISuggestions(){
+  const selectedIds=selectedAISuggestionIds();
+  if(!selectedIds.length){alert('To-Be에 반영할 단위 업무를 하나 이상 선택해 주세요.');return;}
+  await applyAcceptedToBe(selectedIds);
+}
+async function applyAllAISuggestions(){
+  const inputs=[...document.querySelectorAll('.ai-accept')];
+  if(!inputs.length){alert('먼저 AI FIT 분석을 실행해 주세요.');return;}
+  inputs.forEach(input=>{input.checked=true;});
+  await applyAcceptedToBe(inputs.map(input=>Number(input.value)));
+}
+async function applyAcceptedToBe(acceptedIds){
+  ctx.acceptedAiProcessIds=[...new Set((acceptedIds||[]).map(Number).filter(Number.isInteger))];ctx.toBeApplied=false;ctx.report=null;
+  document.querySelectorAll('#aiFitBody tr').forEach(row=>{const input=row.querySelector('.ai-accept');row.classList.toggle('ai-accepted',Boolean(input?.checked));});
+  const buttons=[...document.querySelectorAll('.ai-apply-btn')];buttons.forEach(button=>{button.disabled=true;});
+  const originalLabels=buttons.map(button=>button.textContent);buttons.forEach(button=>{button.textContent='To-Be 생성 중...';});
+  try{
+    const result=await apiRequest('/analysis/project/'+ctx.projectId+'/to-be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId,accepted_process_ids:ctx.acceptedAiProcessIds})});
+    ctx.toBeApplied=true;ctx.report=null;renderToBeComparison(result.toBeProcesses||[]);
+    updateAIAcceptanceStatus(Number(result.accepted_count||ctx.acceptedAiProcessIds.length)+'개 제안이 To-Be 프로세스에 반영되었습니다.');
+    document.querySelectorAll('.tab').forEach(tab=>tab.classList.remove('on'));document.querySelectorAll('.tv').forEach(view=>view.classList.remove('on'));
+    document.querySelector('[onclick*="t3"]')?.classList.add('on');document.getElementById('t3').classList.add('on');
+  }catch(error){ctx.toBeApplied=false;alert(error.message);}finally{buttons.forEach((button,index)=>{button.disabled=false;button.textContent=originalLabels[index];});}
+}
+function renderToBeComparison(toBeProcesses){
+  const toBeById=new Map((toBeProcesses||[]).map(item=>[Number(item.original_process_id),item]));
+  const processes=(ctx.processes||[]).filter(process=>process.level==='L6');
+  const flowNodes=(items,mode)=>items.map((process,index)=>{const toBe=toBeById.get(Number(process.id));const applied=Boolean(toBe?.ai_applied);const isToBe=mode==='tobe';const time=isToBe?Number(toBe?.estimated_execution_time??process.execution_time??0):Number(process.execution_time||0);const nodeClass=isToBe?(applied?'applied':'manual'):'asis';const meta=isToBe?(applied?'AI 적용 · '+escapeHtml(toBe?.automation_method||'AI'):'현행 유지'):'현재 수행 · '+time+'분';const content='<div class="comparison-node '+nodeClass+'"><div class="comparison-node-name">'+(index+1)+'. '+escapeHtml(process.name)+'</div><div class="comparison-node-meta">'+(isToBe?time+'분 · ':'')+meta+'</div></div>';return content+(index<items.length-1?'<div class="comparison-arrow">↓</div>':'');}).join('');
+  const view=document.getElementById('toBeDynamicComparison');if(view){view.style.display='block';view.innerHTML='<div class="card-title">선택 수락 기준 As-Is vs To-Be</div><div class="comparison-flow-grid"><div><div class="comparison-flow-title" style="color:var(--d)">As-Is 프로세스</div><div class="comparison-flow">'+flowNodes(processes,'asis')+'</div></div><div class="comparison-center-arrow">→</div><div><div class="comparison-flow-title" style="color:var(--s)">To-Be 프로세스</div><div class="comparison-flow">'+flowNodes(processes,'tobe')+'</div></div></div>';}
+  const sample=document.querySelector('#t3 .split-eq');if(sample)sample.style.display='none';
 }
 async function runAIFit(){
   if(!ensureProjectAIConnection()) return;
@@ -1077,35 +1197,46 @@ async function runAIFit(){
   const button=document.getElementById('btnRunAIFit');button.disabled=true;button.textContent='AI FIT 분석 중...';
   try{
     const result=await apiRequest('/analysis/project/'+ctx.projectId+'/ai-fit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId,apiKey:appState.apiKey})});
-    await apiRequest('/analysis/project/'+ctx.projectId+'/to-be',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId,ai_analysis:result.analysis})});
-    ctx.report=null;renderAIFit(result);go(5);
+    ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;renderAIFit(result);go(5);
   }catch(error){alert(error.message);}finally{button.disabled=false;button.textContent='✓ 프로세스 확정 & AI FIT 분석 →';}
 }
 
 function renderReport(report){
   const stats=report.statistics;
-  document.getElementById('reportTitle').value=(report.task_name||ctx.l4)+' AX 분석 결과';
   document.getElementById('reportFTE').textContent=Number(stats.fte_equivalent||0).toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
   document.getElementById('reportFTEDetail').textContent='연간 절감 '+Number(stats.annual_savings_hours||0)+'h ÷ 2,248h = '+stats.fte_equivalent+' FTE';
-  document.getElementById('reportSaving').textContent=Number(stats.time_savings||0)+'분';
-  document.getElementById('reportTimeCompare').textContent=Number(stats.as_is_total_time||0)+'→'+Number(stats.to_be_total_time||0)+'분';
+  document.getElementById('reportSaving').textContent=Number(stats.annual_savings_hours||0)+'h';
+  document.getElementById('reportTimeCompare').textContent='건당 '+Number(stats.time_savings||0)+'분 · '+Number(stats.as_is_total_time||0)+'→'+Number(stats.to_be_total_time||0)+'분';
   document.getElementById('reportSavingRate').textContent=Number(stats.time_savings_rate||0)+'%';
   document.getElementById('reportAutomationRate').textContent=Number(stats.automation_rate||0)+'%';
   document.getElementById('reportDevCost').textContent='₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR');
-  document.getElementById('reportCostFormula').textContent='A영역 '+Number(stats.automated_process_count||0)+'개 × 1.0 M/M/개 × ₩8,321,500';
-  document.getElementById('reportMetricBasis').textContent='과제 「'+(report.task_name||'')+'」의 L6 '+Number(stats.total_processes||0)+'개 기준 · 연간 반복 '+Number(stats.annual_frequency||52)+'회 · AS-IS 대기 '+Number(stats.as_is_waiting_hours||0)+'시간';
-  document.getElementById('reportBDWSummary').textContent='병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개';
-  document.getElementById('reportAIFitSummary').textContent='A영역 '+Number(stats.automated_process_count||0)+'개 · 자동화율 '+Number(stats.automation_rate||0)+'%';
+  document.getElementById('reportCostFormula').textContent='수락·반영 '+Number(stats.automated_process_count||0)+'개 × 1.0 M/M/개 × ₩8,321,500';
+  const unitLabels={day:'일',week:'주',month:'월'};const frequencyLabel=(unitLabels[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회';
+  document.getElementById('reportMetricBasis').textContent='과제 「'+(report.task_name||'')+'」의 L6 '+Number(stats.total_processes||0)+'개 기준 · '+frequencyLabel+' → 연간 '+Number(stats.annual_frequency||52)+'회 환산 · AS-IS 대기 '+Number(stats.as_is_waiting_hours||0)+'시간';
   document.getElementById('reportStatus').style.color='var(--s)';
   document.getElementById('reportStatus').textContent='✓ '+report.project_name+' / '+report.task_name+' 기준 리포트 데이터 준비 완료';
 }
 
+function getReportFrequency(){
+  const unit=document.getElementById('reportFrequencyUnit')?.value||'week';
+  const count=Math.max(1,Math.min(10000,Number(document.getElementById('reportFrequencyCount')?.value)||1));
+  const multiplier={day:365,week:52,month:12}[unit]||52;
+  return {unit,count,annual:count*multiplier,label:{day:'일',week:'주',month:'월'}[unit]||'주'};
+}
+function updateFrequencyPreview(refreshReport){
+  const frequency=getReportFrequency();
+  document.getElementById('reportFrequencyPreview').textContent=frequency.label+' '+frequency.count+'회 · 연간 '+frequency.annual+'회로 환산';
+  if(refreshReport&&ctx.report&&cur===6)openReportStep();
+}
+
 async function openReportStep(){
   if(!ctx.projectId||!ctx.taskId){alert('프로젝트와 과제를 먼저 선택해 주세요.');return;}
+  if(!ctx.toBeApplied){alert('AI FIT에서 단위 업무별 AI 제안을 수락하고 To-Be 반영을 먼저 완료해 주세요.');return;}
   const status=document.getElementById('reportStatus');status.style.color='var(--mt)';status.textContent='과제 기준 성과지표를 계산하고 있습니다.';
   try{
-    const frequency=Math.max(1,Number(document.getElementById('reportAnnualFrequency').value)||52);
-    ctx.report=await apiRequest('/analysis/project/'+ctx.projectId+'/report?task_id='+ctx.taskId+'&annual_frequency='+frequency);
+    const frequency=getReportFrequency();
+    const params=new URLSearchParams({task_id:String(ctx.taskId),frequency_unit:frequency.unit,frequency_count:String(frequency.count)});
+    ctx.report=await apiRequest('/analysis/project/'+ctx.projectId+'/report?'+params.toString());
     renderReport(ctx.report);go(6);
   }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;alert(error.message);}
 }
@@ -1113,35 +1244,28 @@ async function openReportStep(){
 function reportTable(headers,rows){
   return '<table><thead><tr>'+headers.map(header=>'<th>'+escapeHtml(header)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(cell=>'<td>'+escapeHtml(cell)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
 }
-function selectedReportSections(){return [...document.querySelectorAll('.report-section:checked')].map(input=>input.value);}
-function buildPrintableReport(report,sections){
+function buildPrintableReport(report){
   const stats=report.statistics;const parts=[];
-  if(sections.includes('hierarchy')) parts.push('<section><h2>STATIK 업무 구조</h2><p>'+[report.hierarchy.l1,report.hierarchy.l2,report.hierarchy.l3,report.hierarchy.l4].map(escapeHtml).join(' › ')+'</p><p>과제 목표: '+escapeHtml(report.task_goal||'미등록')+'</p></section>');
-  if(sections.includes('asis')) parts.push('<section><h2>AS-IS 프로세스</h2>'+reportTable(['순번','프로세스','수행(분)','대기(h)','승인대기(h)','BDW'],report.as_is_processes.map((item,index)=>[index+1,item.name,item.execution_time||0,item.waiting_time||0,item.approval_waiting_time||0,item.bdw_type]))+'</section>');
-  if(sections.includes('bdw')) parts.push('<section><h2>BDW 진단</h2><p>병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p></section>');
-  if(sections.includes('aifit')) parts.push('<section><h2>AI FIT 및 To-Be 프로세스</h2>'+reportTable(['순번','To-Be 프로세스','AI 적용','예상 수행(분)','자동화 방식'],report.to_be_processes.map((item,index)=>[index+1,item.name,item.ai_applied?'Y':'N',item.estimated_execution_time,item.automation_method]))+'</section>');
-  if(sections.includes('ax')) parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',stats.as_is_total_time+'분'],['To-Be 수행시간',stats.to_be_total_time+'분'],['건당 절감시간',stats.time_savings+'분'],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['연간 절감시간',stats.annual_savings_hours+'시간'],['절감 FTE',stats.fte_equivalent],['예상 개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
+  parts.push('<section><h2>STATIK 업무 구조</h2><p>'+[report.hierarchy.l1,report.hierarchy.l2,report.hierarchy.l3,report.hierarchy.l4].map(escapeHtml).join(' › ')+'</p><p>과제 목표: '+escapeHtml(report.task_goal||'미등록')+'</p></section>');
+  parts.push('<section><h2>AS-IS 프로세스</h2>'+reportTable(['순번','프로세스','수행(분)','대기(h)','승인대기(h)','BDW'],report.as_is_processes.map((item,index)=>[index+1,item.name,item.execution_time||0,item.waiting_time||0,item.approval_waiting_time||0,item.bdw_type]))+'</section>');
+  parts.push('<section><h2>BDW 진단</h2><p>병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p></section>');
+  parts.push('<section><h2>AI FIT 및 To-Be 프로세스</h2>'+reportTable(['순번','To-Be 프로세스','AI 적용','예상 수행(분)','자동화 방식'],report.to_be_processes.map((item,index)=>[index+1,item.name,item.ai_applied?'Y':'N',item.estimated_execution_time,item.automation_method]))+'</section>');
+  parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',stats.as_is_total_time+'분'],['To-Be 수행시간',stats.to_be_total_time+'분'],['건당 절감시간',stats.time_savings+'분'],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['수행 빈도',({day:'일',week:'주',month:'월'}[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회 (연간 '+Number(stats.annual_frequency||52)+'회)'],['연간 절감시간',stats.annual_savings_hours+'시간'],['절감 FTE',stats.fte_equivalent],['예상 개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
   return parts.join('');
 }
 function exportReportPDF(){
   if(!ctx.report){alert('리포트 데이터를 먼저 생성해 주세요.');return;}
-  const sections=selectedReportSections();if(!sections.length){alert('PDF에 포함할 섹션을 하나 이상 선택해 주세요.');return;}
-  const popup=window.open('','_blank');if(!popup){alert('PDF 출력 창이 차단되었습니다. 팝업을 허용해 주세요.');return;}popup.opener=null;
-  const title=document.getElementById('reportTitle').value.trim()||'AX 분석 결과';
-  popup.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>'+escapeHtml(title)+'</title><style>@page{size:A4;margin:16mm}body{font-family:"Segoe UI",Arial,sans-serif;color:#17203a;font-size:11px}h1{color:#060f45;border-bottom:3px solid #060f45;padding-bottom:8px}h2{color:#060f45;margin-top:22px}section{break-inside:avoid;margin-bottom:18px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #ccd2df;padding:6px;text-align:left}th{background:#eef1f8}.meta{color:#666;margin-bottom:20px}</style></head><body><h1>'+escapeHtml(title)+'</h1><div class="meta">프로젝트: '+escapeHtml(ctx.report.project_name)+' · 과제: '+escapeHtml(ctx.report.task_name)+' · 생성: '+new Date(ctx.report.created_at).toLocaleString('ko-KR')+'</div>'+buildPrintableReport(ctx.report,sections)+'</body></html>');
-  popup.document.close();popup.focus();setTimeout(()=>popup.print(),250);
-}
-function csvCell(value){
-  let text=String(value??'');if(/^[=+\-@]/.test(text)) text="'"+text;
-  return '"'+text.replace(/"/g,'""')+'"';
+  const title=(ctx.report.task_name||ctx.l4||'과제')+' AX 분석 결과';
+  const printHtml='<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>'+escapeHtml(title)+'</title><style>@page{size:A4;margin:16mm}body{font-family:"Segoe UI",Arial,sans-serif;color:#17203a;font-size:11px}h1{color:#060f45;border-bottom:3px solid #060f45;padding-bottom:8px}h2{color:#060f45;margin-top:22px;break-after:avoid}section{break-inside:avoid;margin-bottom:18px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #ccd2df;padding:6px;text-align:left}th{background:#eef1f8}.meta{color:#666;margin-bottom:20px}</style></head><body><h1>'+escapeHtml(title)+'</h1><div class="meta">프로젝트: '+escapeHtml(ctx.report.project_name)+' · 과제: '+escapeHtml(ctx.report.task_name)+' · 생성: '+new Date(ctx.report.created_at).toLocaleString('ko-KR')+'</div>'+buildPrintableReport(ctx.report)+'</body></html>';
+  const frame=document.createElement('iframe');frame.setAttribute('title','PDF 리포트 인쇄');frame.style.cssText='position:fixed;left:-12000px;bottom:0;width:1000px;height:1px;border:0;opacity:0;pointer-events:none';
+  let printStarted=false;frame.onload=()=>{if(printStarted)return;printStarted=true;const printWindow=frame.contentWindow;if(!printWindow){frame.remove();alert('PDF 출력 화면을 열 수 없습니다.');return;}printWindow.onafterprint=()=>frame.remove();setTimeout(()=>{printWindow.focus();printWindow.print();},200);setTimeout(()=>frame.remove(),60000);};
+  frame.srcdoc=printHtml;document.body.appendChild(frame);
 }
 function exportReportCSV(){
-  if(!ctx.report){alert('리포트 데이터를 먼저 생성해 주세요.');return;}
-  const toBeById=new Map(ctx.report.to_be_processes.map(item=>[Number(item.original_process_id),item]));
-  const rows=[['프로젝트명','과제명','AS-IS 프로세스','To-Be 프로세스'],...ctx.report.as_is_processes.map(item=>{const toBe=toBeById.get(Number(item.id));return [ctx.report.project_name,ctx.report.task_name,item.name+' ('+Number(item.execution_time||0)+'분)',(toBe?.name||item.name)+' ('+Number((toBe?.estimated_execution_time??item.execution_time)||0)+'분)'];})];
-  const content='\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n');
-  const blob=new Blob([content],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');
-  link.href=url;link.download=(ctx.report.project_name+'_'+ctx.report.task_name+'_process').replace(/[\\/:*?"<>|]/g,'_')+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+  if(!ctx.projectId||!ctx.taskId){alert('프로젝트와 과제를 먼저 선택해 주세요.');return;}
+  const link=document.createElement('a');
+  link.href=apiBase+'/analysis/project/'+ctx.projectId+'/report.csv?task_id='+encodeURIComponent(ctx.taskId);
+  link.download='task-info.csv';document.body.appendChild(link);link.click();link.remove();
 }
 function renderTaskCtx(){
   document.getElementById('taskCtxBar').innerHTML =
@@ -1161,7 +1285,8 @@ function go(n){
     else if(i+1===n){el.classList.add('active');sn.textContent=i+1;}
     else{sn.textContent=i+1;}
   });
-  document.getElementById('foot-info').textContent='Step '+n+' / 6 · '+names[n]+' · 과제: '+ctx.l4+' · 참여자: 손희정, 김현수';
+  const participantNames=(ctx.taskParticipants||[]).map(person=>person.name).filter(Boolean).join(', ')||'미등록';
+  document.getElementById('foot-info').textContent='Step '+n+' / 6 · '+names[n]+' · 과제: '+(ctx.l4||'미등록')+' · 참여자: '+participantNames;
   const btnNext=document.getElementById('btnNext');
   const btnTaskList=document.getElementById('btnTaskList');
   if(n===6){
@@ -1223,6 +1348,33 @@ showWelcome();
   </div>
 </div>
 
+<!-- 필수 입력 보완 팝업 -->
+<div class="popup-overlay" id="validationPopup" onclick="if(event.target===this)closeValidationPopup()">
+  <div class="popup-box" role="dialog" aria-modal="true" aria-labelledby="validationPopupTitle">
+    <button class="popup-close" onclick="closeValidationPopup()">✕</button>
+    <div class="popup-title" id="validationPopupTitle">입력 정보를 보완해 주세요</div>
+    <ul class="validation-list" id="validationPopupList"></ul>
+    <div style="text-align:right;margin-top:14px"><button class="btn btn-p" type="button" onclick="closeValidationPopup()">확인</button></div>
+  </div>
+</div>
+
+<!-- FTE 산출 기준 안내 팝업 -->
+<div class="popup-overlay" id="ftePopup" onclick="if(event.target===this)closeFtePopup()">
+  <div class="popup-box" role="dialog" aria-modal="true" aria-labelledby="ftePopupTitle">
+    <button class="popup-close" onclick="closeFtePopup()">×</button>
+    <div class="popup-title" id="ftePopupTitle">FTE 기반 AX 성과 산출 안내</div>
+    <div class="tbox" style="font-size:13px">
+      <b>FTE(Full-Time Equivalent)</b>는 절감된 업무시간을 전일제 인력 1명의 연간 업무량으로 환산한 값입니다.<br><br>
+      ① 연간 수행 횟수 = 기간당 수행 횟수 × 환산계수(일 365 · 주 52 · 월 12)<br>
+      ② 연간 AX 절감 시간 = 건당 절감 시간(분) × 연간 수행 횟수 ÷ 60<br>
+      ③ 절감 FTE = 연간 AX 절감 시간 ÷ 2,248시간
+    </div>
+    <div class="inline-status" id="ftePopupExample" style="margin-top:10px">현재 과제 데이터를 불러온 뒤 실제 산식이 표시됩니다.</div>
+    <div style="font-size:11px;color:var(--mt);line-height:1.6;margin-top:9px">2,248시간은 이 도구의 전사 연간 표준값이며, 법정 근로시간이나 회사별 기준과 다를 수 있습니다.</div>
+    <div style="text-align:right;margin-top:14px"><button class="btn btn-p" type="button" onclick="closeFtePopup()">확인</button></div>
+  </div>
+</div>
+
 <!-- AI FIT 점수 척도 안내 팝업 -->
 <div class="popup-overlay" id="aiFitPopup" onclick="if(event.target===this)closeAiFitPopup()">
   <div class="popup-box">
@@ -1235,11 +1387,11 @@ showWelcome();
     <div class="scale-row"><span class="aisc sc4">4</span><div class="scale-desc"><b>대부분 자동화 가능</b> — 규칙·패턴이 명확해 AI가 초안·결과물 대부분을 생성</div></div>
     <div class="scale-row"><span class="aisc sc5">5</span><div class="scale-desc"><b>완전 자동화 가능</b> — 규칙 기반의 반복적 정형 작업으로 AI가 전체를 수행</div></div>
     <div class="scale-axis-title">비효율성 (1~5)</div>
-    <div class="scale-row"><span class="aisc sc1">1</span><div class="scale-desc"><b>효율적</b> — 소요시간이 짧고 대기·재작업이 없음</div></div>
-    <div class="scale-row"><span class="aisc sc2">2</span><div class="scale-desc"><b>경미한 비효율</b> — 약간의 대기 또는 반복이 존재</div></div>
-    <div class="scale-row"><span class="aisc sc3">3</span><div class="scale-desc"><b>보통</b> — 일부 대기·재작업으로 시간 손실 발생</div></div>
-    <div class="scale-row"><span class="aisc sc4">4</span><div class="scale-desc"><b>비효율적</b> — 반복적 재작업 또는 상당한 대기시간 발생 (Bottleneck·Delay 해당)</div></div>
-    <div class="scale-row" style="margin-bottom:0"><span class="aisc sc5">5</span><div class="scale-desc"><b>매우 비효율적</b> — 병목·장시간 대기·낭비가 겹쳐 전체 프로세스 지연의 핵심 원인</div></div>
+    <div class="scale-row"><span class="aisc ineff-1">1</span><div class="scale-desc"><b>효율적</b> — 소요시간이 짧고 대기·재작업이 없음</div></div>
+    <div class="scale-row"><span class="aisc ineff-2">2</span><div class="scale-desc"><b>경미한 비효율</b> — 약간의 대기 또는 반복이 존재</div></div>
+    <div class="scale-row"><span class="aisc ineff-3">3</span><div class="scale-desc"><b>보통</b> — 일부 대기·재작업으로 시간 손실 발생</div></div>
+    <div class="scale-row"><span class="aisc ineff-4">4</span><div class="scale-desc"><b>비효율적</b> — 반복적 재작업 또는 상당한 대기시간 발생 (Bottleneck·Delay 해당)</div></div>
+    <div class="scale-row" style="margin-bottom:0"><span class="aisc ineff-5">5</span><div class="scale-desc"><b>매우 비효율적</b> — 병목·장시간 대기·낭비가 겹쳐 전체 프로세스 지연의 핵심 원인</div></div>
     <div style="font-size:11px;color:#999;margin-top:12px;padding-top:10px;border-top:1px solid #f0f3f8;line-height:1.6">📌 두 점수의 조합으로 A(즉시 적용)·B(수동 개선 先)·C(장기 검토)·D(현상 유지) 4개 영역으로 자동 분류됩니다.</div>
   </div>
 </div>
@@ -1248,5 +1400,12 @@ function openLvPopup(){document.getElementById('lvPopup').classList.add('open')}
 function closeLvPopup(){document.getElementById('lvPopup').classList.remove('open')}
 function openAiFitPopup(){document.getElementById('aiFitPopup').classList.add('open')}
 function closeAiFitPopup(){document.getElementById('aiFitPopup').classList.remove('open')}
+function openFtePopup(){
+  const frequency=getReportFrequency();const stats=ctx.report?.statistics;
+  const detail=stats?'건당 '+Number(stats.time_savings||0)+'분 × 연간 '+Number(stats.annual_frequency||frequency.annual)+'회 ÷ 60 = '+Number(stats.annual_savings_hours||0)+'시간 → '+Number(stats.fte_equivalent||0)+' FTE':'현재 설정: '+frequency.label+' '+frequency.count+'회 → 연간 '+frequency.annual+'회';
+  document.getElementById('ftePopupExample').textContent=detail;
+  document.getElementById('ftePopup').classList.add('open');
+}
+function closeFtePopup(){document.getElementById('ftePopup').classList.remove('open')}
 </script>
 </body></html>

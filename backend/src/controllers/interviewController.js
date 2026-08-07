@@ -55,8 +55,9 @@ export const analyzeInterview = async (req, res) => {
     if (Number(interview.project_id) !== parseInt(projectId)) {
       return res.status(400).json({ error: '인터뷰와 프로젝트가 일치하지 않습니다' });
     }
+    let task = null;
     if (taskId) {
-      const task = await db.selectOne('tasks', { id: parseInt(taskId) });
+      task = await db.selectOne('tasks', { id: parseInt(taskId) });
       if (!task || Number(task.project_id) !== parseInt(projectId)) {
         return res.status(400).json({ error: '과제와 프로젝트가 일치하지 않습니다' });
       }
@@ -76,7 +77,7 @@ export const analyzeInterview = async (req, res) => {
       project.ai_engine,
       apiKey,
       fullText,
-      'L4'
+      task || {}
     );
     const allowedLevels = new Set(['L4', 'L5', 'L6']);
     const allowedMethods = new Set(['manual', 'system']);
@@ -96,9 +97,28 @@ export const analyzeInterview = async (req, res) => {
     if (!normalizedProcesses.length || !normalizedProcesses.some((proc) => proc.level === 'L6')) {
       return res.status(502).json({ error: 'AI 엔진이 프로세스 Draft를 반환하지 않았습니다' });
     }
+    const invalidL6Names = normalizedProcesses
+      .filter((proc) => proc.level === 'L6')
+      .filter((proc) => !/(을|를)\s*[^.]+다\.?$/.test(proc.name) || /(\s및\s|\/|하고\s)/.test(proc.name));
+    if (invalidL6Names.length) {
+      return res.status(502).json({
+        error: 'AI 엔진이 STATIK L6 명명 규칙(목적어 + 단일 동사)을 지키지 않았습니다. AI Draft를 다시 생성해 주세요.'
+      });
+    }
 
-    // 같은 인터뷰를 재분석할 때 이전 Draft가 중복되지 않도록 교체
-    await db.deleteWhere('processes', { interview_id: parseInt(interviewId) });
+    // 같은 과제에서 Draft를 재생성할 때 이전 프로세스와 파생 분석이 누적되지 않도록 교체
+    const previousProcesses = taskId
+      ? await db.select('processes', { task_id: parseInt(taskId) })
+      : await db.select('processes', { interview_id: parseInt(interviewId) });
+    await Promise.all(previousProcesses.flatMap((process) => [
+      db.deleteWhere('bdw_tags', { process_id: process.id }),
+      db.deleteWhere('ai_analysis', { process_id: process.id }),
+      db.deleteWhere('to_be_processes', { original_process_id: process.id })
+    ]));
+    await db.deleteWhere(
+      'processes',
+      taskId ? { task_id: parseInt(taskId) } : { interview_id: parseInt(interviewId) }
+    );
 
     // 프로세스 저장
     const processes = [];

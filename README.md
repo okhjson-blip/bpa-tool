@@ -71,13 +71,13 @@ npm start
 ## 주요 화면
 
 1. 접속 첫 화면에서 회사명과 외부 AI API 연결 등록
-2. 등록 회사명 기준 프로젝트 목록 및 새 프로젝트 생성
-3. 프로젝트별 과제(L4) 목록 및 등록
+2. 등록 회사명 기준 프로젝트 목록, L1~L3 프로젝트 생성·수정, 참여자 확인
+3. 프로젝트 계층과 연동된 과제(L4) 등록
 4. 인터뷰 답변과 AI Draft 생성
 5. L4~L6 프로세스 수정 및 플로우차트 확인
 6. BDW(Bottleneck, Delay, Waste) 진단
 7. AI FIT 매트릭스와 As-Is/To-Be 비교
-8. 과제별 AX 성과지표와 선택 섹션 PDF 또는 고정 항목 CSV 출력
+8. 과제별 AX 성과지표 전체 PDF 또는 과제당 한 행의 과제정보 CSV 출력
 
 ## 디렉터리
 
@@ -117,6 +117,12 @@ bpa-tool/
 - 운영 및 로컬 API 데이터베이스는 Supabase PostgreSQL을 사용합니다.
 - AI 분석 모델은 OpenAI `gpt-5-nano`, Gemini `gemini-3.5-flash-lite`, Claude `claude-sonnet-5`를 사용합니다. OpenAI와 Gemini 모델은 각각 `OPENAI_MODEL`, `GEMINI_MODEL` 환경변수로 교체할 수 있습니다.
 - 세 공급자 모두 공식 JSON Schema 구조화 출력을 사용하며 API Key는 Draft·BDW·AI FIT 요청 처리 중에만 백엔드로 전달됩니다.
+- 프로젝트 계층은 `department_name=L1`, `description=L2`, `name=L3`로 저장하고 API에서는 L2를 `business_name` 별칭으로 제공합니다.
+- 프로젝트 및 과제 등록은 기간과 필수 역할 참여자를 프런트엔드와 API에서 이중 검증합니다.
+- AI FIT 제안은 L6 단위 업무별로 사용자가 수락한 항목만 To-Be에 반영하며, 서버에 저장된 분석 결과를 기준으로 생성합니다.
+- 리포트 수행 빈도는 일·주·월별 횟수를 연간으로 환산하여 AX 절감 시간과 FTE를 계산합니다.
+- AI Draft는 STATIK L4~L6 정의를 따르며 L6를 `목적어 + 단일 동사` 형태의 최소 행동으로 생성합니다.
+- PDF는 별도 팝업 대신 숨김 인쇄 프레임으로 전체 리포트를 출력하고, CSV의 AS-IS·To-Be는 `A > B > C` 형식의 프로세스 흐름으로 기록합니다.
 
 ## Supabase 설정
 

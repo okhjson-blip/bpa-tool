@@ -35,14 +35,22 @@ router.post('/project/:projectId/ai-fit', [
 router.post('/project/:projectId/to-be', [
   param('projectId').isInt(),
   body('taskId').isInt(),
-  body('ai_analysis').isArray()
+  body('accepted_process_ids').isArray({ min: 1 }),
+  body('accepted_process_ids.*').isInt()
 ], validate, bdwController.createToBe);
 
 // 최종 리포트 생성
 router.get('/project/:projectId/report', [
   param('projectId').isInt(),
   query('task_id').isInt(),
-  query('annual_frequency').isInt({ min: 1, max: 10000 }).optional()
+  query('frequency_unit').isIn(['day', 'week', 'month']).optional(),
+  query('frequency_count').isInt({ min: 1, max: 10000 }).optional(),
+  query('annual_frequency').isInt({ min: 1, max: 1000000 }).optional()
 ], validate, bdwController.generateReport);
+
+router.get('/project/:projectId/report.csv', [
+  param('projectId').isInt(),
+  query('task_id').isInt()
+], validate, bdwController.exportTaskCsv);
 
 export default router;

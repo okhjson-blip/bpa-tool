@@ -17,7 +17,7 @@ const PROCESS_SCHEMA = {
         type: 'object',
         properties: {
           level: { type: 'string', enum: ['L4', 'L5', 'L6'] },
-          name: { type: 'string' },
+          name: { type: 'string', description: 'L4/L5는 간결한 명사형, L6는 목적어와 단일 동사로 끝나는 한국어 행동 문장' },
           description: { type: 'string' },
           execution_time: { type: 'integer' },
           waiting_time: { type: 'number' },
@@ -146,10 +146,23 @@ class LLMProvider {
     throw new Error('Not implemented');
   }
 
-  analyzeInterview(transcription) {
-    const prompt = `다음 인터뷰를 실행 순서에 맞춰 L4 모듈, L5 단위 업무, L6 실제 행동으로 분해하세요.
-L6 execution_time은 분 단위 정수, waiting_time과 approval_waiting_time은 시간 단위 숫자입니다.
-L4와 L5의 시간 값은 0으로 작성하세요. 인터뷰에 명시되지 않은 시간은 합리적인 보수 추정값을 사용하세요.
+  analyzeInterview(transcription, taskContext = {}) {
+    const prompt = `다음 인터뷰를 STATIK 업무 계층 정의와 실제 실행 순서에 따라 L4~L6 프로세스로 분해하세요.
+
+[STATIK 계층 정의]
+- L4 모듈: 담당자가 하나의 책임 영역으로 관리하는 관련 업무의 묶음입니다. 등록 과제와 일치하는 L4를 한 번만 작성하세요.
+- L5 단위 업무: 시작과 종료 및 독립적인 결과물이 명확한 업무 단위입니다. 명사형으로 간결하게 작성하세요.
+- L6 Act: 더 이상 나눌 수 없는 한 사람의 단일 행동입니다. 반드시 "트렌드를 검색한다", "보고서를 작성한다"처럼 '목적어 + 동사' 한 문장으로 작성하세요.
+- L6 이름에 두 행동을 '및', '/', '하고'로 묶지 말고 한 행에 하나의 행동만 작성하세요.
+- 출력 순서는 L4 1개 다음에 각 L5와 그에 속하는 L6들을 실제 수행 순서대로 배치하세요.
+- L6 execution_time은 분 단위 정수, waiting_time과 approval_waiting_time은 시간 단위 숫자입니다.
+- L4와 L5의 모든 시간 값은 0으로 작성하세요. 인터뷰에 명시되지 않은 시간은 합리적인 보수 추정값을 사용하세요.
+
+[등록된 업무 계층]
+L1: ${taskContext.l1 || '미등록'}
+L2: ${taskContext.l2 || '미등록'}
+L3: ${taskContext.l3 || '미등록'}
+L4: ${taskContext.l4 || taskContext.name || '인터뷰에서 식별'}
 
 [인터뷰]
 ${transcription}`;
@@ -294,8 +307,8 @@ export class LLMService {
     return MODEL_BY_ENGINE[String(engine || '').toLowerCase()] || null;
   }
 
-  static analyzeInterview(engine, apiKey, transcription) {
-    return this.getProvider(engine, apiKey).analyzeInterview(transcription);
+  static analyzeInterview(engine, apiKey, transcription, taskContext = {}) {
+    return this.getProvider(engine, apiKey).analyzeInterview(transcription, taskContext);
   }
 
   static analyzeBDW(engine, apiKey, processes) {
