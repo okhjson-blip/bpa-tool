@@ -49,3 +49,4 @@ tmp/
 temp/
 .cache/
 .vercel/
+supabase/.temp/
