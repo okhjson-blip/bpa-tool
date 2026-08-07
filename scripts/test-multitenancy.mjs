@@ -27,11 +27,12 @@ function userClient() {
   });
 }
 
-async function api(path, { token, method = 'GET', body } = {}) {
+async function api(path, { token, cookie, method = 'GET', body } = {}) {
   const response = await fetch(`${apiBase}${path}`, {
     method,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(cookie ? { Cookie: cookie } : {}),
       ...(body ? { 'Content-Type': 'application/json' } : {})
     },
     ...(body ? { body: JSON.stringify(body) } : {})
@@ -44,19 +45,23 @@ async function api(path, { token, method = 'GET', body } = {}) {
 
 async function createTestUser(label) {
   const email = `bpa-${label}-${runId}@example.com`;
-  const password = `T!${crypto.randomBytes(18).toString('base64url')}`;
-  const { data, error } = await service.auth.admin.createUser({ email, password, email_confirm: true });
+  const client = userClient();
+  const { data, error } = await client.auth.signInAnonymously({
+    options: { data: { name: `검증 사용자 ${label.toUpperCase()}`, email, auth_mode: 'partner' } }
+  });
   if (error) throw error;
   createdUserIds.push(data.user.id);
-  const client = userClient();
-  const signIn = await client.auth.signInWithPassword({ email, password });
-  if (signIn.error) throw signIn.error;
-  return { user: data.user, client, token: signIn.data.session.access_token };
+  return { user: data.user, email, client, token: data.session.access_token };
 }
 
 async function createTestCompany(label) {
   const { data, error } = await service.from('companies')
-    .insert({ name: `BPA 자동검증 ${label} ${runId}`, status: 'active' })
+    .insert({
+      name: `BPA 자동검증 ${label} ${runId}`,
+      consulting_year: 2026,
+      consulting_half: '하반기',
+      status: 'active'
+    })
     .select().single();
   if (error) throw error;
   createdCompanyIds.push(data.id);
@@ -88,12 +93,16 @@ async function main() {
   ]);
 
   for (const [user, company, name] of [[userA, companyA, '검증 사용자 A'], [userB, companyB, '검증 사용자 B']]) {
-    const completed = await api('/auth/complete-profile', {
+    const completed = await Promise.all([1, 2].map(() => api('/auth/complete-profile', {
       token: user.token,
       method: 'POST',
-      body: { name, company_id: company.id }
-    });
-    assert.equal(completed.response.status, 200, `가입 실패: ${completed.text}`);
+      body: { name, email: user.email, company_id: company.id }
+    })));
+    const statuses = completed.map((result) => result.response.status).sort();
+    assert.deepEqual(statuses, [200, 409], `중복 가입 요청 처리 실패: ${completed.map((result) => result.text).join(' / ')}`);
+    const duplicate = completed.find((result) => result.response.status === 409);
+    assert.equal(duplicate.data.code, 'ALREADY_REGISTERED');
+    assert.equal(duplicate.data.error, '이미 가입하셨습니다. 시작하기를 클릭하여 로그인하십시오.');
   }
 
   const dummyKey = `dummy-${crypto.randomBytes(24).toString('base64url')}`;
@@ -165,6 +174,28 @@ async function main() {
   const directB = await api(`/projects/${created.data.project.id}`, { token: userB.token });
   assert.equal(directB.response.status, 404);
 
+  const wrongAdmin = await api('/auth/admin-login', {
+    method: 'POST',
+    body: { password: 'not-the-admin-password' }
+  });
+  assert.equal(wrongAdmin.response.status, 401);
+  assert.equal(wrongAdmin.text.includes('not-the-admin-password'), false);
+  const testAdminPassword = process.env.BPA_TEST_ADMIN_PASSWORD;
+  if (testAdminPassword) {
+    const adminLogin = await api('/auth/admin-login', {
+      method: 'POST',
+      body: { password: testAdminPassword }
+    });
+    assert.equal(adminLogin.response.status, 200, `관리자 비밀번호 로그인 실패: ${adminLogin.text}`);
+    const adminCookie = String(adminLogin.response.headers.get('set-cookie') || '').split(';')[0];
+    assert.equal(adminCookie.startsWith('bpa_admin_session='), true);
+    const adminSession = await api('/auth/admin-session', { cookie: adminCookie });
+    assert.equal(adminSession.response.status, 200);
+    const adminOverview = await api('/admin/overview', { cookie: adminCookie });
+    assert.equal(adminOverview.response.status, 200);
+    assert.equal(adminOverview.data.some((company) => Number(company.id) === Number(companyA.id)), true);
+  }
+
   const rlsA = await userA.client.from('projects').select('id').eq('id', created.data.project.id);
   const rlsB = await userB.client.from('projects').select('id').eq('id', created.data.project.id);
   if (rlsA.error) throw rlsA.error;
@@ -222,7 +253,9 @@ async function main() {
   console.log(JSON.stringify({
     ok: true,
     checks: [
-      'health', 'free-signup-membership', 'credential-encryption-roundtrip',
+      'health', 'anonymous-free-registration', 'idempotent-free-signup-membership',
+      testAdminPassword ? 'supabase-secret-admin-session-and-overview' : 'admin-login-skipped',
+      'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',
       'project-create', 'api-company-isolation', 'direct-rls-isolation'

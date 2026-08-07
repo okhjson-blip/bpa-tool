@@ -5,7 +5,7 @@
 - UI 진입점: 저장소 루트 `index.html`
 - 프런트엔드 도구: Vite
 - 백엔드: Node.js + Express (로컬 서버 및 Vercel Function)
-- 인증: Supabase Auth 이메일 매직링크, 브라우저 세션 자동 복원
+- 인증: 협력사 Supabase 익명 세션 자동 복원, 관리자 HttpOnly 서명 세션
 - 데이터베이스: Supabase PostgreSQL + JWT 기반 RLS
 - 개발 API 주소: `http://localhost:5000/api`
 - 개발 UI 주소: `http://localhost:3000`
@@ -38,13 +38,14 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 
 ## 3. 인증·테넌트 모델
 
-- `companies`: 관리자가 등록하며 `active` 또는 `suspended` 상태를 가집니다.
+- `companies`: 관리자가 협력사명과 컨설팅 연도·상/하반기로 등록하며 `active` 또는 `suspended` 상태를 가집니다. 동일 협력사는 서로 다른 컨설팅 차수로 등록할 수 있습니다.
 - `profiles`: Supabase Auth `user_id`와 이름·이메일·애플리케이션 역할을 연결합니다.
 - `company_memberships`: 사용자와 협력사를 연결하고 `company_admin`, `company_editor`, `company_viewer` 역할을 관리합니다.
-- 자유 가입 사용자는 활성 협력사를 선택할 수 있으며 최초 로그인 완료 시 `company_editor` 멤버십을 생성합니다.
+- 자유 등록 사용자는 활성 협력사와 이름·이메일을 입력하며 이메일 형식 검증 후 Supabase 익명 세션과 `company_editor` 멤버십을 즉시 생성합니다. 이메일 승인 절차는 사용하지 않습니다.
 - 브라우저는 Supabase 세션을 자동 복원하고 모든 보호 API에 Access Token을 전달합니다.
 - 백엔드 업무 데이터 클라이언트는 Publishable Key와 사용자 JWT를 사용합니다. 클라이언트 요청의 회사명이나 `company_id`를 신뢰하지 않고 RLS가 허용한 회사 데이터만 조회·변경합니다.
-- `BPA_ADMIN_EMAILS` 등록 이메일은 최초 로그인 시 `super_admin`으로 부트스트랩합니다. 관리자는 전사 프로젝트·과제를 조회할 수 있으나 프로젝트 데이터는 변경할 수 없습니다.
+- 관리자 비밀번호는 Supabase Edge Function Secret `BPA_ADMIN_PASSWORD`에만 저장합니다. Vercel 백엔드는 Secret Key로 `admin-password-verify` 함수를 호출해 일치 여부만 받은 뒤 8시간 유효한 HttpOnly 서명 쿠키를 발급합니다.
+- `202608070003_password_admin_only.sql`은 기존 `super_admin` 프로필을 일반 사용자로 전환하고 사용자 JWT 기반 관리자 우회를 차단합니다. 관리자 조회는 비밀번호 세션을 확인한 백엔드의 Service Role 경로에서만 수행합니다.
 - 관리자가 협력사를 중지하면 미들웨어와 RLS가 모두 해당 멤버의 업무 데이터 접근을 차단합니다.
 
 ## 4. 업무 모델
@@ -73,7 +74,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 9. 프로젝트는 프로젝트 리더·담당자·컨설턴트를, 과제는 과제 리더·담당자를 최소 1명씩 포함해야 합니다.
 10. 프로젝트·과제 기간은 ISO 날짜 시작일/종료일로 저장하고 종료일이 시작일보다 빠를 수 없습니다.
 11. Service Role Key는 브라우저로 전달하지 않으며 업무 데이터 CRUD에 사용하지 않습니다.
-12. 관리자 프로젝트·과제 화면은 조회 전용으로 유지하고 협력사 등록 및 활성/중지만 허용합니다.
+12. 관리자 프로젝트·과제 화면은 조회 전용으로 유지하고 협력사 등록 및 활성/중지만 허용합니다. 관리자 CSV는 선택한 컨설팅 연도·반기에 해당하는 과제만 협력사명·프로젝트명·과제명 세 컬럼으로 과제당 한 행을 출력합니다.
 13. AI 자격증명 테이블은 authenticated/anon 직접 권한과 RLS 정책을 제공하지 않고 권한 검사를 마친 백엔드 Service Role만 접근합니다.
 
 ## 6. 핵심 계산식
@@ -102,8 +103,8 @@ AI Draft 프롬프트에는 STATIK L4(업무 묶음), L5(독립 결과물 단위
 - 팝업 및 AI FIT 탭
 - 브라우저 콘솔 오류
 - 비밀정보 포함 여부
-- Supabase migration 적용 여부와 Vercel 환경 변수 등록 여부
-- 이메일 매직링크 가입, 새로고침 후 세션 복원, 협력사별 데이터 격리
+- Supabase migration·Edge Function 배포 여부와 Supabase/Vercel 환경 변수 등록 여부
+- 이메일 형식 검증, 승인 없는 자유 등록, 새로고침 후 세션 복원, 협력사별 데이터 격리
 - 협력사 중지 후 접근 차단 및 관리자 프로젝트·과제 변경 불가
 
 테스트 실행은 작업 지침에 따라 사용자 승인 후 수행합니다.

@@ -1,18 +1,16 @@
 import { getServiceClient, serviceDb } from '../config/database.js';
 import { runWithAuthContext } from '../config/authContext.js';
+import { ADMIN_COOKIE_NAME, verifyAdminSessionToken } from '../services/adminSessionService.js';
 
 function bearerToken(req) {
   const header = String(req.headers.authorization || '');
   return header.startsWith('Bearer ') ? header.slice(7).trim() : '';
 }
 
-function bootstrapAdminEmails() {
-  return new Set(
-    String(process.env.BPA_ADMIN_EMAILS || '')
-      .split(',')
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean)
-  );
+function cookieValue(req, name) {
+  return String(req.headers.cookie || '').split(';')
+    .map((item) => item.trim().split('='))
+    .find(([key]) => key === name)?.slice(1).join('=') || '';
 }
 
 export async function authenticate(req, res, next) {
@@ -24,16 +22,7 @@ export async function authenticate(req, res, next) {
     if (error || !data.user) return res.status(401).json({ error: '로그인 세션이 유효하지 않습니다.' });
 
     const user = data.user;
-    let profile = await serviceDb.selectOne('profiles', { user_id: user.id });
-    if (bootstrapAdminEmails().has(String(user.email || '').toLowerCase())) {
-      profile = await serviceDb.upsert('profiles', {
-        user_id: user.id,
-        name: profile?.name || user.user_metadata?.name || user.email,
-        email: user.email,
-        app_role: 'super_admin',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
-    }
+    const profile = await serviceDb.selectOne('profiles', { user_id: user.id });
 
     const memberships = await serviceDb.select('company_memberships', { user_id: user.id });
     const companies = memberships.length ? await serviceDb.select('companies') : [];
@@ -55,12 +44,12 @@ export async function authenticate(req, res, next) {
 }
 
 export function requireProfile(req, res, next) {
-  if (!req.auth?.profile) return res.status(403).json({ error: '담당자 가입을 먼저 완료해 주세요.' });
+  if (!req.auth?.profile) return res.status(403).json({ error: '협력사 등록을 먼저 완료해 주세요.' });
   next();
 }
 
 export function requireCompanyUser(req, res, next) {
-  if (!req.auth?.profile) return res.status(403).json({ error: '담당자 가입을 먼저 완료해 주세요.' });
+  if (!req.auth?.profile) return res.status(403).json({ error: '협력사 등록을 먼저 완료해 주세요.' });
   if (req.auth.profile.app_role === 'super_admin') {
     return res.status(403).json({ error: '관리자 계정은 관리자 모드에서 조회해 주세요.' });
   }
@@ -80,9 +69,20 @@ export function requireCompanyWrite(req, res, next) {
   next();
 }
 
-export function requireAdmin(req, res, next) {
-  if (req.auth?.profile?.app_role !== 'super_admin') {
-    return res.status(403).json({ error: '관리자 권한이 필요합니다.' });
+export function authenticateAdminSession(req, res, next) {
+  try {
+    const token = cookieValue(req, ADMIN_COOKIE_NAME);
+    if (!verifyAdminSessionToken(token)) {
+      return res.status(401).json({ error: '관리자 로그인이 필요합니다.' });
+    }
+    req.auth = {
+      user: { id: null, email: null },
+      profile: { name: '시스템 관리자', app_role: 'super_admin' },
+      isPasswordAdmin: true
+    };
+    next();
+  } catch (error) {
+    console.error(error);
+    res.status(503).json({ error: '관리자 세션을 확인할 수 없습니다.' });
   }
-  next();
 }

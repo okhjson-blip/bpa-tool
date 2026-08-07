@@ -70,7 +70,7 @@ npm start
 
 ## 주요 화면
 
-1. 관리자가 등록한 협력사를 선택하고 이름·이메일 매직링크로 자유 가입
+1. 관리자가 등록한 협력사를 선택하고 이름·이메일 형식 확인만으로 즉시 자유 등록
 2. Supabase 로그인 세션 자동 복원 및 로그인 사용자의 활성 협력사 멤버십 확인
 3. 협력사별로 격리된 프로젝트 목록, L1~L3 프로젝트 생성·수정, 참여자 확인
 4. 프로젝트 계층과 연동된 과제(L4) 등록
@@ -96,6 +96,7 @@ bpa-tool/
 │  └─ src/app.js              # API 및 로컬 정적 UI 서버
 ├─ api/index.js               # Vercel Express 함수 진입점
 ├─ supabase/migrations/       # Supabase PostgreSQL 스키마
+├─ supabase/functions/        # Supabase 비밀값을 사용하는 Edge Function
 ├─ vercel.json                # Vercel 빌드·라우팅 설정
 └─ ui mokup/                  # 참고용 원본 문서 보관 위치
 ```
@@ -105,10 +106,14 @@ bpa-tool/
 - `GET /health`
 - `GET /api/auth/companies`: 가입 가능한 활성 협력사 목록
 - `GET /api/auth/me`: 현재 사용자·프로필·멤버십
-- `POST /api/auth/complete-profile`: 최초 담당자 가입 완료
+- `POST /api/auth/complete-profile`: 최초 협력사 등록 완료
+- `POST /api/auth/admin-login`: Supabase Edge Function 비밀번호 검증 및 HttpOnly 관리자 세션 발급
+- `GET /api/auth/admin-session`: 관리자 세션 복원
+- `POST /api/auth/admin-logout`: 관리자 세션 종료
 - `GET /api/admin/overview`: 전체 협력사 프로젝트·과제 조회(관리자)
 - `POST /api/admin/companies`: 협력사 등록(관리자)
 - `PATCH /api/admin/companies/:companyId/status`: 협력사 활성/중지(관리자)
+- `GET /api/admin/tasks.csv?consulting_year=:year&consulting_half=:half`: 선택한 컨설팅 차수의 협력사명·프로젝트명·과제명을 과제당 한 행으로 출력(관리자)
 - `GET|POST /api/projects`
 - `GET|PUT|DELETE /api/projects/:projectId`
 - `GET|POST /api/projects/:projectId/tasks`
@@ -140,11 +145,12 @@ bpa-tool/
 
 1. Supabase 프로젝트를 생성합니다.
 2. SQL Editor에서 `supabase/migrations/202608060001_initial_schema.sql`을 실행합니다.
-3. 이어서 `supabase/migrations/202608070001_multitenant_auth_rls.sql`과 `202608070002_company_ai_credentials.sql`을 순서대로 실행합니다. 기존 프로젝트의 회사명을 이관하고 멤버십·RLS·협력사 AI 자격증명 저장소를 생성합니다.
-4. Supabase Authentication의 Email 공급자를 활성화하고 Site URL과 Redirect URL에 로컬 `http://localhost:3000/` 및 배포 주소를 등록합니다.
+3. 이어서 `supabase/migrations/202608070001_multitenant_auth_rls.sql`, `202608070002_company_ai_credentials.sql`, `202608070003_password_admin_only.sql`, `202608070004_company_consulting_round.sql`을 순서대로 실행합니다. 기존 프로젝트의 회사명을 이관하고 멤버십·RLS·협력사 AI 자격증명 저장소를 생성한 뒤 레거시 Supabase 관리자 권한을 제거하고 협력사 컨설팅 차수를 추가합니다.
+4. Supabase Authentication에서 Anonymous Sign-Ins를 활성화합니다. 협력사 등록은 이메일 승인을 보내지 않고 익명 세션에 검증된 형식의 이메일을 프로필 정보로 저장합니다.
 5. `.env.example`을 참고해 로컬 `.env`에 서버용·브라우저용 Supabase 변수를 설정합니다.
-6. `BPA_ADMIN_EMAILS`에는 관리자 모드 사용 이메일을 쉼표로 구분해 등록합니다. 해당 이메일이 처음 로그인할 때 `super_admin` 프로필이 생성됩니다.
-7. 서비스 역할 키는 백엔드 전용이며 `VITE_` 접두사를 붙이거나 브라우저 코드에 넣지 않습니다. Publishable Key만 브라우저에 노출할 수 있습니다.
+6. Supabase Dashboard의 Edge Functions → Secrets에 `BPA_ADMIN_PASSWORD`를 등록하고 `admin-password-verify` 함수를 배포합니다. 비밀번호는 로컬 `.env`, Vercel, 프런트엔드 코드 또는 Git에 저장하지 않습니다.
+7. `admin-password-verify`는 Supabase Secret Key로 호출한 Vercel 백엔드 요청만 허용하며 비밀번호 일치 여부만 반환합니다.
+8. 서비스 역할 키는 백엔드 전용이며 `VITE_` 접두사를 붙이거나 브라우저 코드에 넣지 않습니다. Publishable Key만 브라우저에 노출할 수 있습니다.
 
 ## Vercel 배포
 
@@ -155,10 +161,9 @@ Git 저장소를 Vercel 프로젝트에 연결한 후 다음 환경 변수를 Pr
 - `SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
-- `BPA_ADMIN_EMAILS`
 - `BPA_CREDENTIAL_ENCRYPTION_KEY`
 
-Vercel은 `npm run build`로 루트 `index.html`을 빌드하고 `api/index.js`의 Express 앱을 서버리스 함수로 실행합니다. `/api/*`는 Express 함수로, 나머지 경로는 정적 `index.html`로 전달됩니다.
+관리자 비밀번호는 Vercel 환경변수가 아니라 Supabase Edge Function Secret `BPA_ADMIN_PASSWORD`로만 관리합니다. Vercel은 `npm run build`로 루트 `index.html`을 빌드하고 `api/index.js`의 Express 앱을 서버리스 함수로 실행합니다. `/api/*`는 Express 함수로, 나머지 경로는 정적 `index.html`로 전달됩니다.
 
 `BPA_CREDENTIAL_ENCRYPTION_KEY`는 32자 이상의 무작위 값으로 설정하고 운영 중 임의로 변경하지 마세요. 값을 변경하면 기존에 저장된 협력사 API Key는 복호화할 수 없으며 각 협력사가 다시 등록해야 합니다.
 

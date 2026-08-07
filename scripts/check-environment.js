@@ -32,12 +32,11 @@ if (!fs.existsSync(envPath)) {
     'VITE_SUPABASE_PUBLISHABLE_KEY',
     'BPA_CREDENTIAL_ENCRYPTION_KEY'
   ]) {
-    if (!env[key] || /your-|placeholder|replace-with/i.test(env[key])) failures.push(`.env의 ${key} 값이 필요합니다.`);
+    if (!env[key] || /your-|placeholder|replace-with|change-this/i.test(env[key])) failures.push(`.env의 ${key} 값이 필요합니다.`);
   }
   if (env.SUPABASE_URL && !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(env.SUPABASE_URL)) {
     failures.push('SUPABASE_URL 형식이 올바르지 않습니다.');
   }
-  if (!env.BPA_ADMIN_EMAILS) notes.push('BPA_ADMIN_EMAILS가 비어 있어 관리자 모드는 사용할 수 없습니다.');
   if (env.BPA_CREDENTIAL_ENCRYPTION_KEY && env.BPA_CREDENTIAL_ENCRYPTION_KEY.length < 32) {
     failures.push('BPA_CREDENTIAL_ENCRYPTION_KEY는 32자 이상이어야 합니다.');
   }

@@ -22,17 +22,11 @@ window.bpaAuth = {
   async getAccessToken() {
     return (await this.getSession())?.access_token || '';
   },
-  async sendMagicLink(email, metadata = {}) {
+  async registerAnonymously(metadata = {}) {
     if (!client) throw new Error('Supabase Auth 환경변수가 설정되지 않았습니다.');
-    const { error } = await client.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: `${window.location.origin}/`,
-        data: metadata
-      }
-    });
+    const { data, error } = await client.auth.signInAnonymously({ options: { data: metadata } });
     if (error) throw error;
+    return data.session;
   },
   async signOut() {
     if (client) await client.auth.signOut();

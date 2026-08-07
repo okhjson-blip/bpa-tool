@@ -1,6 +1,6 @@
 <!doctype html>
 <html>
-<head><meta charset="UTF-8"><title>Business Process Analysis Too for AX</title>
+<head><meta charset="UTF-8"><title>Business Process Analysis Tool for AX</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--p:#060f45;--pl:#e8effd;--s:#2e7d32;--w:#e65100;--d:#c62828;--pu:#6a1b9a;--bd:#e0e6f0;--bg:#f0f3f8;--t:#1a1a2e;--mt:#6b7280}
@@ -123,10 +123,10 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .auth-tabs{display:flex;gap:6px;margin-bottom:14px;padding:4px;background:#f1f3f8;border-radius:8px}
 .auth-tab{flex:1;border:0;background:transparent;padding:8px;border-radius:6px;font-family:inherit;font-weight:700;color:var(--mt);cursor:pointer}
 .auth-tab.on{background:#fff;color:var(--p);box-shadow:0 1px 5px rgba(6,15,69,.12)}
-.auth-session{display:none;align-items:center;justify-content:space-between;gap:10px;background:#eef7ef;border:1px solid #c8e6c9;padding:10px 12px;border-radius:8px;margin-bottom:13px;color:var(--s)}
 .admin-company{background:#fff;border:1px solid var(--bd);border-radius:9px;margin-bottom:9px;overflow:hidden}
 .admin-company-hd{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer}
 .admin-company-name{font-size:15px;font-weight:800;flex:1}
+.admin-company-round{font-size:11px;font-weight:700;color:var(--p);background:var(--pl);padding:3px 8px;border-radius:10px;white-space:nowrap}
 .admin-company-body{display:none;border-top:1px solid var(--bd);padding:10px 13px;background:#fafbfe}
 .admin-company.open .admin-company-body{display:block}
 .admin-project{padding:8px 9px;background:#fff;border:1px solid #e9edf4;border-radius:7px;margin-bottom:6px}
@@ -280,6 +280,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .popup-close{position:absolute;top:12px;right:14px;font-size:19px;cursor:pointer;color:#999;border:none;background:none;line-height:1}
 .popup-close:hover{color:#333}
 .popup-title{font-size:16px;font-weight:900;color:var(--p);margin-bottom:14px;padding-right:20px}
+.popup-desc{font-size:12px;color:var(--mt);line-height:1.6}
 .validation-list{margin:0;padding-left:20px;color:#4d5567;font-size:13px;line-height:1.8}
 .validation-list li::marker{color:var(--d)}
 .lv-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f0f3f8}
@@ -337,23 +338,28 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <div class="sv" id="pageWelcome">
   <div class="welcome-page">
     <div class="welcome-shell">
-      <h1 class="welcome-title">Business Process Analysis Too for AX</h1>
-      <p class="welcome-sub">협력사 담당자 또는 관리자로 로그인한 뒤<br>업무 프로세스 분석을 시작하세요.</p>
+      <h1 class="welcome-title">Business Process Analysis Tool for AX</h1>
+      <p class="welcome-sub">협력사 또는 관리자로 로그인한 뒤<br>업무 프로세스 분석을 시작하세요.</p>
       <div class="welcome-card">
         <section class="welcome-section">
-          <div class="welcome-section-title">1. 협력사 담당자 로그인</div>
-          <div class="welcome-section-desc">관리자가 등록한 활성 협력사를 선택하고 이메일 매직링크로 자유 가입합니다.</div>
+          <div class="welcome-section-title" id="authPanelTitle">협력사 로그인</div>
+          <div class="welcome-section-desc" id="authPanelDesc">관리자가 등록한 활성 협력사를 선택하고 이름과 이메일로 즉시 등록합니다.</div>
           <div class="auth-tabs">
-            <button class="auth-tab on" id="partnerAuthTab" type="button" onclick="setAuthMode('partner')">협력사 담당자</button>
+            <button class="auth-tab on" id="partnerAuthTab" type="button" onclick="setAuthMode('partner')">협력사</button>
             <button class="auth-tab" id="adminAuthTab" type="button" onclick="setAuthMode('admin')">관리자</button>
           </div>
-          <div class="auth-session" id="authSessionBox"><span id="authSessionText"></span><button class="btn btn-o btn-sm" type="button" onclick="logoutApplication()">다른 계정 사용</button></div>
           <div id="partnerAuthFields">
-            <div class="frow"><div class="fg"><label class="fl" for="welcomeCompanySelect">협력사 <span class="req">*</span></label><select class="fi" id="welcomeCompanySelect"><option value="">협력사를 선택하세요</option></select></div><div class="fg"><label class="fl" for="welcomeUserName">담당자 이름 <span class="req">*</span></label><input class="fi" id="welcomeUserName" autocomplete="name" placeholder="예: 홍길동"></div></div>
+            <div class="frow"><div class="fg"><label class="fl" for="welcomeCompanySelect">협력사 <span class="req">*</span></label><select class="fi" id="welcomeCompanySelect"><option value="">협력사를 선택하세요</option></select></div><div class="fg"><label class="fl" for="welcomeUserName">이름 <span class="req">*</span></label><input class="fi" id="welcomeUserName" autocomplete="name" placeholder="예: 홍길동"></div></div>
+            <div class="welcome-row">
+              <div class="fg"><label class="fl" for="welcomeUserEmail">이메일 주소 <span class="req">*</span></label><input class="fi" id="welcomeUserEmail" type="email" autocomplete="email" placeholder="name@company.com"></div>
+              <button class="btn btn-o register-btn" id="btnRegisterPartner" type="button" onclick="registerPartner()">등록</button>
+            </div>
           </div>
-          <div class="welcome-row">
-            <div class="fg"><label class="fl" for="welcomeUserEmail">이메일 주소 <span class="req">*</span></label><input class="fi" id="welcomeUserEmail" type="email" autocomplete="email" placeholder="name@company.com"></div>
-            <button class="btn btn-o register-btn" id="btnSendLoginLink" type="button" onclick="sendLoginLink()">로그인 이메일 받기</button>
+          <div id="adminAuthFields" style="display:none">
+            <div class="welcome-row">
+              <div class="fg"><label class="fl" for="adminPassword">관리자 비밀번호 <span class="req">*</span></label><input class="fi mask" id="adminPassword" type="password" autocomplete="current-password" placeholder="관리자 비밀번호"></div>
+              <button class="btn btn-p register-btn" id="btnAdminLogin" type="button" onclick="loginAdmin()">관리자 로그인</button>
+            </div>
           </div>
           <div class="welcome-status" id="authStatus" role="status" aria-live="polite"></div>
         </section>
@@ -370,15 +376,29 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <div class="sv" id="pageAdmin">
   <div class="list-hd">
     <div><div class="list-title">관리자 모드</div><div class="list-sub">전체 협력사의 프로젝트와 과제를 조회하고 협력사 상태를 관리합니다.</div></div>
-    <button class="btn btn-o" type="button" onclick="logoutApplication()">로그아웃</button>
+    <div style="display:flex;gap:8px"><button class="btn btn-p" type="button" onclick="openAdminCsvPopup()">CSV 파일 다운로드</button><button class="btn btn-o" type="button" onclick="logoutApplication()">로그아웃</button></div>
   </div>
   <div class="card">
     <div class="card-title">협력사 등록 <span class="ct-b">계정 선택 목록에 즉시 반영</span></div>
-    <div class="welcome-row"><div class="fg"><span class="fl">협력사명 <span class="req">*</span></span><input class="fi" id="adminCompanyName" placeholder="예: ABC 컨설팅"></div><div class="fg"><span class="fl">사업자등록번호</span><input class="fi" id="adminBusinessNumber" placeholder="선택 입력"></div><button class="btn btn-p register-btn" type="button" onclick="adminCreateCompany()">협력사 등록</button></div>
-    <div class="inline-status" id="adminCompanyStatus">등록된 협력사는 담당자 가입 화면에서 선택할 수 있습니다.</div>
+    <div class="welcome-row"><div class="fg" style="flex:1.5"><span class="fl">협력사명 <span class="req">*</span></span><input class="fi" id="adminCompanyName" placeholder="예: ABC 컨설팅"></div><div class="fg"><span class="fl">컨설팅 연도 <span class="req">*</span></span><select class="fi" id="adminConsultingYear"></select></div><div class="fg"><span class="fl">컨설팅 반기 <span class="req">*</span></span><select class="fi" id="adminConsultingHalf"><option value="상반기">상반기</option><option value="하반기">하반기</option></select></div><button class="btn btn-p register-btn" type="button" onclick="adminCreateCompany()">협력사 등록</button></div>
+    <div class="inline-status" id="adminCompanyStatus">등록된 협력사는 협력사 등록 화면에서 선택할 수 있습니다.</div>
   </div>
   <div class="srow" id="adminSummaryCards"></div>
   <div id="adminCompanyList"></div>
+</div>
+
+<div class="popup-overlay" id="adminCsvPopup" onclick="if(event.target===this)closeAdminCsvPopup()">
+  <div class="popup-box">
+    <button class="popup-close" type="button" onclick="closeAdminCsvPopup()">×</button>
+    <div class="popup-title">관리자 CSV 다운로드</div>
+    <div class="popup-desc">출력할 컨설팅 차수를 선택하세요. 해당 차수의 과제만 과제별 한 행으로 출력합니다.</div>
+    <div class="frow" style="margin-top:14px">
+      <div class="fg"><span class="fl">컨설팅 연도 <span class="req">*</span></span><select class="fi" id="adminCsvYear" onchange="syncAdminCsvHalves()"></select></div>
+      <div class="fg"><span class="fl">컨설팅 반기 <span class="req">*</span></span><select class="fi" id="adminCsvHalf"></select></div>
+    </div>
+    <div class="inline-status" id="adminCsvStatus"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn btn-o" type="button" onclick="closeAdminCsvPopup()">취소</button><button class="btn btn-p" id="btnAdminCsvDownload" type="button" onclick="downloadAdminTaskCsv()">다운로드</button></div>
+  </div>
 </div>
 
 <!-- PAGE: 협력사 AI API 설정 -->
@@ -803,6 +823,8 @@ let cur=1;
 let ctx={project:'',projectId:null,projectData:null,projectEngine:null,taskId:null,taskParticipants:[],interviewId:null,processes:[],bdw:null,bdwMeta:null,aiResult:null,acceptedAiProcessIds:[],toBeApplied:false,report:null,l1:'',l2:'',l3:'',l4:''};
 const appState={authenticated:false,user:null,profile:null,membership:null,isAdmin:false,authMode:'partner',companyId:null,companyName:'',companyRegistered:false,aiEngine:'gemini',aiConnections:{}};
 let companyProjects=[];
+let adminCompanies=[];
+let partnerRegistrationInProgress=false;
 let editingProjectId=null;
 let editingProjectEngine=null;
 const names=['','과제 등록','인터뷰 & Draft','프로세스 수정','BDW 진단','AI FIT 분석','결과 리포트'];
@@ -815,11 +837,11 @@ async function apiRequest(path,options={}){
   const headers=new Headers(options.headers||{});
   const accessToken=await window.bpaAuth?.getAccessToken?.();
   if(accessToken)headers.set('Authorization','Bearer '+accessToken);
-  const response=await fetch(apiBase+path,{...options,headers});
+  const response=await fetch(apiBase+path,{credentials:'same-origin',...options,headers});
   const text=await response.text();
   let result={};
   try{result=text?JSON.parse(text):{};}catch{result={error:text||'서버 응답을 해석할 수 없습니다.'};}
-  if(!response.ok){const error=new Error(result.error||('서버가 빈 오류 응답을 반환했습니다. (HTTP '+response.status+')'));error.issues=result.issues||(result.errors||[]).map(item=>item.msg||String(item));throw error;}
+  if(!response.ok){const error=new Error(result.error||('서버가 빈 오류 응답을 반환했습니다. (HTTP '+response.status+')'));error.code=result.code;error.status=response.status;error.issues=result.issues||(result.errors||[]).map(item=>item.msg||String(item));throw error;}
   return result;
 }
 function setHeaderVisible(visible){
@@ -837,30 +859,50 @@ function setAuthMode(mode){
   document.getElementById('partnerAuthTab').classList.toggle('on',mode==='partner');
   document.getElementById('adminAuthTab').classList.toggle('on',mode==='admin');
   document.getElementById('partnerAuthFields').style.display=mode==='partner'?'block':'none';
+  document.getElementById('adminAuthFields').style.display=mode==='admin'?'block':'none';
+  document.getElementById('authPanelTitle').textContent=mode==='partner'?'협력사 로그인':'관리자 로그인';
+  document.getElementById('authPanelDesc').textContent=mode==='partner'?'관리자가 등록한 활성 협력사를 선택하고 이름과 이메일로 즉시 등록합니다.':'관리자 비밀번호로 전체 협력사 조회 화면에 접속합니다.';
   document.getElementById('authStatus').textContent='';
 }
 async function loadActiveCompanies(){
   const select=document.getElementById('welcomeCompanySelect');
   try{
     const companies=await apiRequest('/auth/companies');
-    select.innerHTML='<option value="">협력사를 선택하세요</option>'+companies.map(company=>'<option value="'+Number(company.id)+'">'+escapeHtml(company.name)+'</option>').join('');
+    select.innerHTML='<option value="">협력사를 선택하세요</option>'+companies.map(company=>'<option value="'+Number(company.id)+'">'+escapeHtml(company.name+' · '+consultingRoundLabel(company))+'</option>').join('');
   }catch(error){document.getElementById('authStatus').textContent='✕ '+error.message;}
 }
 function validEmail(email){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);}
-async function sendLoginLink(){
+async function registerPartner(){
   const email=document.getElementById('welcomeUserEmail').value.trim();
   const name=document.getElementById('welcomeUserName').value.trim();
   const companyId=Number(document.getElementById('welcomeCompanySelect').value);
-  const status=document.getElementById('authStatus');const button=document.getElementById('btnSendLoginLink');
+  const status=document.getElementById('authStatus');const button=document.getElementById('btnRegisterPartner');
   if(!validEmail(email)){status.style.color='var(--d)';status.textContent='올바른 이메일 주소 형식으로 입력해 주세요.';return;}
-  if(appState.authMode==='partner'&&(!name||!Number.isInteger(companyId))){status.style.color='var(--d)';status.textContent='협력사와 담당자 이름을 입력해 주세요.';return;}
+  if(!name||!Number.isInteger(companyId)){status.style.color='var(--d)';status.textContent='협력사와 이름을 입력해 주세요.';return;}
   if(!window.bpaAuth?.configured){status.style.color='var(--d)';status.textContent='Supabase Auth 환경변수가 설정되지 않았습니다.';return;}
-  button.disabled=true;button.textContent='이메일 전송 중...';
+  button.disabled=true;button.textContent='등록 중...';partnerRegistrationInProgress=true;
   try{
-    await window.bpaAuth.sendMagicLink(email,appState.authMode==='partner'?{name,company_id:companyId,auth_mode:'partner'}:{auth_mode:'admin'});
-    status.style.color='var(--s)';status.textContent='✓ 로그인 이메일을 전송했습니다. 이메일의 링크를 열어 주세요.';
+    const existingSession=await window.bpaAuth.getSession();
+    if(!existingSession)await window.bpaAuth.registerAnonymously({name,email,company_id:companyId,auth_mode:'partner'});
+    await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,company_id:companyId})});
+    status.style.color='var(--s)';status.textContent='✓ 협력사 등록과 로그인이 완료되었습니다.';
+    await restoreAuthenticatedSession();
+  }catch(error){
+    if(error.code==='ALREADY_REGISTERED')await restoreAuthenticatedSession();
+    status.style.color='var(--d)';status.textContent='✕ '+error.message;
+  }
+  finally{partnerRegistrationInProgress=false;button.disabled=false;button.textContent='등록';}
+}
+async function loginAdmin(){
+  const password=document.getElementById('adminPassword').value;const status=document.getElementById('authStatus');const button=document.getElementById('btnAdminLogin');
+  if(!password){status.style.color='var(--d)';status.textContent='관리자 비밀번호를 입력해 주세요.';return;}
+  button.disabled=true;button.textContent='확인 중...';
+  try{
+    const result=await apiRequest('/auth/admin-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
+    Object.assign(appState,{authenticated:true,user:null,profile:result.profile,membership:null,isAdmin:true,companyId:null,companyName:'',companyRegistered:false,aiConnections:{}});
+    document.getElementById('adminPassword').value='';document.getElementById('headerCompany').textContent='시스템 관리자';setHeaderVisible(true);await openAdminDashboard();
   }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
-  finally{button.disabled=false;button.textContent='로그인 이메일 받기';}
+  finally{button.disabled=false;button.textContent='관리자 로그인';}
 }
 function applyPartnerSession(me){
   const membership=(me.memberships||[]).find(item=>item.status==='active'&&item.company?.status==='active');
@@ -869,33 +911,33 @@ function applyPartnerSession(me){
   appState.companyId=Number(membership.company_id);appState.companyName=membership.company.name;appState.companyRegistered=true;
   document.getElementById('headerCompany').textContent=appState.companyName;
   document.getElementById('newCompanyName').value=appState.companyName;
-  document.getElementById('authSessionText').textContent=appState.profile.name+' · '+appState.companyName;
-  document.getElementById('authSessionBox').style.display='flex';
 }
 async function restoreAuthenticatedSession(){
+  try{
+    const admin=await apiRequest('/auth/admin-session');
+    if(admin.authenticated){Object.assign(appState,{authenticated:true,user:null,profile:admin.profile,membership:null,isAdmin:true,companyId:null,companyName:'',companyRegistered:false,aiConnections:{}});document.getElementById('headerCompany').textContent='시스템 관리자';setHeaderVisible(true);await openAdminDashboard();return;}
+  }catch(error){if(!String(error.message).includes('관리자 로그인이 필요'))console.warn(error);}
   if(!window.bpaAuth?.configured){showWelcome();document.getElementById('authStatus').textContent='Supabase Auth 환경변수가 설정되지 않았습니다.';return;}
   const session=await window.bpaAuth.getSession();
   if(!session){showWelcome();await loadActiveCompanies();return;}
   try{
     let me=await apiRequest('/auth/me');
     if(!me.profile&&session.user.user_metadata?.auth_mode==='partner'){
-      await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:session.user.user_metadata.name,company_id:session.user.user_metadata.company_id})});
+      await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:session.user.user_metadata.name,email:session.user.user_metadata.email,company_id:session.user.user_metadata.company_id})});
       me=await apiRequest('/auth/me');
     }
     appState.authenticated=true;appState.user=me.user;appState.profile=me.profile;
-    if(me.profile?.app_role==='super_admin'){
-      appState.isAdmin=true;document.getElementById('headerCompany').textContent='시스템 관리자';setHeaderVisible(true);hideFlowChrome();await openAdminDashboard();return;
-    }
     applyPartnerSession(me);await refreshAIConnectionState();showWelcome();await loadActiveCompanies();
   }catch(error){showWelcome();await loadActiveCompanies();document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='✕ '+error.message;}
 }
 async function logoutApplication(){
+  try{await apiRequest('/auth/admin-logout',{method:'POST'});}catch{}
   await window.bpaAuth?.signOut?.();
   Object.assign(appState,{authenticated:false,user:null,profile:null,membership:null,isAdmin:false,companyId:null,companyName:'',companyRegistered:false,aiEngine:'gemini',aiConnections:{}});
-  ctx.projectId=null;ctx.taskId=null;document.getElementById('authSessionBox').style.display='none';showWelcome();await loadActiveCompanies();
+  ctx.projectId=null;ctx.taskId=null;showWelcome();await loadActiveCompanies();
 }
 async function startApplication(){
-  if(!appState.authenticated){document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='이메일 로그인을 먼저 완료해 주세요.';return;}
+  if(!appState.authenticated){document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='협력사 등록 또는 관리자 로그인을 먼저 완료해 주세요.';return;}
   if(appState.isAdmin){await openAdminDashboard();return;}
   if(!appState.companyRegistered){document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='활성 협력사 멤버십이 필요합니다.';return;}
   setHeaderVisible(true);
@@ -940,23 +982,61 @@ async function setDefaultAIConnection(engine){
   catch(error){alert(error.message);}
 }
 
+function consultingRoundLabel(company){
+  return company.consulting_year&&company.consulting_half
+    ?Number(company.consulting_year)+'년 '+company.consulting_half
+    :'차수 미설정';
+}
+function initializeConsultingYears(){
+  const select=document.getElementById('adminConsultingYear');
+  if(!select||select.options.length)return;
+  const currentYear=new Date().getFullYear();
+  for(let year=2100;year>=2000;year-=1){
+    const option=document.createElement('option');option.value=String(year);option.textContent=year+'년';option.selected=year===currentYear;select.appendChild(option);
+  }
+}
 async function openAdminDashboard(){
   if(!appState.isAdmin){showWelcome();return;}
-  setHeaderVisible(true);hideFlowChrome();show('pageAdmin');setHdrSingle('관리자 모드');
-  const list=document.getElementById('adminCompanyList');list.innerHTML='<div class="loading-state">전체 협력사 현황을 불러오는 중입니다...</div>';
+  setHeaderVisible(true);hideFlowChrome();show('pageAdmin');setHdrSingle('관리자 모드');initializeConsultingYears();
+  adminCompanies=[];const list=document.getElementById('adminCompanyList');list.innerHTML='<div class="loading-state">전체 협력사 현황을 불러오는 중입니다...</div>';
   try{
-    const companies=await apiRequest('/admin/overview');
+    const companies=await apiRequest('/admin/overview');adminCompanies=companies;
     const projectCount=companies.reduce((sum,company)=>sum+Number(company.project_count||0),0);const taskCount=companies.reduce((sum,company)=>sum+Number(company.task_count||0),0);
     document.getElementById('adminSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">전체 협력사</div><div class="sc-val" style="color:var(--p)">'+companies.length+'</div></div><div class="sc"><div class="sc-lbl">활성 협력사</div><div class="sc-val" style="color:var(--s)">'+companies.filter(company=>company.status==='active').length+'</div></div><div class="sc"><div class="sc-lbl">전체 프로젝트</div><div class="sc-val" style="color:var(--w)">'+projectCount+'</div></div><div class="sc"><div class="sc-lbl">전체 과제</div><div class="sc-val" style="color:var(--d)">'+taskCount+'</div></div>';
-    list.innerHTML=companies.map(company=>{const nextStatus=company.status==='active'?'suspended':'active';const projects=(company.projects||[]).map(project=>'<div class="admin-project"><b>'+escapeHtml(project.name)+'</b><span style="font-size:11px;color:var(--mt);margin-left:8px">'+escapeHtml(formatPeriod(project))+'</span><div class="admin-task-list">'+((project.tasks||[]).length?(project.tasks||[]).map(task=>'과제 · '+escapeHtml(task.name||task.l4)).join('<br>'):'등록된 과제 없음')+'</div></div>').join('');return '<div class="admin-company" id="adminCompany'+Number(company.id)+'"><div class="admin-company-hd" onclick="toggleAdminCompany('+Number(company.id)+')"><span class="status-chip '+(company.status==='active'?'st-done':'st-prog')+'">'+(company.status==='active'?'활성':'중지')+'</span><div class="admin-company-name">'+escapeHtml(company.name)+'</div><span style="font-size:12px;color:var(--mt)">프로젝트 '+Number(company.project_count||0)+' · 과제 '+Number(company.task_count||0)+'</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();adminChangeCompanyStatus('+Number(company.id)+',\''+nextStatus+'\')">'+(nextStatus==='active'?'활성화':'중지')+'</button></div><div class="admin-company-body">'+(projects||'<div class="empty-state">등록된 프로젝트가 없습니다.</div>')+'</div></div>';}).join('')||'<div class="empty-state">등록된 협력사가 없습니다.</div>';
+    list.innerHTML=companies.map(company=>{const nextStatus=company.status==='active'?'suspended':'active';const projects=(company.projects||[]).map(project=>'<div class="admin-project"><b>'+escapeHtml(project.name)+'</b><span style="font-size:11px;color:var(--mt);margin-left:8px">'+escapeHtml(formatPeriod(project))+'</span><div class="admin-task-list">'+((project.tasks||[]).length?(project.tasks||[]).map(task=>'과제 · '+escapeHtml(task.name||task.l4)).join('<br>'):'등록된 과제 없음')+'</div></div>').join('');return '<div class="admin-company" id="adminCompany'+Number(company.id)+'"><div class="admin-company-hd" onclick="toggleAdminCompany('+Number(company.id)+')"><span class="status-chip '+(company.status==='active'?'st-done':'st-prog')+'">'+(company.status==='active'?'활성':'중지')+'</span><div class="admin-company-name">'+escapeHtml(company.name)+'</div><span class="admin-company-round">'+escapeHtml(consultingRoundLabel(company))+'</span><span style="font-size:12px;color:var(--mt)">프로젝트 '+Number(company.project_count||0)+' · 과제 '+Number(company.task_count||0)+'</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();adminChangeCompanyStatus('+Number(company.id)+',\''+nextStatus+'\')">'+(nextStatus==='active'?'활성화':'중지')+'</button></div><div class="admin-company-body">'+(projects||'<div class="empty-state">등록된 프로젝트가 없습니다.</div>')+'</div></div>';}).join('')||'<div class="empty-state">등록된 협력사가 없습니다.</div>';
   }catch(error){list.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
 }
 function toggleAdminCompany(companyId){document.getElementById('adminCompany'+companyId)?.classList.toggle('open');}
 async function adminCreateCompany(){
-  const name=document.getElementById('adminCompanyName').value.trim();const businessNumber=document.getElementById('adminBusinessNumber').value.trim();const status=document.getElementById('adminCompanyStatus');
-  if(!name){status.style.color='var(--d)';status.textContent='협력사명을 입력해 주세요.';return;}
-  try{const result=await apiRequest('/admin/companies',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,business_number:businessNumber})});status.style.color='var(--s)';status.textContent='✓ '+result.message;document.getElementById('adminCompanyName').value='';document.getElementById('adminBusinessNumber').value='';await openAdminDashboard();}
+  const name=document.getElementById('adminCompanyName').value.trim();const consultingYear=Number(document.getElementById('adminConsultingYear').value);const consultingHalf=document.getElementById('adminConsultingHalf').value;const status=document.getElementById('adminCompanyStatus');
+  if(!name||!Number.isInteger(consultingYear)||!consultingHalf){status.style.color='var(--d)';status.textContent='협력사명과 컨설팅 차수를 모두 입력해 주세요.';return;}
+  try{const result=await apiRequest('/admin/companies',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,consulting_year:consultingYear,consulting_half:consultingHalf})});status.style.color='var(--s)';status.textContent='✓ '+result.message;document.getElementById('adminCompanyName').value='';await openAdminDashboard();await loadActiveCompanies();}
   catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
+}
+function openAdminCsvPopup(){
+  const yearSelect=document.getElementById('adminCsvYear');const status=document.getElementById('adminCsvStatus');
+  const years=[...new Set(adminCompanies.map(company=>Number(company.consulting_year)).filter(Number.isInteger))].sort((a,b)=>b-a);
+  yearSelect.innerHTML=years.map(year=>'<option value="'+year+'">'+year+'년</option>').join('');
+  status.textContent=years.length?'':'컨설팅 차수가 설정된 협력사가 없습니다.';
+  document.getElementById('btnAdminCsvDownload').disabled=!years.length;syncAdminCsvHalves();document.getElementById('adminCsvPopup').classList.add('open');
+}
+function syncAdminCsvHalves(){
+  const year=Number(document.getElementById('adminCsvYear').value);const halfSelect=document.getElementById('adminCsvHalf');
+  const halves=['상반기','하반기'].filter(half=>adminCompanies.some(company=>Number(company.consulting_year)===year&&company.consulting_half===half));
+  halfSelect.innerHTML=halves.map(half=>'<option value="'+half+'">'+half+'</option>').join('');
+  document.getElementById('btnAdminCsvDownload').disabled=!year||!halves.length;
+}
+function closeAdminCsvPopup(){document.getElementById('adminCsvPopup').classList.remove('open');}
+async function downloadAdminTaskCsv(){
+  const year=Number(document.getElementById('adminCsvYear').value);const half=document.getElementById('adminCsvHalf').value;const status=document.getElementById('adminCsvStatus');const button=document.getElementById('btnAdminCsvDownload');
+  if(!Number.isInteger(year)||!half){status.style.color='var(--d)';status.textContent='컨설팅 연도와 반기를 선택해 주세요.';return;}
+  button.disabled=true;button.textContent='생성 중...';status.textContent='';
+  try{
+    const response=await fetch(apiBase+'/admin/tasks.csv?consulting_year='+encodeURIComponent(year)+'&consulting_half='+encodeURIComponent(half),{credentials:'same-origin'});
+    if(!response.ok){const text=await response.text();let error={};try{error=JSON.parse(text);}catch{}throw new Error(error.error||'CSV 파일을 다운로드할 수 없습니다.');}
+    const blob=await response.blob();const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=year+'년_'+half+'_협력사_프로젝트_과제.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);closeAdminCsvPopup();
+  }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
+  finally{button.disabled=false;button.textContent='다운로드';}
 }
 async function adminChangeCompanyStatus(companyId,status){
   try{await apiRequest('/admin/companies/'+companyId+'/status',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});await openAdminDashboard();}
@@ -1454,7 +1534,7 @@ async function bootstrapApplication(){
   }
   await restoreAuthenticatedSession();
   window.bpaAuth?.onAuthStateChange?.((event)=>{
-    if(event==='SIGNED_IN')restoreAuthenticatedSession();
+    if(event==='SIGNED_IN'&&!partnerRegistrationInProgress)restoreAuthenticatedSession();
     if(event==='SIGNED_OUT')showWelcome();
   });
 }
