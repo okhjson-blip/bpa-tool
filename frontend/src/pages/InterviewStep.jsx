@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { interviewsAPI, domainsAPI } from '../services/api';
+import { statikLevelLabel } from '../utils/statik';
 
 export default function InterviewStep() {
   const { projectId } = useParams();
@@ -192,7 +193,7 @@ export default function InterviewStep() {
         {/* 생성된 프로세스 */}
         {processes.length > 0 && (
           <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-6">AI Draft (L4~L6)</h2>
+            <h2 className="text-2xl font-bold mb-6">AI Draft (L4 모듈·L5 단위·L6 Act)</h2>
 
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -211,7 +212,7 @@ export default function InterviewStep() {
                     <tr key={proc.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-2 text-sm">
                         <span className="bg-primary text-white px-2 py-1 rounded text-xs font-bold">
-                          {proc.level}
+                          {statikLevelLabel(proc.level)}
                         </span>
                       </td>
                       <td className="px-4 py-2 text-sm font-bold">{proc.name}</td>

@@ -106,16 +106,34 @@ if (mode === 'create') {
     ]
   }).select().single();
   if (taskResult.error) throw taskResult.error;
-  const report = await api(
-    `/analysis/project/${projectResult.data.id}/report?task_id=${taskResult.data.id}`,
-    token
+  const processResult = await service.from('processes').insert({
+    project_id: projectResult.data.id,
+    task_id: taskResult.data.id,
+    level: 'L6',
+    name: 'SNS 채널을 관리한다',
+    description: '브라우저 플로우차트 보조 문구 검증',
+    execution_time: 60,
+    waiting_time: 0,
+    approval_waiting_time: 0,
+    method: 'manual',
+    tool: 'web',
+    status: 'confirmed'
+  }).select().single();
+  if (processResult.error) throw processResult.error;
+  await api(`/analysis/project/${projectResult.data.id}/report?task_id=${taskResult.data.id}`, token);
+  const savedReport = await api(
+    `/analysis/project/${projectResult.data.id}/report/save`,
+    token,
+    'POST',
+    { taskId: taskResult.data.id, frequency_unit: 'week', frequency_count: 1 }
   );
 
   console.log(JSON.stringify({
     companyId: company.id,
     projectId: projectResult.data.id,
     taskId: taskResult.data.id,
-    reportCreatedAt: report.created_at,
+    reportCreatedAt: savedReport.report.created_at,
+    reportSavedAt: savedReport.saved_at,
     email
   }));
 } else if (mode === 'cleanup') {

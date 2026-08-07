@@ -85,7 +85,7 @@ export default function NewProject() {
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">
-                L1 도메인 <span className="text-red-500">*</span>
+                L1 구분 · 조직 기능 <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"

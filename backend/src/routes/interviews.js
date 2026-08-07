@@ -33,11 +33,23 @@ router.post('/:interviewId/analyze', requireCompanyWrite, [
   interviewController.analyzeInterview(req, res);
 });
 
-// 프로젝트의 모든 프로세스 (L4~L6) 조회
+// 프로젝트의 모든 프로세스(L4 모듈, L5 단위, L6 Act) 조회
 router.get('/project/:projectId/processes', [
   param('projectId').isInt(),
   query('task_id').isInt().optional()
 ], validate, interviewController.getProcesses);
+
+router.put('/processes/sync', requireCompanyWrite, [
+  body('processes').isArray({ min: 1, max: 500 }),
+  body('processes.*.id').isInt(),
+  body('processes.*.name').trim().notEmpty(),
+  body('processes.*.description').isString().optional(),
+  body('processes.*.execution_time').isInt({ min: 0 }),
+  body('processes.*.waiting_time').isFloat({ min: 0 }),
+  body('processes.*.approval_waiting_time').isFloat({ min: 0 }),
+  body('processes.*.method').isIn(['manual', 'system']),
+  body('processes.*.tool').isIn(['email', 'document', 'excel', 'web', 'erp', 'other'])
+], validate, interviewController.syncProcesses);
 
 // 개별 프로세스 업데이트
 router.put('/process/:processId', requireCompanyWrite, [

@@ -1,5 +1,207 @@
 import { getServiceClient, serviceDb } from '../config/database.js';
 
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function adminUserPayload(account, company) {
+  return {
+    id: account.id,
+    company_id: account.company_id,
+    company_name: company?.name || '',
+    company_status: company?.status || 'suspended',
+    consulting_year: company?.consulting_year || null,
+    consulting_half: company?.consulting_half || null,
+    name: account.name,
+    email: account.email,
+    last_access_at: account.last_access_at,
+    linked: Boolean(account.auth_user_id),
+    created_at: account.created_at,
+    updated_at: account.updated_at
+  };
+}
+
+async function writeAdminUserAudit({ companyId, action, accountId, metadata = {} }) {
+  await serviceDb.insert('audit_logs', {
+    actor_user_id: null,
+    company_id: companyId,
+    action,
+    target_type: 'company_user_account',
+    target_id: String(accountId),
+    metadata: { ...metadata, actor: 'password_admin' }
+  });
+}
+
+export async function getCompanies(_req, res) {
+  try {
+    const companies = (await serviceDb.select('companies')).sort((left, right) =>
+      Number(right.consulting_year || 0) - Number(left.consulting_year || 0) ||
+      Number(right.consulting_half === '하반기') - Number(left.consulting_half === '하반기') ||
+      left.name.localeCompare(right.name, 'ko')
+    );
+    res.json(companies);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '협력사 목록을 불러올 수 없습니다.' });
+  }
+}
+
+export async function getCompanyUsers(_req, res) {
+  try {
+    const [accounts, companies] = await Promise.all([
+      serviceDb.select('company_user_accounts'),
+      serviceDb.select('companies')
+    ]);
+    const companyById = new Map(companies.map((company) => [Number(company.id), company]));
+    const users = accounts
+      .map((account) => adminUserPayload(account, companyById.get(Number(account.company_id))))
+      .sort((left, right) =>
+        left.company_name.localeCompare(right.company_name, 'ko') ||
+        left.name.localeCompare(right.name, 'ko') ||
+        left.email.localeCompare(right.email)
+      );
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '협력사 사용자 목록을 불러올 수 없습니다.' });
+  }
+}
+
+export async function createCompanyUser(req, res) {
+  const companyId = Number(req.body.company_id);
+  const name = String(req.body.name || '').trim();
+  const email = normalizeEmail(req.body.email);
+  try {
+    const company = await serviceDb.selectOne('companies', { id: companyId });
+    if (!company) return res.status(404).json({ error: '협력사를 찾을 수 없습니다.' });
+    const duplicate = await serviceDb.selectOne('company_user_accounts', {
+      company_id: companyId,
+      email
+    });
+    if (duplicate) return res.status(409).json({ error: '해당 협력사에 이미 등록된 이메일 주소입니다.' });
+
+    const account = await serviceDb.insert('company_user_accounts', {
+      company_id: companyId,
+      auth_user_id: null,
+      name,
+      email,
+      last_access_at: null
+    });
+    await writeAdminUserAudit({
+      companyId,
+      action: 'company_user_create',
+      accountId: account.id,
+      metadata: { name, email }
+    });
+    res.status(201).json({
+      message: '협력사 사용자가 등록되었습니다. 해당 이메일로 처음 접속하면 계정이 자동 연결됩니다.',
+      user: adminUserPayload(account, company)
+    });
+  } catch (error) {
+    console.error(error);
+    if (error?.code === '23505') {
+      return res.status(409).json({ error: '해당 협력사에 이미 등록된 이메일 주소입니다.' });
+    }
+    res.status(500).json({ error: '협력사 사용자를 등록할 수 없습니다.' });
+  }
+}
+
+export async function updateCompanyUser(req, res) {
+  const accountId = Number(req.params.userId);
+  const companyId = Number(req.body.company_id);
+  const name = String(req.body.name || '').trim();
+  const email = normalizeEmail(req.body.email);
+  try {
+    const [account, company] = await Promise.all([
+      serviceDb.selectOne('company_user_accounts', { id: accountId }),
+      serviceDb.selectOne('companies', { id: companyId })
+    ]);
+    if (!account) return res.status(404).json({ error: '협력사 사용자를 찾을 수 없습니다.' });
+    if (!company) return res.status(404).json({ error: '협력사를 찾을 수 없습니다.' });
+
+    const duplicate = await serviceDb.selectOne('company_user_accounts', {
+      company_id: companyId,
+      email
+    });
+    if (duplicate && Number(duplicate.id) !== accountId) {
+      return res.status(409).json({ error: '해당 협력사에 이미 등록된 이메일 주소입니다.' });
+    }
+
+    if (account.auth_user_id) {
+      const client = getServiceClient();
+      const membership = await serviceDb.selectOne('company_memberships', {
+        user_id: account.auth_user_id
+      });
+      if (membership && Number(membership.company_id) !== companyId) {
+        await serviceDb.update('company_memberships', membership.id, { company_id: companyId });
+      }
+      const profileResult = await client.from('profiles').update({
+        name,
+        email,
+        updated_at: new Date().toISOString()
+      }).eq('user_id', account.auth_user_id);
+      if (profileResult.error) throw profileResult.error;
+      const authResult = await client.auth.admin.updateUserById(account.auth_user_id, {
+        user_metadata: { name, email, company_id: companyId, auth_mode: 'partner' }
+      });
+      if (authResult.error) {
+        console.error('Supabase Auth 사용자 메타데이터 동기화 실패:', authResult.error.message);
+      }
+    }
+
+    const updated = await serviceDb.update('company_user_accounts', accountId, {
+      company_id: companyId,
+      name,
+      email
+    });
+    await writeAdminUserAudit({
+      companyId,
+      action: 'company_user_update',
+      accountId,
+      metadata: {
+        previous_company_id: account.company_id,
+        previous_email: account.email,
+        name,
+        email
+      }
+    });
+    res.json({
+      message: '협력사 사용자 정보가 수정되었습니다.',
+      user: adminUserPayload(updated, company)
+    });
+  } catch (error) {
+    console.error(error);
+    if (error?.code === '23505') {
+      return res.status(409).json({ error: '해당 협력사에 이미 등록된 이메일 주소입니다.' });
+    }
+    res.status(500).json({ error: '협력사 사용자 정보를 수정할 수 없습니다.' });
+  }
+}
+
+export async function deleteCompanyUser(req, res) {
+  const accountId = Number(req.params.userId);
+  try {
+    const account = await serviceDb.selectOne('company_user_accounts', { id: accountId });
+    if (!account) return res.status(404).json({ error: '협력사 사용자를 찾을 수 없습니다.' });
+
+    if (account.auth_user_id) {
+      const result = await getServiceClient().auth.admin.deleteUser(account.auth_user_id);
+      if (result.error) throw result.error;
+    }
+    await serviceDb.delete('company_user_accounts', accountId);
+    await writeAdminUserAudit({
+      companyId: account.company_id,
+      action: 'company_user_delete',
+      accountId,
+      metadata: { name: account.name, email: account.email, linked: Boolean(account.auth_user_id) }
+    });
+    res.json({ message: '협력사 사용자가 삭제되었습니다.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '협력사 사용자를 삭제할 수 없습니다.' });
+  }
+}
+
 export async function createCompany(req, res) {
   const name = String(req.body.name || '').trim();
   const consultingYear = Number(req.body.consulting_year);
@@ -59,7 +261,8 @@ export async function getOverview(_req, res) {
       list.push({
         ...task,
         has_report: Boolean(savedReport),
-        report_generated_at: savedReport?.generated_at || null
+        report_generated_at: savedReport?.generated_at || null,
+        report_saved_at: savedReport?.saved_at || null
       });
       tasksByProject.set(Number(task.project_id), list);
     });
@@ -162,7 +365,9 @@ export async function getTaskReport(req, res) {
     res.json({
       ...savedReport.report_data,
       company_name: company?.name || '',
-      report_generated_at: savedReport.generated_at
+      report_title: savedReport.report_title,
+      report_generated_at: savedReport.generated_at,
+      report_saved_at: savedReport.saved_at
     });
   } catch (error) {
     console.error(error);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { interviewsAPI } from '../services/api';
+import { statikLevelLabel } from '../utils/statik';
 
 const STATUS_OPTIONS = ['draft', 'confirmed', 'optimized'];
 
@@ -115,7 +116,7 @@ export default function ProcessEditStep() {
                     <tr key={proc.id} className="border-b bg-blue-50">
                       <td className="px-4 py-2 font-bold">
                         <span className="bg-primary text-white px-2 py-1 rounded text-xs">
-                          {proc.level}
+                          {statikLevelLabel(proc.level)}
                         </span>
                       </td>
                       <td className="px-4 py-2">
@@ -183,7 +184,7 @@ export default function ProcessEditStep() {
                     <tr key={proc.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-2 font-bold">
                         <span className="bg-primary text-white px-2 py-1 rounded text-xs">
-                          {proc.level}
+                          {statikLevelLabel(proc.level)}
                         </span>
                       </td>
                       <td className="px-4 py-2 font-bold">{proc.name}</td>

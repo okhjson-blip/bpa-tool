@@ -104,7 +104,7 @@ export const analyzeInterview = async (req, res) => {
       .filter((proc) => !/(을|를)\s*[^.]+다\.?$/.test(proc.name) || /(\s및\s|\/|하고\s)/.test(proc.name));
     if (invalidL6Names.length) {
       return res.status(502).json({
-        error: 'AI 엔진이 STATIK L6 명명 규칙(목적어 + 단일 동사)을 지키지 않았습니다. AI Draft를 다시 생성해 주세요.'
+        error: 'AI 엔진이 STATIK L6 Act 명명 규칙(목적어 + 단일 동사)을 지키지 않았습니다. AI Draft를 다시 생성해 주세요.'
       });
     }
 
@@ -221,5 +221,42 @@ export const updateProcess = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: '프로세스 업데이트 중 오류가 발생했습니다' });
+  }
+};
+
+export const syncProcesses = async (req, res) => {
+  const requestedProcesses = req.body.processes || [];
+  try {
+    const ids = requestedProcesses.map((process) => Number(process.id));
+    if (new Set(ids).size !== ids.length) {
+      return res.status(400).json({ error: '중복된 프로세스가 포함되어 있습니다.' });
+    }
+
+    const accessibleProcesses = await db.select('processes');
+    const accessibleIds = new Set(accessibleProcesses.map((process) => Number(process.id)));
+    if (ids.some((id) => !accessibleIds.has(id))) {
+      return res.status(404).json({ error: '접근할 수 없는 프로세스가 포함되어 있습니다.' });
+    }
+
+    const processes = await Promise.all(requestedProcesses.map((process) =>
+      db.update('processes', Number(process.id), {
+        name: process.name,
+        description: process.description || '',
+        execution_time: Number(process.execution_time) || 0,
+        waiting_time: Number(process.waiting_time) || 0,
+        approval_waiting_time: Number(process.approval_waiting_time) || 0,
+        method: process.method || 'manual',
+        tool: process.tool || 'other',
+        status: 'confirmed'
+      })
+    ));
+
+    res.json({
+      message: `${processes.length}개 프로세스를 저장하고 플로우차트와 동기화했습니다.`,
+      processes
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '프로세스 일괄 동기화 중 오류가 발생했습니다.' });
   }
 };

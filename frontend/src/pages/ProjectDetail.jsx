@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { projectsAPI, domainsAPI } from '../services/api';
+import { statikLevelLabel } from '../utils/statik';
 
 export default function ProjectDetail() {
   const { projectId } = useParams();
@@ -81,7 +82,7 @@ export default function ProjectDetail() {
 
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm">L1 도메인</p>
+            <p className="text-gray-600 text-sm">L1 구분 · 조직 기능</p>
             <p className="text-2xl font-bold text-primary">{project.l1_domain}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
@@ -96,7 +97,7 @@ export default function ProjectDetail() {
 
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">업무 구조 (L1~L3)</h2>
+            <h2 className="text-2xl font-bold">업무 구조 (L1 구분~L3 중분류)</h2>
             <button
               onClick={() => setShowAddDomain(!showAddDomain)}
               className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90"
@@ -117,8 +118,8 @@ export default function ProjectDetail() {
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded"
                   >
-                    <option value="L2">L2 (기능)</option>
-                    <option value="L3">L3 (프로세스)</option>
+                    <option value="L2">L2 대분류 (업무 도메인)</option>
+                    <option value="L3">L3 중분류 (핵심 기능)</option>
                   </select>
                 </div>
                 <div>
@@ -193,7 +194,7 @@ export default function ProjectDetail() {
                         : 'bg-success'
                     }`}
                   >
-                    {domain.level}
+                    {statikLevelLabel(domain.level)}
                   </div>
                   <div className="flex-1">
                     <p className="font-bold">{domain.name}</p>

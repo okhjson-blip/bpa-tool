@@ -72,14 +72,15 @@ npm start
 
 1. 관리자가 등록한 협력사를 선택하고 이름·이메일 형식 확인만으로 즉시 자유 등록
 2. Supabase 로그인 세션 자동 복원 및 로그인 사용자의 활성 협력사 멤버십 확인
-3. 협력사별로 격리된 프로젝트 목록, L1~L3 프로젝트 생성·수정, 참여자 확인
-4. 프로젝트 계층과 연동된 과제(L4) 등록
+3. 협력사별로 격리된 프로젝트 목록, L1 구분·L2 대분류·L3 중분류 프로젝트 생성·수정, 참여자 확인
+4. 프로젝트 계층과 연동된 L4 모듈 과제 등록
 5. 인터뷰 답변과 AI Draft 생성
-6. L4~L6 프로세스 수정 및 플로우차트 확인
+6. L4 모듈·L5 단위·L6 Act 프로세스 수정 및 플로우차트 확인
 7. BDW(Bottleneck, Delay, Waste) 진단
 8. AI FIT 매트릭스와 As-Is/To-Be 비교
 9. 과제별 AX 성과지표 전체 PDF 또는 과제당 한 행의 과제정보 CSV 출력
-10. 관리자 모드에서 전체/활성 통계, 협력사 완료 처리, 협력사 모드에서 생성된 과제 결과 리포트 조회
+10. 관리자 `협력사/과제 관리`에서 전체/활성 통계, 협력사 완료 처리, 협력사 모드에서 생성된 과제 결과 리포트 조회
+11. 관리자 `협력사/사용자 관리`에서 사용자 이름·이메일·최근 접속 시간을 조회하고 사용자 선등록·수정·삭제
 
 ## 디렉터리
 
@@ -112,6 +113,11 @@ bpa-tool/
 - `GET /api/auth/admin-session`: 관리자 세션 복원
 - `POST /api/auth/admin-logout`: 관리자 세션 종료
 - `GET /api/admin/overview`: 전체 협력사 프로젝트·과제 조회(관리자)
+- `GET /api/admin/companies`: 사용자 관리 선택용 경량 협력사 목록(관리자)
+- `GET /api/admin/users`: 협력사 사용자와 최근 접속 시간 조회(관리자)
+- `POST /api/admin/users`: 협력사 사용자 선등록(관리자)
+- `PATCH /api/admin/users/:userId`: 협력사 사용자 이름·이메일·소속 수정(관리자)
+- `DELETE /api/admin/users/:userId`: 사용자 디렉터리와 연결된 Supabase Auth 사용자·멤버십 삭제(관리자)
 - `GET /api/admin/tasks/:taskId/report`: 협력사 모드에서 마지막으로 생성·저장한 과제 결과 리포트 조회(관리자)
 - `POST /api/admin/companies`: 협력사 등록(관리자)
 - `PATCH /api/admin/companies/:companyId/status`: 협력사 완료 처리와 재활성화(관리자). 내부 상태는 `suspended`로 유지하며 재활성화 시 프로젝트·과제의 완료 처리 전 상태를 복원합니다.
@@ -123,25 +129,28 @@ bpa-tool/
 - `PUT /api/connections/:engine`: 실제 연결 검증 후 협력사 Key 암호화 저장
 - `PUT /api/connections/:engine/default`: 새 프로젝트 기본 AI 엔진 지정
 - `DELETE /api/connections/:engine`: 협력사 AI API Key 삭제
-- `/api/interviews/*`: 실제 AI Draft 생성·저장과 작업별 프로세스 수정
+- `/api/interviews/*`: 실제 AI Draft 생성·저장과 작업별 프로세스 수정. 플로우차트 동기화는 단일 일괄 API 요청으로 처리합니다.
 - `/api/domains/*`: 업무 계층
 - `/api/analysis/*`: 작업별 BDW, AI FIT, To-Be, AX 성과지표 리포트
+- `GET /api/analysis/project/:projectId/report`: 저장 없이 최신 PDF 프리뷰 데이터 생성
+- `POST /api/analysis/project/:projectId/report/save`: 검증된 최신 PDF 리포트를 과제별 스냅샷으로 명시적 저장
 
 ## 운영 원칙
 
 - 비밀키와 `.env` 파일은 Git에 커밋하지 않습니다.
 - 모든 업무 데이터는 Supabase Auth 사용자, `company_memberships.company_id`, RLS를 기준으로 격리합니다.
+- `company_user_accounts`는 관리자 선등록과 자유 가입을 연결하는 사용자 디렉터리입니다. 선등록 사용자가 같은 협력사·이메일로 처음 접속하면 익명 Auth 사용자와 자동 연결되고 `/api/auth/me` 세션 복원 시 최근 접속 시간이 갱신됩니다.
 - Supabase Secret Key(또는 레거시 Service Role Key)는 사용자 인증 확인·최초 멤버십 생성·감사 로그에만 사용하고, 업무 데이터 API는 사용자 JWT가 적용된 Supabase 클라이언트로 RLS를 통과해야 합니다.
 - Vercel 배포 시 루트 `index.html`을 프런트엔드 빌드 입력으로 사용합니다.
 - 운영 및 로컬 API 데이터베이스는 Supabase PostgreSQL을 사용합니다.
 - AI 분석 모델은 OpenAI `gpt-5-nano`, Gemini `gemini-3.5-flash-lite`, Claude `claude-sonnet-5`를 사용합니다. OpenAI와 Gemini 모델은 각각 `OPENAI_MODEL`, `GEMINI_MODEL` 환경변수로 교체할 수 있습니다.
 - 세 공급자 모두 공식 JSON Schema 구조화 출력을 사용합니다. 협력사 API Key는 연결 확인 후 AES-256-GCM으로 암호화해 저장하며 Draft·BDW·AI FIT 실행 시 백엔드에서만 복호화합니다.
-- 프로젝트 계층은 `department_name=L1`, `description=L2`, `name=L3`로 저장하고 API에서는 L2를 `business_name` 별칭으로 제공합니다.
+- 프로젝트 계층은 `department_name=L1 구분`, `description=L2 대분류`, `name=L3 중분류`로 저장하고 API에서는 L2를 `business_name` 별칭으로 제공합니다.
 - 프로젝트 및 과제 등록은 기간과 필수 역할 참여자를 프런트엔드와 API에서 이중 검증합니다.
-- AI FIT 제안은 L6 단위 업무별로 사용자가 수락한 항목만 To-Be에 반영하며, 서버에 저장된 분석 결과를 기준으로 생성합니다.
+- AI FIT 제안은 L6 Act별로 사용자가 수락한 항목만 To-Be에 반영하며, 서버에 저장된 분석 결과를 기준으로 생성합니다.
 - 리포트 수행 빈도는 일·주·월별 횟수를 연간으로 환산하여 AX 절감 시간과 FTE를 계산합니다.
-- AI Draft는 STATIK L4~L6 정의를 따르며 L6를 `목적어 + 단일 동사` 형태의 최소 행동으로 생성합니다.
-- PDF는 별도 팝업 대신 숨김 인쇄 프레임으로 전체 리포트를 출력하고, CSV의 AS-IS·To-Be는 `A > B > C` 형식의 프로세스 흐름으로 기록합니다.
+- AI Draft는 STATIK L1 구분~L6 Act 전체 정의를 따르며 L6 Act를 `목적어 + 단일 동사` 형태의 최소 행위로 생성합니다.
+- 결과 페이지는 PDF 프리뷰를 먼저 표시합니다. 사용자가 `결과 리포트 저장`을 누른 경우에만 `task_reports`에 최신 PDF 리포트 스냅샷을 저장하며, 관리자 과제 목록의 `상세 조회` 버튼이 활성화됩니다. 미저장 과제의 버튼은 비활성화되고 `목록 새로고침`으로 최신 저장 여부를 반영합니다. PDF 출력은 숨김 인쇄 프레임을 사용하고 CSV의 AS-IS·To-Be는 `A > B > C` 형식의 프로세스 흐름으로 기록합니다.
 
 ## Supabase 설정
 

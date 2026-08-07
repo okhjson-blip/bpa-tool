@@ -67,6 +67,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .tr-val{flex:1;font-size:14px;color:var(--t)}
 .tr-add{font-size:11px;color:var(--p);cursor:pointer;padding:1px 5px;border-radius:4px;border:1px solid var(--bd)}
 .btn{padding:8px 14px;border-radius:6px;border:none;font-size:14px;font-weight:400;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 .btn-p{background:var(--p);color:#fff}
 .btn-o{background:#fff;border:1.5px solid var(--bd);color:var(--t)}
 .btn-s{background:var(--s);color:#fff}
@@ -120,6 +121,18 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .fte-help{border:0;cursor:pointer;font-family:inherit}
 .frequency-grid{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:end}
 .frequency-preview{font-size:11px;color:var(--p);font-weight:700;margin-top:5px}
+.pdf-preview-shell{background:#e9ecf3;border:1px solid #d9deea;border-radius:9px;padding:10px;max-height:430px;overflow:auto}
+.pdf-preview-page{background:#fff;min-height:390px;padding:18px 16px;box-shadow:0 2px 10px rgba(6,15,69,.12);font-size:8px;color:#17203a}
+.pdf-preview-page h1{font-size:15px;color:var(--p);border-bottom:2px solid var(--p);padding-bottom:6px;margin:0 0 8px}
+.pdf-preview-page .preview-meta{font-size:8px;color:#777;margin-bottom:12px}
+.pdf-preview-page section{margin:0 0 12px}
+.pdf-preview-page h2{font-size:10px;color:var(--p);margin:0 0 5px}
+.pdf-preview-page p{line-height:1.5;margin:3px 0}
+.pdf-preview-page table{width:100%;border-collapse:collapse;font-size:7px}
+.pdf-preview-page th,.pdf-preview-page td{border:1px solid #d7dce7;padding:3px;text-align:left;vertical-align:top}
+.pdf-preview-page th{background:#f0f2f8}
+.pdf-preview-empty{display:flex;align-items:center;justify-content:center;min-height:350px;color:#999;font-size:12px;text-align:center;line-height:1.7}
+.report-save-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px}
 .auth-tabs{display:flex;gap:6px;margin-bottom:14px;padding:4px;background:#f1f3f8;border-radius:8px}
 .auth-tab{flex:1;border:0;background:transparent;padding:8px;border-radius:6px;font-family:inherit;font-weight:700;color:var(--mt);cursor:pointer}
 .auth-tab.on{background:#fff;color:var(--p);box-shadow:0 1px 5px rgba(6,15,69,.12)}
@@ -152,6 +165,19 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .admin-status.active{background:#e8f5e9;color:var(--s)}
 .admin-status.suspended{background:#fff0f0;color:var(--d)}
 .admin-list-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-2px 0 10px;padding:8px 10px;background:#fff;border:1px solid var(--bd);border-radius:8px;font-size:12px;color:var(--mt)}
+.admin-page-tabs{display:flex;gap:6px;margin-bottom:11px;padding:4px;background:#e6eaf2;border-radius:9px;width:max-content;max-width:100%}
+.admin-page-tab{border:0;background:transparent;color:var(--mt);padding:8px 13px;border-radius:7px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.admin-page-tab.on{background:#fff;color:var(--p);box-shadow:0 1px 5px rgba(6,15,69,.13)}
+.admin-user-table-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:8px}
+.admin-user-table{width:100%;border-collapse:collapse;min-width:760px}
+.admin-user-table th{padding:9px 10px;background:#f5f7fb;border-bottom:1px solid var(--bd);font-size:12px;text-align:left;color:#555;white-space:nowrap}
+.admin-user-table td{padding:9px 10px;border-bottom:1px solid #eef1f6;font-size:12px;vertical-align:middle}
+.admin-user-table tr:last-child td{border-bottom:0}
+.admin-user-table tr:hover td{background:#fafbff}
+.admin-user-actions{display:flex;gap:5px;justify-content:flex-end}
+.admin-user-link{display:inline-flex;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:800}
+.admin-user-link.linked{background:#e8f5e9;color:var(--s)}
+.admin-user-link.pending{background:#fff3e0;color:var(--w)}
 .admin-task-item{display:flex;align-items:center;gap:7px;padding:4px 0;border-top:1px dashed #edf0f5}
 .admin-task-item:first-child{border-top:0}
 .admin-task-item-name{flex:1;color:#444}
@@ -176,6 +202,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .fc{background:#fafbff;border-radius:8px;border:1px solid var(--bd);padding:12px;overflow:auto}
 .flow-stack{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:260px;padding:6px}
 .flow-node{width:min(100%,340px);padding:9px 12px;border-radius:8px;border:2px solid var(--p);background:#fff;text-align:center;font-size:12px;font-weight:700;line-height:1.4}
+.flow-node small{display:block;margin-top:3px;font-size:10px;font-weight:500;line-height:1.45;color:#5f6675}
 .flow-node.l4{border-color:var(--pu);background:#f8f1fb;color:var(--pu);font-size:14px}
 .comparison-flow-grid{display:grid;grid-template-columns:1fr 34px 1fr;gap:12px;align-items:start}
 .comparison-flow-title{text-align:center;font-size:14px;font-weight:800;margin-bottom:10px}
@@ -183,9 +210,13 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .comparison-node{width:100%;max-width:360px;border:1.5px solid var(--bd);border-radius:8px;background:#fff;padding:9px 11px;text-align:center;font-size:12px;line-height:1.45}
 .comparison-node.asis{border-color:#9aa5bd;background:#f8f9fc}
 .comparison-node.applied{border-color:var(--s);background:#edf8ee}
+.comparison-node.system{border-color:#1976d2;background:#eef6ff}
 .comparison-node.manual{border-color:#9aa5bd;background:#f8f9fc}
 .comparison-node-name{font-weight:800;margin-bottom:2px;overflow-wrap:anywhere}
 .comparison-node-meta{font-size:11px;color:var(--mt)}
+.automation-badge{display:inline-flex;align-items:center;margin-left:6px;padding:2px 6px;border-radius:999px;font-size:9px;font-weight:900;vertical-align:1px;white-space:nowrap}
+.automation-badge.ai{background:#dff3e2;color:#1f7a35}
+.automation-badge.system{background:#dfeeff;color:#155fa0}
 .comparison-arrow{color:#aeb6c5;font-size:18px;line-height:1;margin:3px 0}
 .comparison-center-arrow{align-self:center;text-align:center;color:var(--p);font-size:24px;font-weight:900;padding-top:48px}
 @media(max-width:760px){.comparison-flow-grid{grid-template-columns:1fr}.comparison-center-arrow{padding:0;transform:rotate(90deg)}}
@@ -302,7 +333,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .validation-list li::marker{color:var(--d)}
 .lv-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f0f3f8}
 .lv-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-.lv-badge{width:70px;flex-shrink:0;text-align:center}
+.lv-badge{width:125px;flex-shrink:0;text-align:center}
 .lv-badge-num{font-size:12px;font-weight:900;padding:2px 6px;border-radius:6px;display:block;margin-bottom:2px}
 .lv-badge-nm{font-size:11px;font-weight:700;color:#666}
 .lv-desc{flex:1}
@@ -335,7 +366,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   </div>
 </div>
 <div class="step-bar" id="stepBar">
-  <div class="sp" id="sp1" onclick="navigateStep(1)"><div class="sn">1</div>과제 등록 (L4)</div>
+  <div class="sp" id="sp1" onclick="navigateStep(1)"><div class="sn">1</div>과제 등록 (L4 모듈)</div>
   <span class="sp-arr">›</span>
   <div class="sp" id="sp2" onclick="navigateStep(2)"><div class="sn">2</div>인터뷰 & Draft</div>
   <span class="sp-arr">›</span>
@@ -356,7 +387,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="welcome-page">
     <div class="welcome-shell">
       <h1 class="welcome-title">Business Process Analysis Tool for AX</h1>
-      <p class="welcome-sub">협력사 또는 관리자로 로그인한 뒤<br>업무 프로세스 분석을 시작하세요.</p>
+      <p class="welcome-sub">협력사로 로그인한 뒤<br>업무 프로세스 분석을 시작하세요.</p>
       <div class="welcome-card">
         <section class="welcome-section">
           <div class="welcome-section-title" id="authPanelTitle">협력사 로그인</div>
@@ -389,20 +420,47 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   </div>
 </div>
 
-<!-- PAGE: 관리자 모드 -->
+<!-- PAGE: 관리자 협력사/과제 관리 -->
 <div class="sv" id="pageAdmin">
   <div class="list-hd">
-    <div><div class="list-title">관리자 모드</div><div class="list-sub">전체 협력사의 프로젝트와 과제를 조회하고 협력사 상태를 관리합니다.</div></div>
+    <div><div class="list-title">협력사/과제 관리</div><div class="list-sub">전체 협력사의 프로젝트와 과제를 조회하고 협력사 상태를 관리합니다.</div></div>
     <div style="display:flex;gap:8px"><button class="btn btn-p" type="button" onclick="openAdminCsvPopup()">CSV 파일 다운로드</button><button class="btn btn-o" type="button" onclick="logoutApplication()">로그아웃</button></div>
   </div>
+  <div class="admin-page-tabs"><button class="admin-page-tab on" type="button" onclick="openAdminDashboard()">협력사/과제 관리</button><button class="admin-page-tab" type="button" onclick="openAdminUserManagement()">협력사/사용자 관리</button></div>
   <div class="card">
     <div class="card-title">협력사 등록 <span class="ct-b">계정 선택 목록에 즉시 반영</span></div>
     <div class="welcome-row"><div class="fg" style="flex:1.5"><span class="fl">협력사명 <span class="req">*</span></span><input class="fi" id="adminCompanyName" placeholder="예: ABC 컨설팅"></div><div class="fg"><span class="fl">컨설팅 연도 <span class="req">*</span></span><select class="fi" id="adminConsultingYear"></select></div><div class="fg"><span class="fl">컨설팅 반기 <span class="req">*</span></span><select class="fi" id="adminConsultingHalf"><option value="상반기">상반기</option><option value="하반기">하반기</option></select></div><button class="btn btn-p register-btn" type="button" onclick="adminCreateCompany()">협력사 등록</button></div>
     <div class="inline-status" id="adminCompanyStatus">등록된 협력사는 협력사 등록 화면에서 선택할 수 있습니다.</div>
   </div>
   <div class="srow admin-summary" id="adminSummaryCards"></div>
-  <div class="admin-list-toolbar"><span>협력사별 전체 프로젝트와 과제 목록입니다. 과제의 <b>상세 조회</b>에서 결과 리포트를 확인할 수 있습니다.</span><div style="display:flex;gap:6px"><button class="btn btn-o btn-sm" type="button" onclick="setAllAdminCompaniesOpen(true)">전체 펼치기</button><button class="btn btn-o btn-sm" type="button" onclick="setAllAdminCompaniesOpen(false)">전체 접기</button></div></div>
+  <div class="admin-list-toolbar"><span>협력사별 전체 프로젝트와 과제 목록입니다. 저장된 리포트가 있는 과제만 <b>상세 조회</b> 버튼이 활성화됩니다.</span><div style="display:flex;gap:6px"><button class="btn btn-o btn-sm" type="button" onclick="openAdminDashboard()">목록 새로고침</button><button class="btn btn-o btn-sm" type="button" onclick="setAllAdminCompaniesOpen(true)">전체 펼치기</button><button class="btn btn-o btn-sm" type="button" onclick="setAllAdminCompaniesOpen(false)">전체 접기</button></div></div>
   <div id="adminCompanyList"></div>
+</div>
+
+<!-- PAGE: 관리자 협력사/사용자 관리 -->
+<div class="sv" id="pageAdminUsers">
+  <div class="list-hd">
+    <div><div class="list-title">협력사/사용자 관리</div><div class="list-sub">협력사별 사용자를 등록하고 이름, 이메일 주소와 최근 접속 시간을 관리합니다.</div></div>
+    <button class="btn btn-o" type="button" onclick="logoutApplication()">로그아웃</button>
+  </div>
+  <div class="admin-page-tabs"><button class="admin-page-tab" type="button" onclick="openAdminDashboard()">협력사/과제 관리</button><button class="admin-page-tab on" type="button" onclick="openAdminUserManagement()">협력사/사용자 관리</button></div>
+  <div class="card">
+    <div class="card-title" id="adminUserFormTitle">협력사 사용자 등록 <span class="ct-b">이메일 형식 검증</span></div>
+    <div class="frow">
+      <div class="fg"><label class="fl" for="adminUserCompany">협력사 <span class="req">*</span></label><select class="fi" id="adminUserCompany"></select></div>
+      <div class="fg"><label class="fl" for="adminUserName">사용자 이름 <span class="req">*</span></label><input class="fi" id="adminUserName" maxlength="100" placeholder="예: 홍길동"></div>
+      <div class="fg"><label class="fl" for="adminUserEmail">이메일 주소 <span class="req">*</span></label><input class="fi" id="adminUserEmail" type="email" maxlength="254" autocomplete="off" placeholder="name@company.com"></div>
+      <div style="display:flex;align-items:flex-end;gap:6px"><button class="btn btn-p" id="btnAdminUserSave" type="button" onclick="saveAdminUser()">등록</button><button class="btn btn-o" id="btnAdminUserCancel" type="button" onclick="cancelAdminUserEdit()" style="display:none">취소</button></div>
+    </div>
+    <div class="inline-status" id="adminUserStatus">선등록된 사용자는 같은 협력사와 이메일로 처음 접속할 때 로그인 세션과 자동 연결됩니다.</div>
+  </div>
+  <div class="admin-list-toolbar"><span>최근 접속 시간은 사용자가 로그인 세션을 복원한 시각을 기준으로 표시합니다.</span><button class="btn btn-o btn-sm" type="button" onclick="openAdminUserManagement()">목록 새로고침</button></div>
+  <div class="admin-user-table-wrap">
+    <table class="admin-user-table">
+      <thead><tr><th>협력사</th><th>사용자 이름</th><th>이메일 주소</th><th>최근 접속 시간</th><th>연결 상태</th><th style="text-align:right">관리</th></tr></thead>
+      <tbody id="adminUserList"><tr><td colspan="6" class="empty-state">사용자 목록을 불러오는 중입니다...</td></tr></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="popup-overlay" id="adminCsvPopup" onclick="if(event.target===this)closeAdminCsvPopup()">
@@ -422,7 +480,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <div class="popup-overlay admin-report-popup" id="adminTaskReportPopup" onclick="if(event.target===this)closeAdminTaskReport()">
   <div class="popup-box" role="dialog" aria-modal="true" aria-labelledby="adminTaskReportTitle">
     <button class="popup-close" type="button" onclick="closeAdminTaskReport()">×</button>
-    <div class="popup-title" id="adminTaskReportTitle">저장된 과제 결과 리포트</div>
+    <div class="popup-title" id="adminTaskReportTitle">저장된 PDF 과제 결과 리포트</div>
     <div class="admin-report-meta" id="adminTaskReportMeta">협력사 모드에서 생성된 결과 리포트를 불러오는 중입니다.</div>
     <div class="admin-report-content" id="adminTaskReportBody"></div>
   </div>
@@ -455,10 +513,10 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <div class="sv" id="pageNewProject">
   <div class="pg-brd"><span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="color:var(--t);font-weight:700;cursor:default" id="projectFormBreadcrumb">새 프로젝트 생성</span></div>
   <div class="card">
-    <div class="card-title"><span id="projectFormTitle">기본 정보</span> <span class="ct-b">필수</span><span class="form-title-actions"><button class="btn btn-o btn-sm" type="button" onclick="openLvPopup()">STATIK L1~L3 단위</button><button class="lv-popup-btn" type="button" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></span></div>
-    <div style="font-size:12px;color:var(--mt);margin-bottom:10px">프로젝트는 <b>L1 부서 › L2 업무 › L3 기능</b> 계층으로 등록되며 과제의 L1~L3에 자동 연결됩니다.</div>
-    <div class="frow"><div class="fg"><span class="fl">회사명 <span class="req">*</span></span><input class="fi" id="newCompanyName" readonly></div><div class="fg"><span class="fl">부서명 (L1 구분) <span class="req">*</span></span><input class="fi" id="newDeptName" placeholder="예: 영업마케팅"></div></div>
-    <div class="frow"><div class="fg"><span class="fl">업무명 (L2 대분류) <span class="req">*</span></span><input class="fi" id="newBusinessName" placeholder="예: 디지털마케팅"></div><div class="fg"><span class="fl">프로젝트명 (L3 기능) <span class="req">*</span></span><input class="fi" id="newProjName" placeholder="예: 콘텐츠 제작"></div></div>
+    <div class="card-title"><span id="projectFormTitle">기본 정보</span> <span class="ct-b">필수</span><span class="form-title-actions"><button class="btn btn-o btn-sm" type="button" onclick="openLvPopup()">STATIK L1 구분~L3 중분류</button><button class="lv-popup-btn" type="button" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></span></div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:10px">프로젝트는 <b>L1 구분 › L2 대분류 › L3 중분류</b> 계층으로 등록되며 과제의 동일 계층에 자동 연결됩니다.</div>
+    <div class="frow"><div class="fg"><span class="fl">회사명 <span class="req">*</span></span><input class="fi" id="newCompanyName" readonly></div><div class="fg"><span class="fl">조직 기능 (L1 구분) <span class="req">*</span></span><input class="fi" id="newDeptName" placeholder="예: 연구개발, 제조, 영업마케팅"></div></div>
+    <div class="frow"><div class="fg"><span class="fl">업무 도메인 (L2 대분류) <span class="req">*</span></span><input class="fi" id="newBusinessName" placeholder="예: S/W개발, 공정관리, 마케팅기획"></div><div class="fg"><span class="fl">프로젝트명 (L3 중분류) <span class="req">*</span></span><input class="fi" id="newProjName" placeholder="예: 프런트엔드 개발, 품질검사, 콘텐츠 제작"></div></div>
     <div class="frow"><div class="fg"><span class="fl">프로젝트 기간 <span class="req">*</span></span><div class="date-range"><input class="fi" id="newStartDate" type="date" aria-label="프로젝트 시작일"><span class="date-sep">~</span><input class="fi" id="newEndDate" type="date" aria-label="프로젝트 종료일"></div></div><div class="fg"><span class="fl">프로젝트 목적 <span class="req">*</span></span><input class="fi" id="newAnalysisGoal" placeholder="프로젝트 목적을 입력하세요"></div></div>
   </div>
   <div class="card">
@@ -477,25 +535,25 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="proj-meta"><span class="proj-chip" id="taskProjectCompany">회사명</span><span class="proj-chip" id="taskProjectGoal">목적</span><span class="proj-chip" id="taskProjectPeriod">기간</span><span class="proj-chip" id="taskProjectEngine">AI엔진</span></div>
   </div>
   <div class="list-hd">
-    <div class="list-title" style="font-size:16px">과제 목록 <span style="font-size:11px;font-weight:600;color:var(--mt)">(L4 단위 등록)</span></div>
-    <button class="btn btn-p btn-sm" onclick="openNewTaskForm()">+ 새 과제 (L4)</button>
+    <div class="list-title" style="font-size:16px">과제 목록 <span style="font-size:11px;font-weight:600;color:var(--mt)">(L4 모듈 등록)</span></div>
+    <button class="btn btn-p btn-sm" onclick="openNewTaskForm()">+ 새 과제 (L4 모듈)</button>
   </div>
   <div id="taskListContainer"></div>
-  <div class="add-card" onclick="openNewTaskForm()">+ 새 과제 등록하기 (L4 단위)</div>
+  <div class="add-card" onclick="openNewTaskForm()">+ 새 과제 등록하기 (L4 모듈)</div>
 </div>
 
-<!-- STEP 1: 과제 등록 (L4) -->
+<!-- STEP 1: 과제 등록 (L4 모듈) -->
 <div class="sv" id="sv1">
   <div class="card">
-    <div class="card-title">과제 등록 <span class="ct-b">STATIK L4 단위</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
-    <div style="font-size:12px;color:var(--mt);margin-bottom:10px">과제는 STATIK <b>L1 › L2 › L3 › L4</b> 전체 계층을 입력하여 등록·관리됩니다.</div>
+    <div class="card-title">과제 등록 <span class="ct-b">STATIK L4 모듈</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
+    <div style="font-size:12px;color:var(--mt);margin-bottom:10px">과제는 STATIK <b>L1 구분 › L2 대분류 › L3 중분류 › L4 모듈</b> 전체 계층으로 등록·관리됩니다.</div>
     <div class="frow">
-      <div class="fg"><span class="fl">L1 구분 (프로젝트 연동) <span class="req">*</span></span><input class="fi" id="inpL1" readonly></div>
-      <div class="fg"><span class="fl">L2 대분류 (프로젝트 연동) <span class="req">*</span></span><input class="fi" id="inpL2" readonly></div>
+      <div class="fg"><span class="fl">L1 구분 · 조직 기능 (프로젝트 연동) <span class="req">*</span></span><input class="fi" id="inpL1" readonly></div>
+      <div class="fg"><span class="fl">L2 대분류 · 업무 도메인 (프로젝트 연동) <span class="req">*</span></span><input class="fi" id="inpL2" readonly></div>
     </div>
     <div class="frow">
-      <div class="fg"><span class="fl">L3 기능 (프로젝트 연동) <span class="req">*</span></span><input class="fi" id="inpL3" readonly></div>
-      <div class="fg"><span class="fl">L4 과제명 (모듈) <span class="req">*</span></span><input class="fi" id="inpL4" placeholder="예: SNS 채널 관리"></div>
+      <div class="fg"><span class="fl">L3 중분류 · 핵심 기능 (프로젝트 연동) <span class="req">*</span></span><input class="fi" id="inpL3" readonly></div>
+      <div class="fg"><span class="fl">L4 모듈 과제명 <span class="req">*</span></span><input class="fi" id="inpL4" placeholder="예: UI 구현, SMT 공정, SNS 채널 관리"></div>
     </div>
     <div class="frow">
       <div class="fg"><span class="fl">과제명 <span class="req">*</span></span><input class="fi" id="inpTaskName" placeholder="예: SNS 채널 관리 프로세스 분석"></div>
@@ -517,9 +575,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <!-- STEP 2 -->
 <div class="sv" id="sv2">
   <div class="card">
-    <div class="card-title">인터뷰 진행 <span class="ct-g" id="taskChip">SNS 채널 관리 (L4 과제)</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
+    <div class="card-title">인터뷰 진행 <span class="ct-g" id="taskChip">SNS 채널 관리 (L4 모듈)</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:8px">아래 기본 질문에 대한 담당자의 답변을 입력창에 직접 입력(타이핑)하세요.</div>
-    <div class="qcard"><div class="qnum">1</div><div class="qtext">이 업무는 누가 어떤 순서로 어떻게 진행되고 얼마나 시간이 걸리나요? <span class="qtag qs">L3 흐름</span></div></div>
+    <div class="qcard"><div class="qnum">1</div><div class="qtext">이 업무는 누가 어떤 순서로 어떻게 진행되고 얼마나 시간이 걸리나요? <span class="qtag qs">L4 모듈 흐름</span></div></div>
     <div class="qans"><div class="qans-lbl">담당자 답변</div><textarea class="fi-ta interview-answer">SNS 게시물은 담당자 1명이 게시물 기획→제작→승인→발행 순으로 진행하며 주 2회 발행, 건당 약 88분 소요됩니다.</textarea></div>
     <div class="qcard"><div class="qnum">2</div><div class="qtext">단위 업무 중 반복적으로 수행하거나 항상 쌓이는 단계는? <span class="qtag qb">Bottleneck</span></div></div>
     <div class="qans"><div class="qans-lbl">담당자 답변</div><textarea class="fi-ta interview-answer">수정사항 반영이요. 검토자 피드백이 매번 달라서 수정→재검토가 반복돼요. 건당 평균 20분인데 여러 번 반복되면 훨씬 더 걸려요.</textarea></div>
@@ -535,7 +593,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     </div>
   </div>
   <div class="card">
-    <div class="card-title">AI 생성 Draft <span class="ct-b">L5~L6 자동 분해</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button> <span id="draftStatus" style="font-size:12px;color:var(--mt);font-weight:600">인터뷰 답변을 입력하고 생성하세요.</span></div>
+    <div class="card-title">AI 생성 Draft <span class="ct-b">L5 단위~L6 Act 자동 분해</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button> <span id="draftStatus" style="font-size:12px;color:var(--mt);font-weight:600">인터뷰 답변을 입력하고 생성하세요.</span></div>
     <table class="tbl">
       <thead><tr><th>레벨</th><th>단위 업무명</th><th>작업방식</th><th>사용도구</th><th>수행시간(분)</th><th>승인대기(h)</th></tr></thead>
       <tbody id="draftBody">
@@ -642,7 +700,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <!-- STEP 4 -->
 <div class="sv" id="sv4">
   <div class="srow" id="bdwSummaryCards">
-    <div class="sc"><div class="sc-lbl">🔴 Bottleneck</div><div class="sc-val" style="color:var(--d)">1개</div><div class="sc-sub">수정사항을 반영한다 (20분) · L5 게시물 승인</div></div>
+    <div class="sc"><div class="sc-lbl">🔴 Bottleneck</div><div class="sc-val" style="color:var(--d)">1개</div><div class="sc-sub">수정사항을 반영한다 (20분) · L5 단위 게시물 승인</div></div>
     <div class="sc"><div class="sc-lbl">🟡 Delay</div><div class="sc-val" style="color:#f57f17">1개</div><div class="sc-sub">대기 0h + 승인대기 24h</div></div>
     <div class="sc"><div class="sc-lbl">⚫ Waste</div><div class="sc-val" style="color:#555">0개</div><div class="sc-sub">—</div></div>
     <div class="sc"><div class="sc-lbl">⏱ 비효율 지수</div><div class="sc-val" style="color:var(--p)">28%</div><div class="sc-sub">88분 중 25분 비효율</div></div>
@@ -683,7 +741,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <!-- STEP 5 -->
 <div class="sv" id="sv5">
   <div class="srow" id="fitSummaryCards">
-    <div class="sc"><div class="sc-lbl">전체 L6 업무</div><div class="sc-val" style="color:var(--p)">8개</div></div>
+    <div class="sc"><div class="sc-lbl">전체 L6 Act</div><div class="sc-val" style="color:var(--p)">8개</div></div>
     <div class="sc"><div class="sc-lbl">A영역 (즉시 적용)</div><div class="sc-val" style="color:var(--s)">5개</div></div>
     <div class="sc"><div class="sc-lbl">예상 자동화율</div><div class="sc-val" style="color:var(--w)">68%</div></div>
     <div class="sc"><div class="sc-lbl">절감 시간 (건당)</div><div class="sc-val" style="color:var(--d)">60분</div><div class="sc-sub">88분 → 28분</div></div>
@@ -697,7 +755,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="card" style="padding:10px">
       <div class="card-title" style="margin-bottom:8px">AI FIT 스코어 <span class="ct-o">AI 적용 가능성 × 비효율성</span> <button class="lv-popup-btn" onclick="openAiFitPopup()" title="점수 척도 설명 보기">?</button></div>
       <table class="tbl">
-        <thead><tr><th style="width:42px;text-align:center">수락</th><th>단위 업무명 (L6)</th><th style="width:67px">AI 가능성</th><th style="width:67px">비효율성</th><th style="width:51px">분류</th><th style="width:176px">추천 AI 기술</th><th style="width:56px">절감(분)</th></tr></thead>
+        <thead><tr><th style="width:42px;text-align:center">수락</th><th>단위 업무명 (L6 Act)</th><th style="width:67px">AI 가능성</th><th style="width:67px">비효율성</th><th style="width:51px">분류</th><th style="width:176px">추천 AI 기술</th><th style="width:56px">절감(분)</th></tr></thead>
         <tbody id="aiFitBody">
           <tr><td colspan="7" class="empty-state">AI FIT 분석을 실행하면 단위 업무별 수락 항목이 표시됩니다.</td></tr>
         </tbody>
@@ -786,6 +844,11 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
         </div>
       </div>
       <div class="card">
+        <div class="card-title">리포트 PDF 프리뷰 <span class="ct-b">관리자 상세 동일 구성</span></div>
+        <div class="pdf-preview-shell"><div class="pdf-preview-page" id="reportPdfPreview"><div class="pdf-preview-empty">결과 리포트를 생성하면<br>PDF 프리뷰가 표시됩니다.</div></div></div>
+        <div class="report-save-row"><div class="inline-status" id="reportSaveStatus">프리뷰 확인 후 결과 리포트를 저장하세요.</div><button class="btn btn-p btn-sm" id="btnSaveReport" type="button" onclick="saveResultReport()">결과 리포트 저장</button></div>
+      </div>
+      <div class="card">
         <div class="card-title">출력 형식 선택</div>
         <div class="dl-row">
           <button class="dl-btn dl-pdf" onclick="exportReportPDF()">📕 전체 리포트 PDF 출력</button>
@@ -809,7 +872,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
           <div class="sc" style="flex:1"><div class="sc-lbl">자동화율</div><div class="sc-val" style="color:var(--s)" id="reportAutomationRate">0%</div><div class="sc-sub">AI 제안 수락 기준</div></div>
         </div>
         <div style="font-size:12px;color:#555;line-height:1.8;background:#f8f9fc;border-radius:7px;padding:8px 10px;border:1px solid var(--bd);margin-bottom:7px" id="reportMetricBasis">
-          과제의 L6 프로세스와 사용자가 수락한 AI 제안을 기준으로 산출합니다. 수행 빈도는 연간 횟수로 환산합니다.
+          과제의 L6 Act와 사용자가 수락한 AI 제안을 기준으로 산출합니다. 수행 빈도는 연간 횟수로 환산합니다.
         </div>
         <div style="font-size:12px;font-weight:700;margin-bottom:5px;color:var(--mt)">🏗️ 외주 개발비 추정 <span style="font-size:11px;font-weight:400;color:#aaa">수락·반영한 AI 제안 기반 자동 산출</span></div>
         <div class="cost-box">
@@ -851,10 +914,13 @@ let ctx={project:'',projectId:null,projectData:null,projectEngine:null,taskId:nu
 const appState={authenticated:false,user:null,profile:null,membership:null,isAdmin:false,authMode:'partner',companyId:null,companyName:'',companyRegistered:false,aiEngine:'gemini',aiConnections:{}};
 let companyProjects=[];
 let adminCompanies=[];
+let adminUsers=[];
 let partnerRegistrationInProgress=false;
 let editingProjectId=null;
 let editingProjectEngine=null;
+let editingAdminUserId=null;
 const names=['','과제 등록','인터뷰 & Draft','프로세스 수정','BDW 진단','AI FIT 분석','결과 리포트'];
+const statikLevelLabels={L1:'L1 구분',L2:'L2 대분류',L3:'L3 중분류',L4:'L4 모듈',L5:'L5 단위',L6:'L6 Act'};
 const apiBase=window.location.protocol==='file:'?'http://localhost:5000/api':'/api';
 
 function escapeHtml(value){
@@ -911,11 +977,15 @@ async function registerPartner(){
   try{
     const existingSession=await window.bpaAuth.getSession();
     if(!existingSession)await window.bpaAuth.registerAnonymously({name,email,company_id:companyId,auth_mode:'partner'});
-    await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,company_id:companyId})});
-    status.style.color='var(--s)';status.textContent='✓ 협력사 등록과 로그인이 완료되었습니다.';
-    await restoreAuthenticatedSession();
+    const result=await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,company_id:companyId})});
+    const restored=await restoreAuthenticatedSession();
+    if(!restored)throw new Error('로그인 세션을 복원할 수 없습니다. 다시 시도해 주세요.');
+    status.style.color='var(--s)';status.textContent=result.existing?'✓ 기존 가입 세션으로 로그인되었습니다.':'✓ 협력사 등록과 로그인이 완료되었습니다.';
   }catch(error){
-    if(error.code==='ALREADY_REGISTERED')await restoreAuthenticatedSession();
+    if(error.code==='ALREADY_REGISTERED'){
+      const restored=await restoreAuthenticatedSession();
+      if(restored){status.style.color='var(--s)';status.textContent='✓ 기존 가입 세션으로 로그인되었습니다.';return;}
+    }
     status.style.color='var(--d)';status.textContent='✕ '+error.message;
   }
   finally{partnerRegistrationInProgress=false;button.disabled=false;button.textContent='등록';}
@@ -942,20 +1012,26 @@ function applyPartnerSession(me){
 async function restoreAuthenticatedSession(){
   try{
     const admin=await apiRequest('/auth/admin-session');
-    if(admin.authenticated){Object.assign(appState,{authenticated:true,user:null,profile:admin.profile,membership:null,isAdmin:true,companyId:null,companyName:'',companyRegistered:false,aiConnections:{}});document.getElementById('headerCompany').textContent='시스템 관리자';setHeaderVisible(true);await openAdminDashboard();return;}
+    if(admin.authenticated){Object.assign(appState,{authenticated:true,user:null,profile:admin.profile,membership:null,isAdmin:true,companyId:null,companyName:'',companyRegistered:false,aiConnections:{}});document.getElementById('headerCompany').textContent='시스템 관리자';setHeaderVisible(true);await openAdminDashboard();return true;}
   }catch(error){if(!String(error.message).includes('관리자 로그인이 필요'))console.warn(error);}
-  if(!window.bpaAuth?.configured){showWelcome();document.getElementById('authStatus').textContent='Supabase Auth 환경변수가 설정되지 않았습니다.';return;}
+  if(!window.bpaAuth?.configured){showWelcome();document.getElementById('authStatus').textContent='Supabase Auth 환경변수가 설정되지 않았습니다.';return false;}
   const session=await window.bpaAuth.getSession();
-  if(!session){showWelcome();await loadActiveCompanies();return;}
+  if(!session){showWelcome();await loadActiveCompanies();return false;}
   try{
     let me=await apiRequest('/auth/me');
     if(!me.profile&&session.user.user_metadata?.auth_mode==='partner'){
-      await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:session.user.user_metadata.name,email:session.user.user_metadata.email,company_id:session.user.user_metadata.company_id})});
+      const membership=(me.memberships||[]).find(item=>item.status==='active'&&item.company?.status==='active')||(me.memberships||[])[0];
+      const recoveryCompanyId=Number(membership?.company_id||session.user.user_metadata.company_id);
+      await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:session.user.user_metadata.name,email:session.user.user_metadata.email,company_id:recoveryCompanyId})});
       me=await apiRequest('/auth/me');
     }
-    appState.authenticated=true;appState.user=me.user;appState.profile=me.profile;
-    applyPartnerSession(me);await refreshAIConnectionState();showWelcome();await loadActiveCompanies();
-  }catch(error){showWelcome();await loadActiveCompanies();document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='✕ '+error.message;}
+    applyPartnerSession(me);
+    try{await refreshAIConnectionState();}catch(error){console.warn('AI API 설정을 불러오지 못했습니다.',error);appState.aiConnections={};}
+    showWelcome();await loadActiveCompanies();document.getElementById('authStatus').textContent='';return true;
+  }catch(error){
+    Object.assign(appState,{authenticated:false,user:null,profile:null,membership:null,isAdmin:false,companyId:null,companyName:'',companyRegistered:false,aiConnections:{}});
+    showWelcome();await loadActiveCompanies();document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='✕ '+error.message;return false;
+  }
 }
 async function logoutApplication(){
   try{await apiRequest('/auth/admin-logout',{method:'POST'});}catch{}
@@ -964,7 +1040,11 @@ async function logoutApplication(){
   ctx.projectId=null;ctx.taskId=null;showWelcome();await loadActiveCompanies();
 }
 async function startApplication(){
-  if(!appState.authenticated){document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='협력사 등록 또는 관리자 로그인을 먼저 완료해 주세요.';return;}
+  if(!appState.isAdmin){
+    const status=document.getElementById('authStatus');status.style.color='var(--mt)';status.textContent='저장된 로그인 세션을 확인하고 있습니다...';
+    const restored=await restoreAuthenticatedSession();
+    if(!restored){if(status.textContent==='저장된 로그인 세션을 확인하고 있습니다...'){status.style.color='var(--d)';status.textContent='협력사 등록 또는 관리자 로그인을 먼저 완료해 주세요.';}return;}
+  }
   if(appState.isAdmin){await openAdminDashboard();return;}
   if(!appState.companyRegistered){document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='활성 협력사 멤버십이 필요합니다.';return;}
   setHeaderVisible(true);
@@ -1024,7 +1104,7 @@ function initializeConsultingYears(){
 }
 async function openAdminDashboard(){
   if(!appState.isAdmin){showWelcome();return;}
-  setHeaderVisible(true);hideFlowChrome();show('pageAdmin');setHdrSingle('관리자 모드');initializeConsultingYears();
+  setHeaderVisible(true);hideFlowChrome();show('pageAdmin');setHdrSingle('협력사/과제 관리');initializeConsultingYears();
   adminCompanies=[];const list=document.getElementById('adminCompanyList');list.innerHTML='<div class="loading-state">전체 협력사 현황을 불러오는 중입니다...</div>';
   try{
     const companies=await apiRequest('/admin/overview');adminCompanies=companies;
@@ -1047,8 +1127,8 @@ async function openAdminDashboard(){
         const tasks=(project.tasks||[]).length?(project.tasks||[]).map(task=>{
           const taskActive=task.status!=='suspended';
           const reportControl=task.has_report
-            ? '<button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();openAdminTaskReport('+Number(task.id)+')">상세 조회</button>'
-            : '<span style="font-size:11px;color:#aaa">리포트 미생성</span>';
+            ? '<span style="font-size:10px;color:var(--mt)">'+escapeHtml(task.report_saved_at?new Date(task.report_saved_at).toLocaleDateString('ko-KR')+' 저장':'저장 완료')+'</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();openAdminTaskReport('+Number(task.id)+')">상세 조회</button>'
+            : '<button class="btn btn-o btn-sm" type="button" disabled title="협력사 모드에서 결과 리포트를 저장하면 활성화됩니다.">상세 조회</button>';
           return '<div class="admin-task-item"><span class="admin-task-item-name">과제 · '+escapeHtml(task.name||task.l4)+'</span><span class="admin-status '+(taskActive?'active':'suspended')+'">'+(taskActive?'활성':'완료')+'</span>'+reportControl+'</div>';
         }).join(''):'등록된 과제 없음';
         return '<div class="admin-project"><b>'+escapeHtml(project.name)+'</b><span class="admin-status '+(projectActive?'active':'suspended')+'">'+(projectActive?'활성':'완료')+'</span><span style="font-size:11px;color:var(--mt);margin-left:8px">'+escapeHtml(formatPeriod(project))+'</span><div class="admin-task-list">'+tasks+'</div></div>';
@@ -1056,6 +1136,67 @@ async function openAdminDashboard(){
       return '<div class="admin-company" id="adminCompany'+Number(company.id)+'"><div class="admin-company-hd" onclick="toggleAdminCompany('+Number(company.id)+')"><span class="status-chip '+(company.status==='active'?'st-done':'st-prog')+'">'+(company.status==='active'?'활성':'완료')+'</span><div class="admin-company-name">'+escapeHtml(company.name)+'</div><span class="admin-company-round">'+escapeHtml(consultingRoundLabel(company))+'</span><span style="font-size:12px;color:var(--mt)">프로젝트 '+Number(company.active_project_count||0)+'/'+Number(company.project_count||0)+' 활성 · 과제 '+Number(company.active_task_count||0)+'/'+Number(company.task_count||0)+' 활성</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();adminChangeCompanyStatus('+Number(company.id)+',\''+nextStatus+'\')">'+(nextStatus==='active'?'활성화':'완료 처리')+'</button></div><div class="admin-company-body">'+(projects||'<div class="empty-state">등록된 프로젝트가 없습니다.</div>')+'</div></div>';
     }).join('')||'<div class="empty-state">등록된 협력사가 없습니다.</div>';
   }catch(error){list.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
+}
+function adminCompanyOptions(selectedId){
+  return adminCompanies.map(company=>'<option value="'+Number(company.id)+'" '+(Number(company.id)===Number(selectedId)?'selected':'')+'>'+escapeHtml(company.name+' · '+consultingRoundLabel(company)+(company.status==='active'?'':' · 완료'))+'</option>').join('');
+}
+function formatAdminAccessTime(value){
+  if(!value)return '접속 이력 없음';
+  const date=new Date(value);
+  return Number.isNaN(date.getTime())?'접속 이력 없음':date.toLocaleString('ko-KR');
+}
+function renderAdminUsers(){
+  const body=document.getElementById('adminUserList');
+  body.innerHTML=adminUsers.map(user=>'<tr><td><b>'+escapeHtml(user.company_name||'-')+'</b><div style="font-size:10px;color:var(--mt);margin-top:2px">'+escapeHtml(user.consulting_year&&user.consulting_half?user.consulting_year+'년 '+user.consulting_half:'차수 미설정')+'</div></td><td>'+escapeHtml(user.name)+'</td><td>'+escapeHtml(user.email)+'</td><td>'+escapeHtml(formatAdminAccessTime(user.last_access_at))+'</td><td><span class="admin-user-link '+(user.linked?'linked':'pending')+'">'+(user.linked?'로그인 연결':'선등록')+'</span></td><td><div class="admin-user-actions"><button class="btn btn-o btn-sm" type="button" onclick="startAdminUserEdit('+Number(user.id)+')">수정</button><button class="btn btn-o btn-sm" type="button" onclick="deleteAdminUser('+Number(user.id)+')" style="color:var(--d)">삭제</button></div></td></tr>').join('')||'<tr><td colspan="6" class="empty-state">등록된 협력사 사용자가 없습니다.</td></tr>';
+}
+async function openAdminUserManagement(){
+  if(!appState.isAdmin){showWelcome();return;}
+  setHeaderVisible(true);hideFlowChrome();show('pageAdminUsers');setHdrSingle('협력사/사용자 관리');cancelAdminUserEdit();
+  const body=document.getElementById('adminUserList');body.innerHTML='<tr><td colspan="6" class="empty-state">사용자 목록을 불러오는 중입니다...</td></tr>';
+  try{
+    const [users,companies]=await Promise.all([apiRequest('/admin/users'),apiRequest('/admin/companies')]);
+    adminUsers=users;adminCompanies=companies;
+    const select=document.getElementById('adminUserCompany');select.innerHTML=adminCompanyOptions();select.disabled=!adminCompanies.length;
+    document.getElementById('btnAdminUserSave').disabled=!adminCompanies.length;
+    if(!adminCompanies.length){document.getElementById('adminUserStatus').style.color='var(--d)';document.getElementById('adminUserStatus').textContent='사용자를 등록할 협력사가 없습니다. 협력사/과제 관리에서 협력사를 먼저 등록해 주세요.';}
+    renderAdminUsers();
+  }catch(error){body.innerHTML='<tr><td colspan="6" class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</td></tr>';}
+}
+function startAdminUserEdit(userId){
+  const user=adminUsers.find(item=>Number(item.id)===Number(userId));if(!user)return;
+  editingAdminUserId=Number(user.id);
+  document.getElementById('adminUserFormTitle').innerHTML='협력사 사용자 수정 <span class="ct-b">이메일 형식 검증</span>';
+  document.getElementById('adminUserCompany').innerHTML=adminCompanyOptions(user.company_id);
+  document.getElementById('adminUserName').value=user.name||'';document.getElementById('adminUserEmail').value=user.email||'';
+  document.getElementById('btnAdminUserSave').textContent='수정 저장';document.getElementById('btnAdminUserCancel').style.display='inline-block';
+  const status=document.getElementById('adminUserStatus');status.style.color='var(--mt)';status.textContent='수정할 내용을 확인한 뒤 저장해 주세요.';
+  document.getElementById('adminUserName').focus();
+}
+function cancelAdminUserEdit(resetStatus=true){
+  editingAdminUserId=null;
+  const title=document.getElementById('adminUserFormTitle');if(!title)return;
+  title.innerHTML='협력사 사용자 등록 <span class="ct-b">이메일 형식 검증</span>';
+  document.getElementById('adminUserName').value='';document.getElementById('adminUserEmail').value='';
+  document.getElementById('btnAdminUserSave').textContent='등록';document.getElementById('btnAdminUserCancel').style.display='none';
+  if(resetStatus){const status=document.getElementById('adminUserStatus');status.style.color='var(--mt)';status.textContent='선등록된 사용자는 같은 협력사와 이메일로 처음 접속할 때 로그인 세션과 자동 연결됩니다.';}
+}
+async function saveAdminUser(){
+  const companyId=Number(document.getElementById('adminUserCompany').value);const name=document.getElementById('adminUserName').value.trim();const email=document.getElementById('adminUserEmail').value.trim().toLowerCase();const status=document.getElementById('adminUserStatus');const button=document.getElementById('btnAdminUserSave');
+  const issues=[];if(!Number.isInteger(companyId))issues.push('협력사를 선택해 주세요.');if(!name)issues.push('사용자 이름을 입력해 주세요.');if(!isValidEmail(email))issues.push('올바른 이메일 주소 형식으로 입력해 주세요.');
+  if(issues.length){status.style.color='var(--d)';status.textContent='✕ '+issues.join(' ');return;}
+  const userId=editingAdminUserId;button.disabled=true;button.textContent=userId?'저장 중...':'등록 중...';
+  try{
+    const result=await apiRequest(userId?'/admin/users/'+userId:'/admin/users',{method:userId?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company_id:companyId,name,email})});
+    await openAdminUserManagement();status.style.color='var(--s)';status.textContent='✓ '+result.message;
+  }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
+  finally{button.disabled=!adminCompanies.length;button.textContent=editingAdminUserId?'수정 저장':'등록';}
+}
+async function deleteAdminUser(userId){
+  const user=adminUsers.find(item=>Number(item.id)===Number(userId));if(!user)return;
+  const detail=user.linked?'이 사용자의 로그인 계정과 협력사 접근 권한도 함께 삭제됩니다.':'아직 로그인과 연결되지 않은 선등록 정보가 삭제됩니다.';
+  if(!confirm(user.name+' ('+user.email+') 사용자를 삭제하시겠습니까?\n'+detail))return;
+  try{const result=await apiRequest('/admin/users/'+Number(userId),{method:'DELETE'});await openAdminUserManagement();const status=document.getElementById('adminUserStatus');status.style.color='var(--s)';status.textContent='✓ '+result.message;}
+  catch(error){alert(error.message);}
 }
 function toggleAdminCompany(companyId){document.getElementById('adminCompany'+companyId)?.classList.toggle('open');}
 function setAllAdminCompaniesOpen(open){document.querySelectorAll('#adminCompanyList .admin-company').forEach(element=>element.classList.toggle('open',open));}
@@ -1103,7 +1244,7 @@ async function openAdminTaskReport(taskId){
   try{
     const report=await apiRequest('/admin/tasks/'+Number(taskId)+'/report');
     document.getElementById('adminTaskReportTitle').textContent=(report.task_name||'과제')+' 결과 리포트';
-    meta.innerHTML='협력사: <b>'+escapeHtml(report.company_name||'-')+'</b> · 프로젝트: <b>'+escapeHtml(report.project_name||'-')+'</b> · 과제 기간: '+escapeHtml([report.task_start_date,report.task_end_date].filter(Boolean).join(' ~ ')||'미등록')+' · 리포트 생성: '+escapeHtml(report.report_generated_at?new Date(report.report_generated_at).toLocaleString('ko-KR'):'-');
+    meta.innerHTML='협력사: <b>'+escapeHtml(report.company_name||'-')+'</b> · 프로젝트: <b>'+escapeHtml(report.project_name||'-')+'</b> · 과제 기간: '+escapeHtml([report.task_start_date,report.task_end_date].filter(Boolean).join(' ~ ')||'미등록')+' · 리포트 저장: '+escapeHtml(report.report_saved_at?new Date(report.report_saved_at).toLocaleString('ko-KR'):'-');
     body.innerHTML=buildPrintableReport(report);
   }catch(error){meta.textContent='과제 상세 조회 실패';body.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
 }
@@ -1170,7 +1311,7 @@ async function loadCompanyProjects(){
       const updated=project.updated_at||project.created_at;
       const date=updated?new Date(updated).toLocaleDateString('ko-KR'):'-';
       const participants=(project.participants||[]).map(person=>[person.name,person.position,person.role].filter(Boolean).join(' / '));
-      card.innerHTML='<div class="proj-card-top"><div><div class="proj-name">'+escapeHtml(project.name)+'</div><div class="task-path">'+[project.department_name,project.business_name||project.description,project.name].filter(Boolean).map(escapeHtml).join(' › ')+'</div></div><div class="proj-actions"><span style="font-size:11px;color:#bbb">최근 수정 '+escapeHtml(date)+'</span><button class="btn btn-o proj-edit" type="button">정보 수정</button></div></div><div class="proj-meta"><span class="proj-chip">L1 '+escapeHtml(project.department_name||'미등록')+'</span><span class="proj-chip">L2 '+escapeHtml(project.business_name||project.description||'미등록')+'</span><span class="proj-chip">목적: '+escapeHtml(project.analysis_goal||'미등록')+'</span><span class="proj-chip">'+escapeHtml(formatPeriod(project))+'</span></div><div class="proj-participants">참여자: '+(participants.length?participants.map(escapeHtml).join(' · '):'미등록')+'</div><div class="proj-stats">과제 '+Number(project.task_count||0)+'건 · 진행중 '+Number(project.in_progress_count||0)+' · 완료 '+Number(project.completed_count||0)+'</div>';
+      card.innerHTML='<div class="proj-card-top"><div><div class="proj-name">'+escapeHtml(project.name)+'</div><div class="task-path">'+[project.department_name,project.business_name||project.description,project.name].filter(Boolean).map(escapeHtml).join(' › ')+'</div></div><div class="proj-actions"><span style="font-size:11px;color:#bbb">최근 수정 '+escapeHtml(date)+'</span><button class="btn btn-o proj-edit" type="button">정보 수정</button></div></div><div class="proj-meta"><span class="proj-chip">L1 구분 '+escapeHtml(project.department_name||'미등록')+'</span><span class="proj-chip">L2 대분류 '+escapeHtml(project.business_name||project.description||'미등록')+'</span><span class="proj-chip">L3 중분류 '+escapeHtml(project.name||'미등록')+'</span><span class="proj-chip">목적: '+escapeHtml(project.analysis_goal||'미등록')+'</span><span class="proj-chip">'+escapeHtml(formatPeriod(project))+'</span></div><div class="proj-participants">참여자: '+(participants.length?participants.map(escapeHtml).join(' · '):'미등록')+'</div><div class="proj-stats">과제 '+Number(project.task_count||0)+'건 · 진행중 '+Number(project.in_progress_count||0)+' · 완료 '+Number(project.completed_count||0)+'</div>';
       card.querySelector('.proj-edit').addEventListener('click',event=>{event.stopPropagation();openEditProjectForm(project.id);});
       card.addEventListener('click',()=>openTaskList(project.name,project.id));
       container.appendChild(card);
@@ -1238,7 +1379,7 @@ async function openEditProjectForm(projectId){
 async function saveProject(){
   const participants=collectParticipants('project');const startDate=document.getElementById('newStartDate').value;const endDate=document.getElementById('newEndDate').value;
   const body={name:document.getElementById('newProjName').value.trim(),department_name:document.getElementById('newDeptName').value.trim(),business_name:document.getElementById('newBusinessName').value.trim(),analysis_goal:document.getElementById('newAnalysisGoal').value.trim(),start_date:startDate,end_date:endDate,participants};
-  const issues=[];if(!body.department_name)issues.push('부서명(L1 구분)을 입력해 주세요.');if(!body.business_name)issues.push('업무명(L2 대분류)을 입력해 주세요.');if(!body.name)issues.push('프로젝트명(L3 기능)을 입력해 주세요.');if(!body.analysis_goal)issues.push('프로젝트 목적을 입력해 주세요.');issues.push(...validateDateRange(startDate,endDate,'프로젝트 기간'),...validateParticipants('project',participants));
+  const issues=[];if(!body.department_name)issues.push('조직 기능(L1 구분)을 입력해 주세요.');if(!body.business_name)issues.push('업무 도메인(L2 대분류)을 입력해 주세요.');if(!body.name)issues.push('프로젝트명(L3 중분류)을 입력해 주세요.');if(!body.analysis_goal)issues.push('프로젝트 목적을 입력해 주세요.');issues.push(...validateDateRange(startDate,endDate,'프로젝트 기간'),...validateParticipants('project',participants));
   if(issues.length){showValidationPopup(editingProjectId?'프로젝트 수정 보완사항':'프로젝트 생성 보완사항',issues);return;}
   try{
     const result=await apiRequest(editingProjectId?'/projects/'+editingProjectId:'/projects',{method:editingProjectId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -1259,7 +1400,7 @@ async function openTaskList(name,projectId=ctx.projectId){
   }catch(error){alert(error.message);return;}
   document.getElementById('tlProjName').textContent=ctx.project;
   document.getElementById('taskProjectCompany').textContent=appState.companyName;
-  document.getElementById('taskProjectGoal').textContent='L1~L3: '+[ctx.l1,ctx.l2,ctx.l3].filter(Boolean).join(' › ');
+  document.getElementById('taskProjectGoal').textContent='L1 구분 › L2 대분류 › L3 중분류: '+[ctx.l1,ctx.l2,ctx.l3].filter(Boolean).join(' › ');
   document.getElementById('taskProjectPeriod').textContent='기간: '+(project?formatPeriod(project):'미등록');
   document.getElementById('taskProjectEngine').textContent='AI엔진 '+({gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude'}[ctx.projectEngine]||ctx.projectEngine);
   hideFlowChrome();
@@ -1288,12 +1429,12 @@ async function loadProjectTasks(){
   container.innerHTML='<div class="loading-state">과제 목록을 불러오는 중입니다...</div>';
   try{
     const tasks=await apiRequest('/projects/'+ctx.projectId+'/tasks');
-    if(!tasks.length){container.innerHTML='<div class="empty-state">등록된 L4 과제가 없습니다.</div>';return;}
+    if(!tasks.length){container.innerHTML='<div class="empty-state">등록된 L4 모듈 과제가 없습니다.</div>';return;}
     container.innerHTML='';
     tasks.forEach(task=>{
       const card=document.createElement('div');card.className='task-card';
       const date=task.updated_at||task.created_at;
-      card.innerHTML='<div class="task-l"><div class="task-name">🗂 '+escapeHtml(task.l4||task.name)+' <span style="font-size:11px;color:#999;font-weight:400">(L4)</span></div><div class="task-path">'+[task.l1,task.l2,task.l3].map(escapeHtml).join(' › ')+'</div></div><div class="task-r"><span class="status-chip '+(task.status==='completed'?'st-done':'st-prog')+'">'+escapeHtml(task.status==='completed'?'✓ 완료':'진행중')+'</span><div class="task-date">'+(date?new Date(date).toLocaleDateString('ko-KR'):'-')+'</div></div>';
+      card.innerHTML='<div class="task-l"><div class="task-name">🗂 '+escapeHtml(task.l4||task.name)+' <span style="font-size:11px;color:#999;font-weight:400">(L4 모듈)</span></div><div class="task-path">'+[task.l1,task.l2,task.l3].map(escapeHtml).join(' › ')+'</div></div><div class="task-r"><span class="status-chip '+(task.status==='completed'?'st-done':'st-prog')+'">'+escapeHtml(task.status==='completed'?'✓ 완료':'진행중')+'</span><div class="task-date">'+(date?new Date(date).toLocaleDateString('ko-KR'):'-')+'</div></div>';
       card.addEventListener('click',()=>openTaskFlow(task));container.appendChild(card);
     });
   }catch(error){container.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
@@ -1304,14 +1445,14 @@ async function openTaskFlow(task){
   ctx.interviewId=null;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
   try{ctx.processes=await apiRequest('/interviews/project/'+ctx.projectId+'/processes?task_id='+ctx.taskId);}catch(error){alert(error.message);return;}
   showFlowChrome();setHdrTrail(ctx.project||'프로젝트',ctx.l4);
-  document.getElementById('taskChip').textContent=ctx.l4+' (L4 과제)';
+  document.getElementById('taskChip').textContent=ctx.l4+' (L4 모듈)';
   if(ctx.processes.length){renderDraftTable();renderProcessEditor();renderFlowchart();go(3);}else go(2);
 }
 async function startTaskFlow(){
   if(!ctx.projectId){showValidationPopup('과제 등록 보완사항',['프로젝트를 먼저 선택해 주세요.']);return;}
   ctx.l1=document.getElementById('inpL1').value.trim();ctx.l2=document.getElementById('inpL2').value.trim();ctx.l3=document.getElementById('inpL3').value.trim();ctx.l4=document.getElementById('inpL4').value.trim();
   const taskName=document.getElementById('inpTaskName').value.trim();const goal=document.getElementById('inpTaskGoal').value.trim();const startDate=document.getElementById('inpTaskStartDate').value;const endDate=document.getElementById('inpTaskEndDate').value;const participants=collectParticipants('task');
-  const issues=[];if(!ctx.l1||!ctx.l2||!ctx.l3)issues.push('프로젝트의 L1~L3 정보를 먼저 완성해 주세요.');if(!ctx.l4)issues.push('L4 과제명을 입력해 주세요.');if(!taskName)issues.push('과제명을 입력해 주세요.');if(!goal)issues.push('과제 목표를 입력해 주세요.');issues.push(...validateDateRange(startDate,endDate,'과제 기간'),...validateParticipants('task',participants));
+  const issues=[];if(!ctx.l1||!ctx.l2||!ctx.l3)issues.push('프로젝트의 L1 구분·L2 대분류·L3 중분류 정보를 먼저 완성해 주세요.');if(!ctx.l4)issues.push('L4 모듈 과제명을 입력해 주세요.');if(!taskName)issues.push('과제명을 입력해 주세요.');if(!goal)issues.push('과제 목표를 입력해 주세요.');issues.push(...validateDateRange(startDate,endDate,'과제 기간'),...validateParticipants('task',participants));
   if(issues.length){showValidationPopup('과제 등록 보완사항',issues);return;}
   try{
     const result=await apiRequest('/projects/'+ctx.projectId+'/tasks',{
@@ -1320,7 +1461,7 @@ async function startTaskFlow(){
     });
     ctx.taskId=result.task.id;ctx.taskParticipants=result.task.participants||participants;ctx.processes=[];ctx.interviewId=null;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
     setHdrTrail(ctx.project||'프로젝트',ctx.l4);
-    document.getElementById('taskChip').textContent=ctx.l4+' (L4 과제)';
+    document.getElementById('taskChip').textContent=ctx.l4+' (L4 모듈)';
     document.getElementById('draftBody').innerHTML='';
     document.getElementById('draftStatus').textContent='인터뷰 답변을 입력하고 생성하세요.';
     document.getElementById('draftSummary').textContent='AI Draft 생성 전입니다.';
@@ -1333,7 +1474,7 @@ function renderDraftTable(){
   body.innerHTML=ctx.processes.map(process=>{
     const levelClass=process.level==='L4'?'lv4':process.level==='L5'?'lv5':'lv6';
     const indent=process.level==='L4'?0:process.level==='L5'?16:28;
-    return '<tr><td style="padding-left:'+indent+'px"><span class="lvc '+levelClass+'">'+escapeHtml(process.level)+'</span></td><td><b>'+escapeHtml(process.name)+'</b></td><td>'+escapeHtml(process.method==='system'?'시스템':'수작업')+'</td><td>'+escapeHtml(process.tool||'other')+'</td><td>'+Number(process.execution_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td></tr>';
+    return '<tr><td style="padding-left:'+indent+'px"><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><b>'+escapeHtml(process.name)+'</b></td><td>'+escapeHtml(process.method==='system'?'시스템':'수작업')+'</td><td>'+escapeHtml(process.tool||'other')+'</td><td>'+Number(process.execution_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td></tr>';
   }).join('');
   const total=ctx.processes.reduce((sum,p)=>sum+Number(p.execution_time||0),0);
   const approval=ctx.processes.reduce((sum,p)=>sum+Number(p.approval_waiting_time||0),0);
@@ -1373,7 +1514,7 @@ function renderProcessEditor(){
   const tools=['email','document','excel','web','erp','other'].map(value=>({value,label:value}));
   document.getElementById('processEditorBody').innerHTML=ctx.processes.map((process,index)=>{
     const levelClass=process.level==='L4'?'lv4':process.level==='L5'?'lv5':'lv6';
-    return '<tr><td style="color:#bbb">⋮⋮</td><td><span class="lvc '+levelClass+'">'+escapeHtml(process.level)+'</span></td><td><input class="fi" style="padding:4px 6px" value="'+escapeHtml(process.name)+'" onchange="setProcessValue('+index+',\'name\',this.value)"></td><td><select class="sel-sm" onchange="setProcessValue('+index+',\'method\',this.value)">'+optionList(methods,process.method||'manual')+'</select></td><td><select class="sel-sm" onchange="setProcessValue('+index+',\'tool\',this.value)">'+optionList(tools,process.tool||'other')+'</select></td><td><input type="number" min="0" class="key-in" value="'+Number(process.execution_time||0)+'" onchange="setProcessValue('+index+',\'execution_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.waiting_time||0)+'" onchange="setProcessValue('+index+',\'waiting_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.approval_waiting_time||0)+'" onchange="setProcessValue('+index+',\'approval_waiting_time\',this.value)"></td></tr>';
+    return '<tr><td style="color:#bbb">⋮⋮</td><td><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><input class="fi" style="padding:4px 6px" value="'+escapeHtml(process.name)+'" onchange="setProcessValue('+index+',\'name\',this.value)"></td><td><select class="sel-sm" onchange="setProcessValue('+index+',\'method\',this.value)">'+optionList(methods,process.method||'manual')+'</select></td><td><select class="sel-sm" onchange="setProcessValue('+index+',\'tool\',this.value)">'+optionList(tools,process.tool||'other')+'</select></td><td><input type="number" min="0" class="key-in" value="'+Number(process.execution_time||0)+'" onchange="setProcessValue('+index+',\'execution_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.waiting_time||0)+'" onchange="setProcessValue('+index+',\'waiting_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.approval_waiting_time||0)+'" onchange="setProcessValue('+index+',\'approval_waiting_time\',this.value)"></td></tr>';
   }).join('');
 }
 function renderFlowchart(){
@@ -1384,8 +1525,11 @@ function renderFlowchart(){
     if(Number(process.execution_time)) times.push(Number(process.execution_time)+'분');
     if(Number(process.waiting_time)) times.push('대기 '+Number(process.waiting_time)+'h');
     if(Number(process.approval_waiting_time)) times.push('승인대기 '+Number(process.approval_waiting_time)+'h');
+    const methodLabel={manual:'수작업',system:'시스템'}[process.method]||'수작업';
+    const toolLabel={email:'이메일을',document:'문서를',excel:'엑셀을',web:'웹을',erp:'ERP를',other:'기타 도구를'}[process.tool]||'기타 도구를';
+    const workDescription=methodLabel+'으로 '+toolLabel+' 활용한다';
     const tag=process.bdw_tag&&process.bdw_tag!=='normal'?' '+process.bdw_tag:'';
-    const node='<div class="flow-node '+process.level.toLowerCase()+tag+'"><span>'+escapeHtml(process.level)+'</span> · '+escapeHtml(process.name)+(times.length?'<br><small>'+times.join(' · ')+'</small>':'')+'</div>';
+    const node='<div class="flow-node '+process.level.toLowerCase()+tag+'"><span>'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span> · '+escapeHtml(process.name)+'<small>'+escapeHtml(workDescription)+(times.length?' · '+escapeHtml(times.join(' · ')):'')+'</small></div>';
     return (index?'<div class="flow-arrow">↓</div>':'')+node;
   }).join('')+'</div>';
 }
@@ -1394,7 +1538,9 @@ async function syncProcesses(silent=false){
   const status=document.getElementById('syncStatus');
   status.style.color='var(--mt)';status.textContent='Supabase 저장 및 플로우차트 동기화 중...';
   try{
-    await Promise.all(ctx.processes.map(process=>apiRequest('/interviews/process/'+process.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:process.name,description:process.description||'',execution_time:Number(process.execution_time)||0,waiting_time:Number(process.waiting_time)||0,approval_waiting_time:Number(process.approval_waiting_time)||0,method:process.method||'manual',tool:process.tool||'other',status:'confirmed'})})));
+    const payload=ctx.processes.map(process=>({id:Number(process.id),name:process.name,description:process.description||'',execution_time:Number(process.execution_time)||0,waiting_time:Number(process.waiting_time)||0,approval_waiting_time:Number(process.approval_waiting_time)||0,method:process.method||'manual',tool:process.tool||'other'}));
+    const result=await apiRequest('/interviews/processes/sync',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({processes:payload})});
+    ctx.processes=result.processes||ctx.processes;
     renderFlowchart();status.style.color='var(--s)';status.textContent='✓ 저장 및 플로우차트 동기화 완료';return true;
   }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;if(!silent) alert(error.message);return false;}
 }
@@ -1406,7 +1552,7 @@ function renderBDW(data){
   const diagnosis=data.diagnosis;
   document.getElementById('bdwSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">🔴 Bottleneck</div><div class="sc-val" style="color:var(--d)">'+diagnosis.bottleneck_count+'개</div></div><div class="sc"><div class="sc-lbl">🟡 Delay</div><div class="sc-val" style="color:#f57f17">'+diagnosis.delay_count+'개</div></div><div class="sc"><div class="sc-lbl">⚫ Waste</div><div class="sc-val">'+diagnosis.waste_count+'개</div></div><div class="sc"><div class="sc-lbl">⏱ 비효율 지수</div><div class="sc-val" style="color:var(--p)">'+Math.round(diagnosis.inefficiency_rate)+'%</div><div class="sc-sub">총 '+diagnosis.total_execution_time+'분</div></div>';
   const tagOptions=[{value:'normal',label:'정상'},{value:'bottleneck',label:'Bottleneck'},{value:'delay',label:'Delay'},{value:'waste',label:'Waste'}];
-  document.getElementById('bdwBody').innerHTML=data.processes.map(process=>'<tr><td><span class="lvc lv6">'+escapeHtml(process.level)+'</span></td><td>'+escapeHtml(process.name)+'</td><td>'+Number(process.execution_time||0)+'</td><td>'+Number(process.waiting_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td><td><select class="sel-sm" onchange="updateBDWTag('+process.id+',this.value)">'+optionList(tagOptions,process.bdw_tag||'normal')+'</select></td></tr>').join('');
+  document.getElementById('bdwBody').innerHTML=data.processes.map(process=>'<tr><td><span class="lvc lv6">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td>'+escapeHtml(process.name)+'</td><td>'+Number(process.execution_time||0)+'</td><td>'+Number(process.waiting_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td><td><select class="sel-sm" onchange="updateBDWTag('+process.id+',this.value)">'+optionList(tagOptions,process.bdw_tag||'normal')+'</select></td></tr>').join('');
   const modelText=ctx.bdwMeta?.model_used?' · '+escapeHtml(ctx.bdwMeta.model_used):'';
   document.getElementById('bdwSummaryText').innerHTML='<b style="font-size:14px">🔍 BDW 진단 요약'+modelText+'</b><br>병목 '+diagnosis.bottleneck_count+'건 · Delay '+diagnosis.delay_count+'건 · Waste '+diagnosis.waste_count+'건<br>수행 '+diagnosis.total_execution_time+'분 · 대기 '+Number(diagnosis.total_waiting_time_hours||0)+'시간 · 비효율 '+diagnosis.inefficient_time+'분 ('+Math.round(diagnosis.inefficiency_rate)+'%)';
   const tags=new Map(data.processes.map(item=>[item.id,item.bdw_tag]));ctx.processes.forEach(item=>item.bdw_tag=tags.get(item.id)||'normal');renderFlowchart();
@@ -1423,7 +1569,7 @@ async function openBDWStep(){
 function renderAIFit(result){
   const analysis=result.analysis||[];const summary=result.summary||{};ctx.aiResult=result;
   const totalSaving=analysis.reduce((sum,item)=>sum+Number(item.estimated_time_savings||0),0);
-  document.getElementById('fitSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">전체 L6 업무</div><div class="sc-val" style="color:var(--p)">'+analysis.length+'개</div><div class="sc-sub">'+escapeHtml(result.model_used||'AI')+'</div></div><div class="sc"><div class="sc-lbl">A영역 (즉시 적용)</div><div class="sc-val" style="color:var(--s)">'+Number(summary.immediate_application_count||0)+'개</div></div><div class="sc"><div class="sc-lbl">예상 자동화율</div><div class="sc-val" style="color:var(--w)">'+Number(summary.automation_rate||0)+'%</div></div><div class="sc"><div class="sc-lbl">예상 절감</div><div class="sc-val" style="color:var(--d)">'+totalSaving+'분</div></div>';
+  document.getElementById('fitSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">전체 L6 Act</div><div class="sc-val" style="color:var(--p)">'+analysis.length+'개</div><div class="sc-sub">'+escapeHtml(result.model_used||'AI')+'</div></div><div class="sc"><div class="sc-lbl">A영역 (즉시 적용)</div><div class="sc-val" style="color:var(--s)">'+Number(summary.immediate_application_count||0)+'개</div></div><div class="sc"><div class="sc-lbl">예상 자동화율</div><div class="sc-val" style="color:var(--w)">'+Number(summary.automation_rate||0)+'%</div></div><div class="sc"><div class="sc-lbl">예상 절감</div><div class="sc-val" style="color:var(--d)">'+totalSaving+'분</div></div>';
   const acceptedIds=new Set((ctx.acceptedAiProcessIds||[]).map(Number));
   document.getElementById('aiFitBody').innerHTML=analysis.map(item=>{const processId=Number(item.process_id);const accepted=acceptedIds.has(processId);const score=Math.max(1,Math.min(5,Math.round(Number(item.inefficiency)||1)));const category=String(item.fit_category||'D').toLowerCase();return '<tr class="'+(accepted?'ai-accepted':'')+'"><td style="text-align:center"><input class="ai-accept" type="checkbox" value="'+processId+'" '+(accepted?'checked':'')+' onchange="onAISuggestionCheckChange()" aria-label="'+escapeHtml(item.name)+' AI 제안 수락"></td><td>'+escapeHtml(item.name)+'</td><td><span class="aisc sc'+Math.max(1,Math.min(5,Math.round(Number(item.ai_possibility)||1)))+'">'+Number(item.ai_possibility||0)+'</span></td><td><span class="aisc ineff-'+score+'">'+Number(item.inefficiency||0)+'</span></td><td><span class="fit-'+category+'">'+escapeHtml(item.fit_category||'D')+'</span></td><td>'+escapeHtml(item.recommended_tech||'—')+'</td><td><b>'+Number(item.estimated_time_savings||0)+'</b></td></tr>';}).join('');
   const grouped={A:[],B:[],C:[],D:[]};analysis.forEach(item=>grouped[item.fit_category]?.push(item));
@@ -1469,7 +1615,18 @@ async function applyAcceptedToBe(acceptedIds){
 function renderToBeComparison(toBeProcesses){
   const toBeById=new Map((toBeProcesses||[]).map(item=>[Number(item.original_process_id),item]));
   const processes=(ctx.processes||[]).filter(process=>process.level==='L6');
-  const flowNodes=(items,mode)=>items.map((process,index)=>{const toBe=toBeById.get(Number(process.id));const applied=Boolean(toBe?.ai_applied);const isToBe=mode==='tobe';const time=isToBe?Number(toBe?.estimated_execution_time??process.execution_time??0):Number(process.execution_time||0);const nodeClass=isToBe?(applied?'applied':'manual'):'asis';const meta=isToBe?(applied?'AI 적용 · '+escapeHtml(toBe?.automation_method||'AI'):'현행 유지'):'현재 수행 · '+time+'분';const content='<div class="comparison-node '+nodeClass+'"><div class="comparison-node-name">'+(index+1)+'. '+escapeHtml(process.name)+'</div><div class="comparison-node-meta">'+(isToBe?time+'분 · ':'')+meta+'</div></div>';return content+(index<items.length-1?'<div class="comparison-arrow">↓</div>':'');}).join('');
+  const methodLabels={manual:'수작업',system:'시스템'};const toolLabels={email:'이메일',document:'문서',excel:'엑셀',web:'웹',erp:'ERP',other:'기타 도구'};
+  const flowNodes=(items,mode)=>items.map((process,index)=>{
+    const toBe=toBeById.get(Number(process.id));const applied=Boolean(toBe?.ai_applied);const isToBe=mode==='tobe';const systemAutomated=isToBe&&!applied&&process.method==='system';
+    const time=isToBe?Number(toBe?.estimated_execution_time??process.execution_time??0):Number(process.execution_time||0);
+    const method=isToBe&&applied?'AI 자동화':(methodLabels[process.method]||'수작업');
+    const tool=isToBe&&applied?(toBe?.automation_method||'AI 자동화 도구'):(toolLabels[process.tool]||'기타 도구');
+    const nodeClass=isToBe?(applied?'applied':systemAutomated?'system':'manual'):'asis';
+    const badge=applied?'<span class="automation-badge ai">AI 자동화</span>':systemAutomated?'<span class="automation-badge system">시스템 자동화</span>':'';
+    const meta='작업방식: '+escapeHtml(method)+' · 도구: '+escapeHtml(tool)+' · 수행시간: '+time+'분';
+    const content='<div class="comparison-node '+nodeClass+'"><div class="comparison-node-name">'+(index+1)+'. '+escapeHtml(process.name)+badge+'</div><div class="comparison-node-meta">'+meta+'</div></div>';
+    return content+(index<items.length-1?'<div class="comparison-arrow">↓</div>':'');
+  }).join('');
   const view=document.getElementById('toBeDynamicComparison');if(view){view.style.display='block';view.innerHTML='<div class="card-title">선택 수락 기준 As-Is vs To-Be</div><div class="comparison-flow-grid"><div><div class="comparison-flow-title" style="color:var(--d)">As-Is 프로세스</div><div class="comparison-flow">'+flowNodes(processes,'asis')+'</div></div><div class="comparison-center-arrow">→</div><div><div class="comparison-flow-title" style="color:var(--s)">To-Be 프로세스</div><div class="comparison-flow">'+flowNodes(processes,'tobe')+'</div></div></div>';}
   const sample=document.querySelector('#t3 .split-eq');if(sample)sample.style.display='none';
 }
@@ -1494,9 +1651,16 @@ function renderReport(report){
   document.getElementById('reportDevCost').textContent='₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR');
   document.getElementById('reportCostFormula').textContent='수락·반영 '+Number(stats.automated_process_count||0)+'개 × 1.0 M/M/개 × ₩8,321,500';
   const unitLabels={day:'일',week:'주',month:'월'};const frequencyLabel=(unitLabels[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회';
-  document.getElementById('reportMetricBasis').textContent='과제 「'+(report.task_name||'')+'」의 L6 '+Number(stats.total_processes||0)+'개 기준 · '+frequencyLabel+' → 연간 '+Number(stats.annual_frequency||52)+'회 환산 · AS-IS 대기 '+Number(stats.as_is_waiting_hours||0)+'시간';
+  document.getElementById('reportMetricBasis').textContent='과제 「'+(report.task_name||'')+'」의 L6 Act '+Number(stats.total_processes||0)+'개 기준 · '+frequencyLabel+' → 연간 '+Number(stats.annual_frequency||52)+'회 환산 · AS-IS 대기 '+Number(stats.as_is_waiting_hours||0)+'시간';
   document.getElementById('reportStatus').style.color='var(--s)';
   document.getElementById('reportStatus').textContent='✓ '+report.project_name+' / '+report.task_name+' 기준 리포트 데이터 준비 완료';
+  renderReportPdfPreview(report);
+}
+
+function renderReportPdfPreview(report){
+  const preview=document.getElementById('reportPdfPreview');if(!preview)return;
+  const title=(report.task_name||ctx.l4||'과제')+' AX 분석 결과';
+  preview.innerHTML='<h1>'+escapeHtml(title)+'</h1><div class="preview-meta">프로젝트: '+escapeHtml(report.project_name||'-')+' · 과제: '+escapeHtml(report.task_name||'-')+' · 생성: '+new Date(report.created_at).toLocaleString('ko-KR')+'</div>'+buildPrintableReport(report);
 }
 
 function getReportFrequency(){
@@ -1519,8 +1683,19 @@ async function openReportStep(){
     const frequency=getReportFrequency();
     const params=new URLSearchParams({task_id:String(ctx.taskId),frequency_unit:frequency.unit,frequency_count:String(frequency.count)});
     ctx.report=await apiRequest('/analysis/project/'+ctx.projectId+'/report?'+params.toString());
-    renderReport(ctx.report);go(6);
+    renderReport(ctx.report);const saveStatus=document.getElementById('reportSaveStatus');saveStatus.style.color='var(--w)';saveStatus.textContent='저장되지 않은 최신 프리뷰입니다.';go(6);
   }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;alert(error.message);}
+}
+
+async function saveResultReport(){
+  if(!ctx.report||!ctx.projectId||!ctx.taskId){alert('저장할 결과 리포트를 먼저 생성해 주세요.');return;}
+  const button=document.getElementById('btnSaveReport');const status=document.getElementById('reportSaveStatus');const frequency=getReportFrequency();
+  button.disabled=true;button.textContent='저장 중...';status.style.color='var(--mt)';status.textContent='Supabase에 PDF 리포트 스냅샷을 저장하고 있습니다.';
+  try{
+    const result=await apiRequest('/analysis/project/'+ctx.projectId+'/report/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId,frequency_unit:frequency.unit,frequency_count:frequency.count})});
+    ctx.report=result.report;renderReport(ctx.report);status.style.color='var(--s)';status.textContent='✓ '+new Date(result.saved_at).toLocaleString('ko-KR')+' 저장 완료 · 관리자 과제 상세 조회 가능';
+  }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
+  finally{button.disabled=false;button.textContent='결과 리포트 저장';}
 }
 
 function reportTable(headers,rows){
@@ -1528,7 +1703,9 @@ function reportTable(headers,rows){
 }
 function buildPrintableReport(report){
   const stats=report.statistics;const parts=[];
-  parts.push('<section><h2>STATIK 업무 구조</h2><p>'+[report.hierarchy.l1,report.hierarchy.l2,report.hierarchy.l3,report.hierarchy.l4].map(escapeHtml).join(' › ')+'</p><p>과제 목표: '+escapeHtml(report.task_goal||'미등록')+'</p></section>');
+  const hierarchyLabels=['L1 구분','L2 대분류','L3 중분류','L4 모듈'];
+  const hierarchyValues=[report.hierarchy.l1,report.hierarchy.l2,report.hierarchy.l3,report.hierarchy.l4];
+  parts.push('<section><h2>STATIK 업무 구조</h2><p>'+hierarchyValues.map((value,index)=>'<b>'+hierarchyLabels[index]+':</b> '+escapeHtml(value||'미등록')).join(' › ')+'</p><p>과제 목표: '+escapeHtml(report.task_goal||'미등록')+'</p></section>');
   parts.push('<section><h2>AS-IS 프로세스</h2>'+reportTable(['순번','프로세스','수행(분)','대기(h)','승인대기(h)','BDW'],report.as_is_processes.map((item,index)=>[index+1,item.name,item.execution_time||0,item.waiting_time||0,item.approval_waiting_time||0,item.bdw_type]))+'</section>');
   parts.push('<section><h2>BDW 진단</h2><p>병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p></section>');
   parts.push('<section><h2>AI FIT 및 To-Be 프로세스</h2>'+reportTable(['순번','To-Be 프로세스','AI 적용','예상 수행(분)','자동화 방식'],report.to_be_processes.map((item,index)=>[index+1,item.name,item.ai_applied?'Y':'N',item.estimated_execution_time,item.automation_method]))+'</section>');
@@ -1551,10 +1728,10 @@ function exportReportCSV(){
 }
 function renderTaskCtx(){
   document.getElementById('taskCtxBar').innerHTML =
-    '<span class="tctx-chip">L1 '+ctx.l1+'</span><span class="tctx-arr">›</span>'+
-    '<span class="tctx-chip">L2 '+ctx.l2+'</span><span class="tctx-arr">›</span>'+
-    '<span class="tctx-chip">L3 '+ctx.l3+'</span><span class="tctx-arr">›</span>'+
-    '<span class="tctx-chip cur">L4(과제) '+ctx.l4+'</span>';
+    '<span class="tctx-chip">L1 구분 '+ctx.l1+'</span><span class="tctx-arr">›</span>'+
+    '<span class="tctx-chip">L2 대분류 '+ctx.l2+'</span><span class="tctx-arr">›</span>'+
+    '<span class="tctx-chip">L3 중분류 '+ctx.l3+'</span><span class="tctx-arr">›</span>'+
+    '<span class="tctx-chip cur">L4 모듈 '+ctx.l4+'</span>';
 }
 
 function go(n){
@@ -1618,15 +1795,15 @@ bootstrapApplication();
     </div>
     <div class="lv-row">
       <div class="lv-badge"><span class="lv-badge-num" style="background:#e8eaf6;color:#3949ab">L2 대분류</span><span class="lv-badge-nm">업무 도메인</span></div>
-      <div class="lv-desc"><div class="lv-def">도메인별 핵심 프로세스</div><div class="lv-sub">L1 내에서 구분되는 업무 도메인</div><div class="lv-ex">예: S/W개발, 공정관리, 마케팅기획, 인사</div></div>
+      <div class="lv-desc"><div class="lv-def">조직 기능별 핵심 업무</div><div class="lv-sub">L1 내에서 구분되는 업무 도메인</div><div class="lv-ex">예: S/W개발, 공정관리, 마케팅기획, 인사</div></div>
     </div>
     <div class="lv-row">
-      <div class="lv-badge"><span class="lv-badge-num" style="background:#e8f5e9;color:#2e7d32">L3 기능</span><span class="lv-badge-nm">핵심 기능</span></div>
+      <div class="lv-badge"><span class="lv-badge-num" style="background:#e8f5e9;color:#2e7d32">L3 중분류</span><span class="lv-badge-nm">업무 도메인을 구성하는 핵심 기능</span></div>
       <div class="lv-desc"><div class="lv-def">목적별 세부 기능</div><div class="lv-sub">분석 단위가 되는 핵심 기능 영역</div><div class="lv-ex">예: 프런트엔드 개발, 품질검사, 콘텐츠 제작, 채용</div></div>
     </div>
     <div class="lv-row">
-      <div class="lv-badge"><span class="lv-badge-num" style="background:#f3e5f5;color:#6a1b9a">L4 모듈</span><span class="lv-badge-nm">업무 묶음</span></div>
-      <div class="lv-desc"><div class="lv-def">실제로 관리·인식되는 관련 업무의 묶음</div><div class="lv-sub">담당자가 "이 업무 담당한다"고 말하는 단위 · <b>과제 등록 단위</b></div><div class="lv-ex">예: UI 구현, SMT 공정, SNS 채널 관리</div></div>
+      <div class="lv-badge"><span class="lv-badge-num" style="background:#f3e5f5;color:#6a1b9a">L4 모듈</span><span class="lv-badge-nm">독립 업무가 연결되어 완성되는 업무 모듈</span></div>
+      <div class="lv-desc"><div class="lv-def">실제로 관리·인식되는 관련 업무의 묶음</div><div class="lv-sub">담당자가 "이 업무를 담당한다"고 말하는 단위 · <b>과제 등록 단위</b></div><div class="lv-ex">예: UI 구현, SMT 공정, SNS 채널 관리</div></div>
     </div>
     <div class="lv-row">
       <div class="lv-badge"><span class="lv-badge-num" style="background:#fff3e0;color:#e65100">L5 단위</span><span class="lv-badge-nm">독립 업무</span></div>

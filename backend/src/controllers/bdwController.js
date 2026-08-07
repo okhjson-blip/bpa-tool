@@ -54,7 +54,7 @@ export const analyzeBDW = async (req, res) => {
     if (!project) return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다.' });
     const processes = await getTaskL6Processes(projectId, taskId);
     if (!processes.length) {
-      return res.status(400).json({ error: 'BDW 진단을 수행할 L6 프로세스가 없습니다.' });
+      return res.status(400).json({ error: 'BDW 진단을 수행할 L6 Act가 없습니다.' });
     }
 
     const apiKey = await getCompanyApiKey(req.auth.companyId, project.ai_engine);
@@ -222,7 +222,7 @@ export const createToBe = async (req, res) => {
     }
     const processes = await getTaskL6Processes(projectId, taskId);
     if (!processes.length) {
-      return res.status(400).json({ error: 'To-Be를 생성할 L6 프로세스가 없습니다.' });
+      return res.status(400).json({ error: 'To-Be를 생성할 L6 Act가 없습니다.' });
     }
 
     const processIds = new Set(processes.map((process) => Number(process.id)));
@@ -286,6 +286,25 @@ export const generateReport = async (req, res) => {
       frequencyCount: req.query.frequency_count,
       annualFrequency: req.query.annual_frequency
     });
+    res.json(report);
+  } catch (error) {
+    console.error(error);
+    res.status(error.status || 500).json({ error: error.message || '리포트 생성 중 오류' });
+  }
+};
+
+export const saveReport = async (req, res) => {
+  try {
+    const report = await buildTaskReport({
+      database: db,
+      projectId: req.params.projectId,
+      taskId: req.body.taskId,
+      frequencyUnit: req.body.frequency_unit,
+      frequencyCount: req.body.frequency_count,
+      annualFrequency: req.body.annual_frequency
+    });
+    const savedAt = new Date().toISOString();
+    const reportTitle = `${report.task_name || '과제'} AX 분석 결과`;
     await db.upsert('task_reports', {
       company_id: Number(req.auth.companyId),
       project_id: Number(report.project_id),
@@ -293,12 +312,21 @@ export const generateReport = async (req, res) => {
       report_data: report,
       generated_by: req.auth.user.id,
       generated_at: report.created_at,
-      updated_at: report.created_at
+      report_title: reportTitle,
+      report_format: 'pdf',
+      report_version: 1,
+      saved_at: savedAt,
+      updated_at: savedAt
     }, { onConflict: 'task_id' });
-    res.json(report);
+    res.json({
+      message: '결과 리포트가 저장되었습니다. 관리자 모드의 과제 상세에서 조회할 수 있습니다.',
+      report,
+      report_title: reportTitle,
+      saved_at: savedAt
+    });
   } catch (error) {
     console.error(error);
-    res.status(error.status || 500).json({ error: error.message || '리포트 생성 중 오류' });
+    res.status(error.status || 500).json({ error: error.message || '결과 리포트 저장 중 오류' });
   }
 };
 
@@ -333,7 +361,7 @@ export const exportTaskCsv = async (req, res) => {
       .join(' > ');
     const taskPeriod = [task.start_date, task.end_date].filter(Boolean).join(' ~ ');
     const rows = [
-      ['프로젝트명', '과제명', 'L1', 'L2', 'L3', 'L4', '과제 목표', '과제 기간', 'AS-IS 프로세스', 'To-Be 프로세스'],
+      ['프로젝트명', '과제명', 'L1 구분', 'L2 대분류', 'L3 중분류', 'L4 모듈', '과제 목표', '과제 기간', 'AS-IS 프로세스', 'To-Be 프로세스'],
       [project.name, task.name, task.l1, task.l2, task.l3, task.l4, task.goal || '', taskPeriod, asIsFlow, toBeFlow]
     ];
     const content = `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}`;

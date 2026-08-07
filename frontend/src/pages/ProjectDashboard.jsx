@@ -80,7 +80,7 @@ export default function ProjectDashboard() {
                 <p className="text-sm text-gray-600 mb-3">{project.description}</p>
                 <div className="space-y-2 text-sm text-gray-700">
                   <p>
-                    <span className="font-semibold">L1 도메인:</span> {project.l1_domain}
+                    <span className="font-semibold">L1 구분 · 조직 기능:</span> {project.l1_domain}
                   </p>
                   {project.analysis_goal && (
                     <p>

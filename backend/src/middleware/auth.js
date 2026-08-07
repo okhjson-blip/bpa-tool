@@ -13,12 +13,24 @@ function cookieValue(req, name) {
     .find(([key]) => key === name)?.slice(1).join('=') || '';
 }
 
+async function getAuthenticatedUser(accessToken) {
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await getServiceClient().auth.getUser(accessToken);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 export async function authenticate(req, res, next) {
   const accessToken = bearerToken(req);
   if (!accessToken) return res.status(401).json({ error: '로그인이 필요합니다.' });
 
   try {
-    const { data, error } = await getServiceClient().auth.getUser(accessToken);
+    const { data, error } = await getAuthenticatedUser(accessToken);
     if (error || !data.user) return res.status(401).json({ error: '로그인 세션이 유효하지 않습니다.' });
 
     const user = data.user;
@@ -38,7 +50,7 @@ export async function authenticate(req, res, next) {
     req.auth = { user, profile, memberships: enrichedMemberships, activeMembership };
     return runWithAuthContext({ accessToken, userId: user.id }, next);
   } catch (error) {
-    console.error(error);
+    console.error('Supabase 사용자 인증 조회 실패:', error?.message || error);
     return res.status(503).json({ error: '사용자 인증 정보를 확인할 수 없습니다.' });
   }
 }

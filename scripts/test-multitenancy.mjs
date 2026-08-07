@@ -104,7 +104,33 @@ async function main() {
     const duplicate = completed.find((result) => result.response.status === 409);
     assert.equal(duplicate.data.code, 'ALREADY_REGISTERED');
     assert.equal(duplicate.data.error, '이미 가입하셨습니다. 시작하기를 클릭하여 로그인하십시오.');
+
+    const repeatedLogin = await api('/auth/complete-profile', {
+      token: user.token,
+      method: 'POST',
+      body: { name, email: user.email, company_id: company.id }
+    });
+    assert.equal(repeatedLogin.response.status, 200, `기존 가입 세션 재로그인 실패: ${repeatedLogin.text}`);
+    assert.equal(repeatedLogin.data.existing, true);
   }
+
+  const returningClient = userClient();
+  const { data: returningAuth, error: returningAuthError } = await returningClient.auth.signInAnonymously({
+    options: { data: { name: '검증 사용자 A', email: userA.email, company_id: companyA.id, auth_mode: 'partner' } }
+  });
+  if (returningAuthError) throw returningAuthError;
+  createdUserIds.push(returningAuth.user.id);
+  const returningLogin = await api('/auth/complete-profile', {
+    token: returningAuth.session.access_token,
+    method: 'POST',
+    body: { name: '검증 사용자 A', email: userA.email, company_id: companyA.id }
+  });
+  assert.equal(returningLogin.response.status, 200, `새 익명 세션의 기존 이메일 로그인 복원 실패: ${returningLogin.text}`);
+  const returningMe = await api('/auth/me', { token: returningAuth.session.access_token });
+  assert.equal(returningMe.response.status, 200, `복원된 기존 이메일 세션 조회 실패: ${returningMe.text}`);
+  assert.ok(returningMe.data.memberships.some((item) =>
+    Number(item.company_id) === Number(companyA.id) && item.status === 'active'
+  ), '복원된 기존 이메일 세션에 활성 협력사 멤버십이 없습니다.');
 
   const dummyKey = `dummy-${crypto.randomBytes(24).toString('base64url')}`;
   await saveCompanyCredential({
@@ -196,6 +222,46 @@ async function main() {
     assert.equal(adminOverview.response.status, 200);
     assert.equal(adminOverview.data.some((company) => Number(company.id) === Number(companyA.id)), true);
 
+    const managedUserEmail = `managed-${runId}@example.com`;
+    const createdManagedUser = await api('/admin/users', {
+      cookie: adminCookie,
+      method: 'POST',
+      body: {
+        company_id: companyA.id,
+        name: '관리자 선등록 사용자',
+        email: managedUserEmail
+      }
+    });
+    assert.equal(createdManagedUser.response.status, 201, `관리자 사용자 등록 실패: ${createdManagedUser.text}`);
+    assert.equal(createdManagedUser.data.user.linked, false);
+    const managedUserId = createdManagedUser.data.user.id;
+
+    const listedManagedUsers = await api('/admin/users', { cookie: adminCookie });
+    assert.equal(listedManagedUsers.response.status, 200, `관리자 사용자 목록 실패: ${listedManagedUsers.text}`);
+    assert.equal(listedManagedUsers.data.some((user) => Number(user.id) === Number(managedUserId)), true);
+
+    const updatedManagedUser = await api(`/admin/users/${managedUserId}`, {
+      cookie: adminCookie,
+      method: 'PATCH',
+      body: {
+        company_id: companyA.id,
+        name: '수정된 선등록 사용자',
+        email: managedUserEmail
+      }
+    });
+    assert.equal(updatedManagedUser.response.status, 200, `관리자 사용자 수정 실패: ${updatedManagedUser.text}`);
+    assert.equal(updatedManagedUser.data.user.name, '수정된 선등록 사용자');
+
+    const deletedManagedUser = await api(`/admin/users/${managedUserId}`, {
+      cookie: adminCookie,
+      method: 'DELETE'
+    });
+    assert.equal(deletedManagedUser.response.status, 200, `관리자 사용자 삭제 실패: ${deletedManagedUser.text}`);
+    const deletedManagedUserRow = await service.from('company_user_accounts')
+      .select('id').eq('id', managedUserId).maybeSingle();
+    if (deletedManagedUserRow.error) throw deletedManagedUserRow.error;
+    assert.equal(deletedManagedUserRow.data, null);
+
     const { data: cascadeTask, error: cascadeTaskError } = await service.from('tasks').insert({
       project_id: created.data.project.id,
       name: `company-status-cascade-${runId}`,
@@ -207,19 +273,66 @@ async function main() {
     }).select().single();
     if (cascadeTaskError) throw cascadeTaskError;
 
+    const { data: syncProcess, error: syncProcessError } = await service.from('processes').insert({
+      project_id: created.data.project.id,
+      task_id: cascadeTask.id,
+      level: 'L6',
+      name: 'SNS 채널을 관리한다',
+      execution_time: 30,
+      waiting_time: 0,
+      approval_waiting_time: 0,
+      method: 'manual',
+      tool: 'web',
+      status: 'draft'
+    }).select().single();
+    if (syncProcessError) throw syncProcessError;
+    const syncedProcesses = await api('/interviews/processes/sync', {
+      token: userA.token,
+      method: 'PUT',
+      body: {
+        processes: [{
+          id: syncProcess.id,
+          name: syncProcess.name,
+          description: '',
+          execution_time: 60,
+          waiting_time: 0,
+          approval_waiting_time: 0,
+          method: 'manual',
+          tool: 'web'
+        }]
+      }
+    });
+    assert.equal(syncedProcesses.response.status, 200, `프로세스 일괄 동기화 실패: ${syncedProcesses.text}`);
+    assert.equal(syncedProcesses.data.processes[0].execution_time, 60);
+    assert.equal(syncedProcesses.data.processes[0].method, 'manual');
+    assert.equal(syncedProcesses.data.processes[0].tool, 'web');
+
     const generatedReport = await api(`/analysis/project/${created.data.project.id}/report?task_id=${cascadeTask.id}`, {
       token: userA.token
     });
-    assert.equal(generatedReport.response.status, 200, `협력사 결과 리포트 생성·저장 실패: ${generatedReport.text}`);
+    assert.equal(generatedReport.response.status, 200, `협력사 결과 리포트 프리뷰 생성 실패: ${generatedReport.text}`);
+    const beforeSave = await service.from('task_reports').select('id').eq('task_id', cascadeTask.id).maybeSingle();
+    if (beforeSave.error) throw beforeSave.error;
+    assert.equal(beforeSave.data, null, '명시적 저장 전에 리포트 스냅샷이 생성되었습니다.');
+
+    const savedReportResponse = await api(`/analysis/project/${created.data.project.id}/report/save`, {
+      token: userA.token,
+      method: 'POST',
+      body: { taskId: cascadeTask.id, frequency_unit: 'week', frequency_count: 1 }
+    });
+    assert.equal(savedReportResponse.response.status, 200, `협력사 결과 리포트 명시적 저장 실패: ${savedReportResponse.text}`);
     const { data: savedReport, error: savedReportError } = await service
       .from('task_reports').select('*').eq('task_id', cascadeTask.id).single();
     if (savedReportError) throw savedReportError;
     assert.equal(savedReport.report_data.task_name, cascadeTask.name);
+    assert.equal(savedReport.report_format, 'pdf');
+    assert.equal(savedReport.report_title, `${cascadeTask.name} AX 분석 결과`);
 
     const adminTaskReport = await api(`/admin/tasks/${cascadeTask.id}/report`, { cookie: adminCookie });
     assert.equal(adminTaskReport.response.status, 200, `관리자 저장 리포트 조회 실패: ${adminTaskReport.text}`);
-    assert.equal(adminTaskReport.data.task_name, generatedReport.data.task_name);
-    assert.equal(adminTaskReport.data.created_at, generatedReport.data.created_at);
+    assert.equal(adminTaskReport.data.task_name, savedReportResponse.data.report.task_name);
+    assert.equal(adminTaskReport.data.created_at, savedReportResponse.data.report.created_at);
+    assert.equal(adminTaskReport.data.report_saved_at, savedReport.saved_at);
 
     const reportOverview = await api('/admin/overview', { cookie: adminCookie });
     const reportCompany = reportOverview.data.find((company) => Number(company.id) === Number(companyA.id));
@@ -324,8 +437,8 @@ async function main() {
   console.log(JSON.stringify({
     ok: true,
     checks: [
-      'health', 'anonymous-free-registration', 'idempotent-free-signup-membership',
-      testAdminPassword ? 'admin-overview-saved-report-and-status-cascade' : 'admin-login-skipped',
+      'health', 'anonymous-free-registration', 'idempotent-free-signup-membership', 'email-only-session-rebind',
+      testAdminPassword ? 'admin-user-crud-report-status-cascade-and-bulk-process-sync' : 'admin-login-skipped',
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',

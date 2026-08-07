@@ -100,9 +100,9 @@ function projectPayload(body, existing = {}) {
 function validateProject(project) {
   const issues = [];
   if (!project.company_name) issues.push('회사명을 등록해 주세요.');
-  if (!project.department_name) issues.push('부서명(L1 구분)을 입력해 주세요.');
-  if (!project.description) issues.push('업무명(L2 대분류)을 입력해 주세요.');
-  if (!project.name) issues.push('프로젝트명(L3 기능)을 입력해 주세요.');
+  if (!project.department_name) issues.push('조직 기능(L1 구분)을 입력해 주세요.');
+  if (!project.description) issues.push('업무 도메인(L2 대분류)을 입력해 주세요.');
+  if (!project.name) issues.push('프로젝트명(L3 중분류)을 입력해 주세요.');
   if (!project.analysis_goal) issues.push('프로젝트 목적을 입력해 주세요.');
   issues.push(...validateDateRange(project.start_date, project.end_date, '프로젝트 기간'));
   issues.push(...validateParticipants(project.participants, PROJECT_ROLES, '프로젝트 참여자'));
@@ -236,8 +236,8 @@ export const createTask = async (req, res) => {
       current_step: 1
     };
     const issues = [];
-    if (!values.l1 || !values.l2 || !values.l3) issues.push('프로젝트의 L1~L3 정보를 먼저 완성해 주세요.');
-    if (!values.l4) issues.push('L4 과제명을 입력해 주세요.');
+    if (!values.l1 || !values.l2 || !values.l3) issues.push('프로젝트의 L1 구분·L2 대분류·L3 중분류 정보를 먼저 완성해 주세요.');
+    if (!values.l4) issues.push('L4 모듈 과제명을 입력해 주세요.');
     if (!values.name) issues.push('과제명을 입력해 주세요.');
     if (!values.goal) issues.push('과제 목표를 입력해 주세요.');
     issues.push(...validateDateRange(values.start_date, values.end_date, '과제 기간'));
