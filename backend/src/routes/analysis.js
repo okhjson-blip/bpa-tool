@@ -39,7 +39,7 @@ router.post('/project/:projectId/to-be', requireCompanyWrite, [
 ], validate, bdwController.createToBe);
 
 // 최종 리포트 생성
-router.get('/project/:projectId/report', [
+router.get('/project/:projectId/report', requireCompanyWrite, [
   param('projectId').isInt(),
   query('task_id').isInt(),
   query('frequency_unit').isIn(['day', 'week', 'month']).optional(),

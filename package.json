@@ -14,7 +14,8 @@
     "dev:frontend": "vite --config frontend/vite.config.js",
     "dev:backend": "node --watch backend/src/app.js",
     "test:multitenancy": "node scripts/test-multitenancy.mjs",
-    "test:integration-seed": "node scripts/seed-integration-test.mjs"
+    "test:integration-seed": "node scripts/seed-integration-test.mjs",
+    "check:deployment": "node scripts/check-deployment.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.55.0",

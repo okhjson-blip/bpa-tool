@@ -26,13 +26,18 @@ if (!fs.existsSync(envPath)) {
   const env = { ...fileEnv, ...process.env };
   for (const key of [
     'SUPABASE_URL',
-    'SUPABASE_SERVICE_ROLE_KEY',
     'SUPABASE_PUBLISHABLE_KEY',
     'VITE_SUPABASE_URL',
     'VITE_SUPABASE_PUBLISHABLE_KEY',
     'BPA_CREDENTIAL_ENCRYPTION_KEY'
   ]) {
     if (!env[key] || /your-|placeholder|replace-with|change-this/i.test(env[key])) failures.push(`.env의 ${key} 값이 필요합니다.`);
+  }
+  const secretKey = env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secretKey || /your-|placeholder|replace-with|change-this/i.test(secretKey)) {
+    failures.push('.env의 SUPABASE_SECRET_KEY 또는 SUPABASE_SERVICE_ROLE_KEY 값이 필요합니다.');
+  } else {
+    notes.push(`서버 비밀키 별칭: ${env.SUPABASE_SECRET_KEY ? 'SUPABASE_SECRET_KEY' : 'SUPABASE_SERVICE_ROLE_KEY'}`);
   }
   if (env.SUPABASE_URL && !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(env.SUPABASE_URL)) {
     failures.push('SUPABASE_URL 형식이 올바르지 않습니다.');

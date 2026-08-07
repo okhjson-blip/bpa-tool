@@ -54,7 +54,7 @@ export function requireCompanyUser(req, res, next) {
     return res.status(403).json({ error: '관리자 계정은 관리자 모드에서 조회해 주세요.' });
   }
   if (!req.auth.activeMembership) {
-    return res.status(403).json({ error: '협력사 계정이 중지되었거나 활성 멤버십이 없습니다.' });
+    return res.status(403).json({ error: '협력사 컨설팅이 완료되었거나 활성 멤버십이 없습니다.' });
   }
   req.auth.companyId = Number(req.auth.activeMembership.company_id);
   req.auth.company = req.auth.activeMembership.company;

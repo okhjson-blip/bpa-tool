@@ -2,10 +2,11 @@ import 'dotenv/config';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
+import { resolveSupabaseSecretKey } from '../backend/src/config/supabaseEnv.js';
 
 const apiBase = process.env.TEST_API_BASE || 'http://localhost:5000/api';
 const supabaseUrl = process.env.SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceRoleKey = resolveSupabaseSecretKey();
 const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
 const service = createClient(supabaseUrl, serviceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false }

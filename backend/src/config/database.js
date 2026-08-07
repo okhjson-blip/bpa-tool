@@ -1,22 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 import { getAuthContext } from './authContext.js';
+import { resolveSupabaseConfig } from './supabaseEnv.js';
 
 let serviceClient;
 
 function getConfig() {
-  const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !serviceRoleKey || !publishableKey) {
-    throw new Error('SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_PUBLISHABLE_KEY 환경 변수가 필요합니다.');
+  const { url, secretKey, publishableKey } = resolveSupabaseConfig();
+  if (!url || !secretKey || !publishableKey) {
+    throw new Error('SUPABASE_URL, SUPABASE_SECRET_KEY(또는 SUPABASE_SERVICE_ROLE_KEY), SUPABASE_PUBLISHABLE_KEY 환경 변수가 필요합니다.');
   }
-  return { url, serviceRoleKey, publishableKey };
+  return { url, secretKey, publishableKey };
 }
 
 export function getServiceClient() {
   if (serviceClient) return serviceClient;
-  const { url, serviceRoleKey } = getConfig();
-  serviceClient = createClient(url, serviceRoleKey, {
+  const { url, secretKey } = getConfig();
+  serviceClient = createClient(url, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
     global: { headers: { 'x-application-name': 'bpa-tool-backend' } }
   });
@@ -101,4 +100,10 @@ export const initializeDatabase = async () => {
     throw new Error(`Supabase 초기화 실패: ${result.error.message}`);
   }
   console.log('✓ Supabase database connected');
+  return {
+    provider: 'supabase',
+    dataApi: true,
+    probeTable: 'projects',
+    probeRows: result.data?.length || 0
+  };
 };

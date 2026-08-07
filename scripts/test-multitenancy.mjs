@@ -7,10 +7,11 @@ import {
   removeCompanyCredential,
   saveCompanyCredential
 } from '../backend/src/services/companyCredentialService.js';
+import { resolveSupabaseSecretKey } from '../backend/src/config/supabaseEnv.js';
 
 const apiBase = process.env.TEST_API_BASE || 'http://localhost:5000/api';
 const supabaseUrl = process.env.SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceRoleKey = resolveSupabaseSecretKey();
 const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
 const realGeminiKey = String(process.env.TEST_GEMINI_API_KEY || '').trim();
 const runId = `${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
@@ -194,6 +195,76 @@ async function main() {
     const adminOverview = await api('/admin/overview', { cookie: adminCookie });
     assert.equal(adminOverview.response.status, 200);
     assert.equal(adminOverview.data.some((company) => Number(company.id) === Number(companyA.id)), true);
+
+    const { data: cascadeTask, error: cascadeTaskError } = await service.from('tasks').insert({
+      project_id: created.data.project.id,
+      name: `company-status-cascade-${runId}`,
+      l1: projectBody.department_name,
+      l2: projectBody.business_name,
+      l3: projectBody.name,
+      l4: '협력사 상태 연동 검증',
+      status: 'registered'
+    }).select().single();
+    if (cascadeTaskError) throw cascadeTaskError;
+
+    const generatedReport = await api(`/analysis/project/${created.data.project.id}/report?task_id=${cascadeTask.id}`, {
+      token: userA.token
+    });
+    assert.equal(generatedReport.response.status, 200, `협력사 결과 리포트 생성·저장 실패: ${generatedReport.text}`);
+    const { data: savedReport, error: savedReportError } = await service
+      .from('task_reports').select('*').eq('task_id', cascadeTask.id).single();
+    if (savedReportError) throw savedReportError;
+    assert.equal(savedReport.report_data.task_name, cascadeTask.name);
+
+    const adminTaskReport = await api(`/admin/tasks/${cascadeTask.id}/report`, { cookie: adminCookie });
+    assert.equal(adminTaskReport.response.status, 200, `관리자 저장 리포트 조회 실패: ${adminTaskReport.text}`);
+    assert.equal(adminTaskReport.data.task_name, generatedReport.data.task_name);
+    assert.equal(adminTaskReport.data.created_at, generatedReport.data.created_at);
+
+    const reportOverview = await api('/admin/overview', { cookie: adminCookie });
+    const reportCompany = reportOverview.data.find((company) => Number(company.id) === Number(companyA.id));
+    const reportTask = reportCompany.projects
+      .flatMap((project) => project.tasks || [])
+      .find((task) => Number(task.id) === Number(cascadeTask.id));
+    assert.equal(reportTask.has_report, true);
+
+    const suspended = await api(`/admin/companies/${companyA.id}/status`, {
+      cookie: adminCookie,
+      method: 'PATCH',
+      body: { status: 'suspended' }
+    });
+    assert.equal(suspended.response.status, 200, `협력사 완료 처리 연동 실패: ${suspended.text}`);
+    assert.equal(Number(suspended.data.affected.projects) >= 1, true);
+    assert.equal(Number(suspended.data.affected.tasks) >= 1, true);
+
+    const suspendedRows = await Promise.all([
+      service.from('projects').select('status').eq('id', created.data.project.id).single(),
+      service.from('tasks').select('status').eq('id', cascadeTask.id).single()
+    ]);
+    suspendedRows.forEach((result) => { if (result.error) throw result.error; });
+    assert.equal(suspendedRows[0].data.status, 'suspended');
+    assert.equal(suspendedRows[1].data.status, 'suspended');
+
+    const suspendedOverview = await api('/admin/overview', { cookie: adminCookie });
+    const suspendedCompany = suspendedOverview.data.find((company) => Number(company.id) === Number(companyA.id));
+    assert.equal(suspendedCompany.status, 'suspended');
+    assert.equal(Number(suspendedCompany.active_project_count), 0);
+    assert.equal(Number(suspendedCompany.active_task_count), 0);
+
+    const activated = await api(`/admin/companies/${companyA.id}/status`, {
+      cookie: adminCookie,
+      method: 'PATCH',
+      body: { status: 'active' }
+    });
+    assert.equal(activated.response.status, 200, `협력사 활성 복원 실패: ${activated.text}`);
+
+    const restoredRows = await Promise.all([
+      service.from('projects').select('status').eq('id', created.data.project.id).single(),
+      service.from('tasks').select('status').eq('id', cascadeTask.id).single()
+    ]);
+    restoredRows.forEach((result) => { if (result.error) throw result.error; });
+    assert.equal(restoredRows[0].data.status, 'active');
+    assert.equal(restoredRows[1].data.status, 'registered');
   }
 
   const rlsA = await userA.client.from('projects').select('id').eq('id', created.data.project.id);
@@ -254,7 +325,7 @@ async function main() {
     ok: true,
     checks: [
       'health', 'anonymous-free-registration', 'idempotent-free-signup-membership',
-      testAdminPassword ? 'supabase-secret-admin-session-and-overview' : 'admin-login-skipped',
+      testAdminPassword ? 'admin-overview-saved-report-and-status-cascade' : 'admin-login-skipped',
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',

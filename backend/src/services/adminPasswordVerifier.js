@@ -1,3 +1,5 @@
+import { resolveSupabaseSecretKey } from '../config/supabaseEnv.js';
+
 const FUNCTION_NAME = 'admin-password-verify';
 const REQUEST_TIMEOUT_MS = 8_000;
 
@@ -8,8 +10,8 @@ function verificationUrl() {
 }
 
 function serviceKey() {
-  const key = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '');
-  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY 환경 변수가 필요합니다.');
+  const key = resolveSupabaseSecretKey();
+  if (!key) throw new Error('SUPABASE_SECRET_KEY 또는 SUPABASE_SERVICE_ROLE_KEY 환경 변수가 필요합니다.');
   return key;
 }
 

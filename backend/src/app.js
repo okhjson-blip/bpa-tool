@@ -25,15 +25,29 @@ app.use(express.json());
 
 // 정적 파일 서빙 (Frontend 빌드 결과)
 const distPath = path.join(__dirname, '../../frontend/dist');
-app.use(express.static(distPath));
+if (!process.env.VERCEL) {
+  app.use(express.static(distPath));
+}
 
 // Health check
 const healthHandler = async (req, res) => {
   try {
-    await initializeDatabase();
-    res.json({ status: 'OK', database: 'supabase' });
+    const database = await initializeDatabase();
+    res.json({
+      status: 'OK',
+      db: database.provider,
+      database: database.provider,
+      data_api: database.dataApi,
+      probe: { table: database.probeTable, rows: database.probeRows }
+    });
   } catch (error) {
-    res.status(503).json({ status: 'ERROR', database: 'supabase', error: error.message });
+    res.status(503).json({
+      status: 'ERROR',
+      db: 'supabase',
+      database: 'supabase',
+      data_api: false,
+      error: error.message
+    });
   }
 };
 app.get('/health', healthHandler);

@@ -79,7 +79,7 @@ npm start
 7. BDW(Bottleneck, Delay, Waste) 진단
 8. AI FIT 매트릭스와 As-Is/To-Be 비교
 9. 과제별 AX 성과지표 전체 PDF 또는 과제당 한 행의 과제정보 CSV 출력
-10. 관리자 모드에서 전체 협력사의 프로젝트·과제 조회 및 협력사 활성/중지
+10. 관리자 모드에서 전체/활성 통계, 협력사 완료 처리, 협력사 모드에서 생성된 과제 결과 리포트 조회
 
 ## 디렉터리
 
@@ -95,6 +95,7 @@ bpa-tool/
 ├─ backend/
 │  └─ src/app.js              # API 및 로컬 정적 UI 서버
 ├─ api/index.js               # Vercel Express 함수 진입점
+├─ docs/DEPLOY.md             # Supabase·Vercel 배포 체크리스트
 ├─ supabase/migrations/       # Supabase PostgreSQL 스키마
 ├─ supabase/functions/        # Supabase 비밀값을 사용하는 Edge Function
 ├─ vercel.json                # Vercel 빌드·라우팅 설정
@@ -103,7 +104,7 @@ bpa-tool/
 
 ## 주요 API
 
-- `GET /health`
+- `GET /api/health`: Supabase Data API 실제 조회를 포함한 상태 확인
 - `GET /api/auth/companies`: 가입 가능한 활성 협력사 목록
 - `GET /api/auth/me`: 현재 사용자·프로필·멤버십
 - `POST /api/auth/complete-profile`: 최초 협력사 등록 완료
@@ -111,8 +112,9 @@ bpa-tool/
 - `GET /api/auth/admin-session`: 관리자 세션 복원
 - `POST /api/auth/admin-logout`: 관리자 세션 종료
 - `GET /api/admin/overview`: 전체 협력사 프로젝트·과제 조회(관리자)
+- `GET /api/admin/tasks/:taskId/report`: 협력사 모드에서 마지막으로 생성·저장한 과제 결과 리포트 조회(관리자)
 - `POST /api/admin/companies`: 협력사 등록(관리자)
-- `PATCH /api/admin/companies/:companyId/status`: 협력사 활성/중지(관리자)
+- `PATCH /api/admin/companies/:companyId/status`: 협력사 완료 처리와 재활성화(관리자). 내부 상태는 `suspended`로 유지하며 재활성화 시 프로젝트·과제의 완료 처리 전 상태를 복원합니다.
 - `GET /api/admin/tasks.csv?consulting_year=:year&consulting_half=:half`: 선택한 컨설팅 차수의 협력사명·프로젝트명·과제명을 과제당 한 행으로 출력(관리자)
 - `GET|POST /api/projects`
 - `GET|PUT|DELETE /api/projects/:projectId`
@@ -129,7 +131,7 @@ bpa-tool/
 
 - 비밀키와 `.env` 파일은 Git에 커밋하지 않습니다.
 - 모든 업무 데이터는 Supabase Auth 사용자, `company_memberships.company_id`, RLS를 기준으로 격리합니다.
-- 서비스 역할 키는 사용자 인증 확인·최초 멤버십 생성·감사 로그에만 사용하고, 업무 데이터 API는 사용자 JWT가 적용된 Supabase 클라이언트로 RLS를 통과해야 합니다.
+- Supabase Secret Key(또는 레거시 Service Role Key)는 사용자 인증 확인·최초 멤버십 생성·감사 로그에만 사용하고, 업무 데이터 API는 사용자 JWT가 적용된 Supabase 클라이언트로 RLS를 통과해야 합니다.
 - Vercel 배포 시 루트 `index.html`을 프런트엔드 빌드 입력으로 사용합니다.
 - 운영 및 로컬 API 데이터베이스는 Supabase PostgreSQL을 사용합니다.
 - AI 분석 모델은 OpenAI `gpt-5-nano`, Gemini `gemini-3.5-flash-lite`, Claude `claude-sonnet-5`를 사용합니다. OpenAI와 Gemini 모델은 각각 `OPENAI_MODEL`, `GEMINI_MODEL` 환경변수로 교체할 수 있습니다.
@@ -143,27 +145,28 @@ bpa-tool/
 
 ## Supabase 설정
 
-1. Supabase 프로젝트를 생성합니다.
-2. SQL Editor에서 `supabase/migrations/202608060001_initial_schema.sql`을 실행합니다.
-3. 이어서 `supabase/migrations/202608070001_multitenant_auth_rls.sql`, `202608070002_company_ai_credentials.sql`, `202608070003_password_admin_only.sql`, `202608070004_company_consulting_round.sql`을 순서대로 실행합니다. 기존 프로젝트의 회사명을 이관하고 멤버십·RLS·협력사 AI 자격증명 저장소를 생성한 뒤 레거시 Supabase 관리자 권한을 제거하고 협력사 컨설팅 차수를 추가합니다.
-4. Supabase Authentication에서 Anonymous Sign-Ins를 활성화합니다. 협력사 등록은 이메일 승인을 보내지 않고 익명 세션에 검증된 형식의 이메일을 프로필 정보로 저장합니다.
-5. `.env.example`을 참고해 로컬 `.env`에 서버용·브라우저용 Supabase 변수를 설정합니다.
-6. Supabase Dashboard의 Edge Functions → Secrets에 `BPA_ADMIN_PASSWORD`를 등록하고 `admin-password-verify` 함수를 배포합니다. 비밀번호는 로컬 `.env`, Vercel, 프런트엔드 코드 또는 Git에 저장하지 않습니다.
-7. `admin-password-verify`는 Supabase Secret Key로 호출한 Vercel 백엔드 요청만 허용하며 비밀번호 일치 여부만 반환합니다.
-8. 서비스 역할 키는 백엔드 전용이며 `VITE_` 접두사를 붙이거나 브라우저 코드에 넣지 않습니다. Publishable Key만 브라우저에 노출할 수 있습니다.
+1. Supabase 프로젝트를 생성하고 CLI를 같은 소유 계정으로 로그인한 뒤 프로젝트를 연결합니다.
+2. `npx supabase db push --linked`로 `supabase/migrations/`의 마이그레이션을 순서대로 적용합니다.
+3. `npx supabase config push --project-ref <PROJECT_REF>`로 Anonymous Sign-Ins 설정을 적용합니다. 협력사 등록은 이메일 승인을 보내지 않고 익명 세션에 검증된 형식의 이메일을 프로필 정보로 저장합니다.
+4. `.env.example`을 참고해 로컬 `.env`에 서버용·브라우저용 Supabase 변수를 설정합니다.
+5. Supabase Dashboard의 Edge Functions → Secrets에 `BPA_ADMIN_PASSWORD`를 등록하고 `admin-password-verify` 함수를 배포합니다. 비밀번호는 로컬 `.env`, Vercel, 프런트엔드 코드 또는 Git에 저장하지 않습니다.
+6. `admin-password-verify`는 Supabase Secret Key로 호출한 Vercel 백엔드 요청만 허용하며 비밀번호 일치 여부만 반환합니다.
+7. Secret Key 또는 레거시 Service Role Key는 백엔드 전용이며 `VITE_` 접두사를 붙이거나 브라우저 코드에 넣지 않습니다. Publishable Key만 브라우저에 노출할 수 있습니다.
 
 ## Vercel 배포
 
 Git 저장소를 Vercel 프로젝트에 연결한 후 다음 환경 변수를 Production, Preview, Development에 등록합니다.
 
 - `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY` 또는 `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `BPA_CREDENTIAL_ENCRYPTION_KEY`
 
 관리자 비밀번호는 Vercel 환경변수가 아니라 Supabase Edge Function Secret `BPA_ADMIN_PASSWORD`로만 관리합니다. Vercel은 `npm run build`로 루트 `index.html`을 빌드하고 `api/index.js`의 Express 앱을 서버리스 함수로 실행합니다. `/api/*`는 Express 함수로, 나머지 경로는 정적 `index.html`로 전달됩니다.
+
+배포 후 `npm run check:deployment -- https://your-app.vercel.app`를 실행해 `/api/health`와 실제 협력사 데이터 API가 모두 200인지 확인합니다. 전체 절차는 [docs/DEPLOY.md](docs/DEPLOY.md)를 따릅니다.
 
 `BPA_CREDENTIAL_ENCRYPTION_KEY`는 32자 이상의 무작위 값으로 설정하고 운영 중 임의로 변경하지 마세요. 값을 변경하면 기존에 저장된 협력사 API Key는 복호화할 수 없으며 각 협력사가 다시 등록해야 합니다.
 
