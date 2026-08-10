@@ -152,6 +152,7 @@ bpa-tool/
 - 비밀키와 `.env` 파일은 Git에 커밋하지 않습니다.
 - 모든 업무 데이터는 Supabase Auth 사용자, `company_memberships.company_id`, RLS를 기준으로 격리합니다.
 - `company_user_accounts`는 관리자 선등록과 자유 가입을 연결하는 사용자 디렉터리입니다. 선등록 사용자가 같은 협력사·이메일로 처음 접속하면 익명 Auth 사용자와 자동 연결되고 `/api/auth/me` 세션 복원 시 최근 접속 시간이 갱신됩니다.
+- 관리자 사용자 등록은 브라우저와 API에서 이메일 형식을 이중 검증하며, 등록 성공 응답 후 `/api/admin/users`를 다시 조회하여 Supabase 저장 결과를 목록에 표시합니다.
 - Supabase Secret Key(또는 레거시 Service Role Key)는 사용자 인증 확인·최초 멤버십 생성·감사 로그에만 사용하고, 업무 데이터 API는 사용자 JWT가 적용된 Supabase 클라이언트로 RLS를 통과해야 합니다.
 - Vercel 배포 시 루트 `index.html`을 프런트엔드 빌드 입력으로 사용합니다.
 - 운영 및 로컬 API 데이터베이스는 Supabase PostgreSQL을 사용합니다.

@@ -955,6 +955,10 @@ const apiBase=window.location.protocol==='file:'?'http://localhost:5000/api':'/a
 function escapeHtml(value){
   return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
 }
+function isValidEmail(value){
+  const email=String(value??'').trim();
+  return email.length>0&&email.length<=254&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 async function apiRequest(path,options={}){
   const headers=new Headers(options.headers||{});
   const accessToken=await window.bpaAuth?.getAccessToken?.();
@@ -1293,13 +1297,13 @@ function cancelAdminUserEdit(resetStatus=true){
 }
 async function saveAdminUser(){
   const companyId=Number(document.getElementById('adminUserCompany').value);const name=document.getElementById('adminUserName').value.trim();const email=document.getElementById('adminUserEmail').value.trim().toLowerCase();const status=document.getElementById('adminUserStatus');const button=document.getElementById('btnAdminUserSave');
-  const issues=[];if(!Number.isInteger(companyId))issues.push('협력사를 선택해 주세요.');if(!name)issues.push('사용자 이름을 입력해 주세요.');if(!isValidEmail(email))issues.push('올바른 이메일 주소 형식으로 입력해 주세요.');
+  const issues=[];if(!Number.isInteger(companyId)||companyId<1)issues.push('협력사를 선택해 주세요.');if(!name)issues.push('사용자 이름을 입력해 주세요.');if(!isValidEmail(email))issues.push('올바른 이메일 주소 형식으로 입력해 주세요.');
   if(issues.length){status.style.color='var(--d)';status.textContent='✕ '+issues.join(' ');return;}
   const userId=editingAdminUserId;button.disabled=true;button.textContent=userId?'저장 중...':'등록 중...';
   try{
     const result=await apiRequest(userId?'/admin/users/'+userId:'/admin/users',{method:userId?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company_id:companyId,name,email})});
     await openAdminUserManagement();status.style.color='var(--s)';status.textContent='✓ '+result.message;
-  }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
+  }catch(error){const message=error.issues?.length?error.issues.join(' '):error.message;status.style.color='var(--d)';status.textContent='✕ '+message;}
   finally{button.disabled=!adminCompanies.length;button.textContent=editingAdminUserId?'수정 저장':'등록';}
 }
 async function deleteAdminUser(userId){

@@ -42,6 +42,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 - `profiles`: Supabase Auth `user_id`와 이름·이메일·애플리케이션 역할을 연결합니다.
 - `company_memberships`: 사용자와 협력사를 연결하고 `company_admin`, `company_editor`, `company_viewer` 역할을 관리합니다.
 - `company_user_accounts`: 관리자 사용자 선등록과 자유 가입을 연결하는 디렉터리입니다. `auth_user_id`는 최초 로그인 전에는 `NULL`이며, 같은 협력사·이메일로 접속하면 익명 Auth 사용자와 연결됩니다. 최근 세션 복원 시 `last_access_at`을 갱신합니다.
+- 관리자 사용자 등록 화면은 공통 `isValidEmail` 검증을 거친 뒤 HttpOnly 관리자 세션으로 `/api/admin/users`를 호출합니다. 백엔드는 양수 `company_id`, 이름 길이와 이메일 형식을 다시 검증하고 Service Role로 `company_user_accounts`에 기록합니다.
 - `panel_drafts`: 협력사·사용자·패널 키·화면 범위별 최신 수동 임시 저장 payload를 JSONB로 보관합니다. 프로젝트·과제 외래키 삭제 시 연관 저장본도 정리됩니다.
 - `interviews.task_id`, `interviews.answers`: 인터뷰를 과제에 직접 연결하고 화면 질문 순서의 답변 배열을 저장하여 재접속·이전 단계 이동 시 복원합니다. 기존 인터뷰는 연결된 프로세스의 `task_id`로 역연결합니다.
 - 협력사 사용자는 활성 협력사와 이름·이메일을 입력하고 `시작하기`를 클릭합니다. 같은 협력사·이메일의 기존 디렉터리 계정은 기존 로그인 세션을 유지하면서 현재 Supabase 익명 세션에도 접근 멤버십을 연결합니다. 미등록 사용자는 안내 후 `등록`을 직접 클릭한 경우에만 프로필과 `company_editor` 멤버십을 생성합니다. 이메일 승인 절차는 사용하지 않습니다.

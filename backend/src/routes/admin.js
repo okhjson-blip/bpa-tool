@@ -11,13 +11,13 @@ router.get('/overview', adminController.getOverview);
 router.get('/companies', adminController.getCompanies);
 router.get('/users', adminController.getCompanyUsers);
 router.post('/users', [
-  body('company_id').isInt(),
+  body('company_id').isInt({ min: 1 }),
   body('name').trim().isLength({ min: 1, max: 100 }),
   body('email').trim().isEmail().isLength({ max: 254 })
 ], validate, adminController.createCompanyUser);
 router.patch('/users/:userId', [
   param('userId').isInt(),
-  body('company_id').isInt(),
+  body('company_id').isInt({ min: 1 }),
   body('name').trim().isLength({ min: 1, max: 100 }),
   body('email').trim().isEmail().isLength({ max: 254 })
 ], validate, adminController.updateCompanyUser);
