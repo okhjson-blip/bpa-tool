@@ -71,6 +71,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .btn-p{background:var(--p);color:#fff}
 .btn-o{background:#fff;border:1.5px solid var(--bd);color:var(--t)}
 .btn-s{background:var(--s);color:#fff}
+.btn-d{background:var(--d);color:#fff}
 .btn-sm{padding:5px 10px;font-size:12px;border-radius:5px}
 .opt-row{display:flex;gap:9px;margin-bottom:12px}
 .opt{flex:1;border:2px solid var(--bd);border-radius:9px;padding:13px 10px;text-align:center;cursor:pointer;transition:all .15s}
@@ -478,6 +479,18 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     </div>
     <div class="inline-status" id="adminCsvStatus"></div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn btn-o" type="button" onclick="closeAdminCsvPopup()">취소</button><button class="btn btn-p" id="btnAdminCsvDownload" type="button" onclick="downloadAdminTaskCsv()">다운로드</button></div>
+  </div>
+</div>
+
+<div class="popup-overlay" id="deleteConfirmPopup" onclick="if(event.target===this)closeDeleteConfirmation(false)">
+  <div class="popup-box" role="alertdialog" aria-modal="true" aria-labelledby="deleteConfirmTitle" aria-describedby="deleteConfirmMessage">
+    <div class="popup-title" id="deleteConfirmTitle">삭제하시겠습니까?</div>
+    <div class="popup-desc" id="deleteConfirmTarget" style="font-size:14px;font-weight:800;color:var(--t);margin-bottom:8px"></div>
+    <div class="tbox" id="deleteConfirmMessage" style="color:var(--d)"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-o" id="btnDeleteConfirmNo" type="button" onclick="closeDeleteConfirmation(false)">아니오</button>
+      <button class="btn btn-d" id="btnDeleteConfirmYes" type="button" onclick="closeDeleteConfirmation(true)">네</button>
+    </div>
   </div>
 </div>
 
@@ -923,6 +936,7 @@ let partnerRegistrationInProgress=false;
 let editingProjectId=null;
 let editingProjectEngine=null;
 let editingAdminUserId=null;
+let deleteConfirmationResolve=null;
 const names=['','과제 등록','인터뷰 & Draft','프로세스 수정','BDW 진단','AI FIT 분석','결과 리포트'];
 const statikLevelLabels={L1:'L1 구분',L2:'L2 대분류',L3:'L3 중분류',L4:'L4 모듈',L5:'L5 단위',L6:'L6 Act'};
 const apiBase=window.location.protocol==='file:'?'http://localhost:5000/api':'/api';
@@ -1212,23 +1226,36 @@ function findAdminTask(taskId){
   for(const company of adminCompanies){for(const project of company.projects||[]){const task=(project.tasks||[]).find(item=>Number(item.id)===Number(taskId));if(task)return {company,project,task};}}
   return null;
 }
+function requestDeleteConfirmation(target,warning){
+  if(deleteConfirmationResolve){deleteConfirmationResolve(false);deleteConfirmationResolve=null;}
+  document.getElementById('deleteConfirmTarget').textContent=target;
+  document.getElementById('deleteConfirmMessage').textContent=warning;
+  document.getElementById('deleteConfirmPopup').classList.add('open');
+  setTimeout(()=>document.getElementById('btnDeleteConfirmNo').focus(),0);
+  return new Promise(resolve=>{deleteConfirmationResolve=resolve;});
+}
+function closeDeleteConfirmation(confirmed){
+  document.getElementById('deleteConfirmPopup').classList.remove('open');
+  const resolve=deleteConfirmationResolve;deleteConfirmationResolve=null;
+  if(resolve)resolve(Boolean(confirmed));
+}
 async function adminDeleteCompany(companyId){
   const company=adminCompanies.find(item=>Number(item.id)===Number(companyId));if(!company)return;
   const warning='소속 프로젝트 '+Number(company.project_count||0)+'건, 과제 '+Number(company.task_count||0)+'건과 사용자·리포트·AI API 설정이 데이터베이스에서 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다.';
-  if(prompt(company.name+' 협력사를 삭제하시겠습니까?\n'+warning+'\n\n계속하려면 아래에 삭제를 입력하세요.','')!=='삭제')return;
+  if(!await requestDeleteConfirmation(company.name+' 협력사',warning))return;
   try{const result=await apiRequest('/admin/companies/'+Number(companyId),{method:'DELETE'});alert(result.message);await openAdminDashboard();await loadActiveCompanies();}
   catch(error){alert(error.message);}
 }
 async function adminDeleteProject(projectId){
   const found=findAdminProject(projectId);if(!found)return;
   const taskCount=(found.project.tasks||[]).length;
-  if(prompt(found.project.name+' 프로젝트를 삭제하시겠습니까?\n소속 과제 '+taskCount+'건과 모든 분석·리포트 데이터가 함께 삭제되며 되돌릴 수 없습니다.\n\n계속하려면 아래에 삭제를 입력하세요.','')!=='삭제')return;
+  if(!await requestDeleteConfirmation(found.project.name+' 프로젝트','소속 과제 '+taskCount+'건과 모든 분석·리포트 데이터가 함께 삭제되며 되돌릴 수 없습니다.'))return;
   try{const result=await apiRequest('/admin/projects/'+Number(projectId),{method:'DELETE'});alert(result.message);await openAdminDashboard();}
   catch(error){alert(error.message);}
 }
 async function adminDeleteTask(taskId){
   const found=findAdminTask(taskId);if(!found)return;
-  if(prompt((found.task.name||found.task.l4)+' 과제를 삭제하시겠습니까?\n프로세스·BDW·AI FIT·To-Be·저장 리포트가 함께 삭제되며 되돌릴 수 없습니다.\n\n계속하려면 아래에 삭제를 입력하세요.','')!=='삭제')return;
+  if(!await requestDeleteConfirmation((found.task.name||found.task.l4)+' 과제','프로세스·BDW·AI FIT·To-Be·저장 리포트가 함께 삭제되며 되돌릴 수 없습니다.'))return;
   try{const result=await apiRequest('/admin/tasks/'+Number(taskId),{method:'DELETE'});alert(result.message);await openAdminDashboard();}
   catch(error){alert(error.message);}
 }
