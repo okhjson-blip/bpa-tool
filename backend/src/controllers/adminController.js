@@ -391,7 +391,7 @@ export async function getOverview(_req, res) {
         task_count: companyProjects.reduce((sum, project) => sum + project.tasks.length, 0),
         active_task_count: companyIsActive
           ? companyProjects.reduce(
-            (sum, project) => sum + project.tasks.filter((task) => task.status !== 'suspended').length,
+            (sum, project) => sum + project.tasks.filter((task) => !['suspended', 'completed'].includes(task.status)).length,
             0
           )
           : 0,

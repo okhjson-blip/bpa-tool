@@ -13,10 +13,18 @@ router.use(dataMaskingMiddleware);
 router.post('/project/:projectId', requireCompanyWrite, [
   param('projectId').isInt(),
   body('interview_type').isIn(['voice', 'text', 'upload']),
+  body('taskId').isInt().optional(),
+  body('answers').isArray().optional(),
+  body('answers.*').isString().optional(),
   body('text').trim().optional(),
   body('transcription').trim().optional(),
   body('domain_l3_id').isInt().optional()
 ], validate, interviewController.createInterview);
+
+router.get('/project/:projectId/task/:taskId/latest', [
+  param('projectId').isInt(),
+  param('taskId').isInt()
+], validate, interviewController.getLatestTaskInterview);
 
 // 프로젝트의 모든 인터뷰 조회
 router.get('/project/:projectId', [

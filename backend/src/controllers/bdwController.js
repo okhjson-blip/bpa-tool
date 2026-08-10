@@ -334,6 +334,7 @@ export const saveReport = async (req, res) => {
       saved_at: savedAt,
       updated_at: savedAt
     }, { onConflict: 'task_id' });
+    await db.update('tasks', Number(report.task_id), { status: 'completed', current_step: 6 });
     res.json({
       message: '결과 리포트가 저장되었습니다. 관리자 모드의 과제 상세에서 조회할 수 있습니다.',
       report,

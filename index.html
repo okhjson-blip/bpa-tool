@@ -492,7 +492,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="popup-desc" id="deleteConfirmTarget" style="font-size:14px;font-weight:800;color:var(--t);margin-bottom:8px"></div>
     <div class="tbox" id="deleteConfirmMessage" style="color:var(--d)"></div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-      <button class="btn btn-o" id="btnDeleteConfirmNo" type="button" onclick="closeDeleteConfirmation(false)">아니오</button>
+      <button class="btn btn-o" id="btnDeleteConfirmNo" type="button" onclick="closeDeleteConfirmation(false)">취소</button>
       <button class="btn btn-d" id="btnDeleteConfirmYes" type="button" onclick="closeDeleteConfirmation(true)">네</button>
     </div>
   </div>
@@ -590,7 +590,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div id="taskParticipantRows"></div>
     <div style="text-align:right;margin-top:4px"><button class="btn btn-o btn-sm" type="button" onclick="addParticipantRow('task')">+ 참여자 추가</button></div>
   </div>
-  <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px"><span class="panel-save-status" id="taskDraftStatus"></span><button class="btn btn-o" id="btnDraftTask" type="button" onclick="saveTaskBasicDraft()">저장</button><button class="btn btn-o" onclick="openTaskListCurrent()">취소</button><button class="btn btn-p" onclick="startTaskFlow()">과제 등록 → 인터뷰 시작 →</button></div>
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px"><span class="panel-save-status" id="taskDraftStatus"></span><button class="btn btn-o" id="btnDraftTask" type="button" onclick="saveTaskBasicDraft()">저장</button><button class="btn btn-o" onclick="openTaskListCurrent()">취소</button><button class="btn btn-p" id="btnSaveTask" onclick="startTaskFlow()">과제 등록 → 인터뷰 시작 →</button></div>
 </div>
 
 <!-- STEP 2 -->
@@ -933,7 +933,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 </div>
 <script>
 let cur=1;
-let ctx={project:'',projectId:null,projectData:null,projectEngine:null,taskId:null,taskParticipants:[],interviewId:null,processes:[],bdw:null,bdwMeta:null,aiResult:null,acceptedAiProcessIds:[],toBeApplied:false,report:null,l1:'',l2:'',l3:'',l4:''};
+let ctx={project:'',projectId:null,projectData:null,projectEngine:null,taskId:null,taskData:null,taskParticipants:[],interviewId:null,processes:[],bdw:null,bdwMeta:null,aiResult:null,acceptedAiProcessIds:[],toBeApplied:false,report:null,l1:'',l2:'',l3:'',l4:''};
 const appState={authenticated:false,user:null,profile:null,membership:null,isAdmin:false,authMode:'partner',companyId:null,companyName:'',companyRegistered:false,aiEngine:'gemini',aiConnections:{}};
 let companyProjects=[];
 let adminCompanies=[];
@@ -964,7 +964,7 @@ async function apiRequest(path,options={}){
 }
 function panelDraftScope(panelKey){
   if(panelKey==='project_basic')return editingProjectId?'project:'+editingProjectId:'new-project';
-  if(panelKey==='task_basic')return 'project:'+Number(ctx.projectId)+':new-task';
+  if(panelKey==='task_basic')return ctx.taskId?'task:'+Number(ctx.taskId):'project:'+Number(ctx.projectId)+':new-task';
   return 'task:'+Number(ctx.taskId);
 }
 function setPanelDraftStatus(statusId,message,color='var(--mt)'){
@@ -1231,7 +1231,8 @@ async function openAdminDashboard(){
       const projects=(company.projects||[]).map(project=>{
         const projectActive=project.status!=='suspended';
         const tasks=(project.tasks||[]).length?(project.tasks||[]).map(task=>{
-          const taskActive=task.status!=='suspended';
+          const taskCompleted=task.status==='completed'||task.has_report;
+          const taskActive=task.status!=='suspended'&&!taskCompleted;
           const reportControl=task.has_report
             ? '<span style="font-size:10px;color:var(--mt)">'+escapeHtml(task.report_saved_at?new Date(task.report_saved_at).toLocaleDateString('ko-KR')+' 저장':'저장 완료')+'</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();openAdminTaskReport('+Number(task.id)+')">상세 조회</button>'
             : '<button class="btn btn-o btn-sm" type="button" disabled title="협력사 모드에서 결과 리포트를 저장하면 활성화됩니다.">상세 조회</button>';
@@ -1481,12 +1482,20 @@ async function loadCompanyProjects(){
       const updated=project.updated_at||project.created_at;
       const date=updated?new Date(updated).toLocaleDateString('ko-KR'):'-';
       const participants=(project.participants||[]).map(person=>[person.name,person.position,person.role].filter(Boolean).join(' / '));
-      card.innerHTML='<div class="proj-card-top"><div><div class="proj-name">'+escapeHtml(project.name)+'</div><div class="task-path">'+[project.department_name,project.business_name||project.description,project.name].filter(Boolean).map(escapeHtml).join(' › ')+'</div></div><div class="proj-actions"><span style="font-size:11px;color:#bbb">최근 수정 '+escapeHtml(date)+'</span><button class="btn btn-o proj-edit" type="button">정보 수정</button></div></div><div class="proj-meta"><span class="proj-chip">L1 구분 '+escapeHtml(project.department_name||'미등록')+'</span><span class="proj-chip">L2 대분류 '+escapeHtml(project.business_name||project.description||'미등록')+'</span><span class="proj-chip">L3 중분류 '+escapeHtml(project.name||'미등록')+'</span><span class="proj-chip">목적: '+escapeHtml(project.analysis_goal||'미등록')+'</span><span class="proj-chip">'+escapeHtml(formatPeriod(project))+'</span></div><div class="proj-participants">참여자: '+(participants.length?participants.map(escapeHtml).join(' · '):'미등록')+'</div><div class="proj-stats">과제 '+Number(project.task_count||0)+'건 · 진행중 '+Number(project.in_progress_count||0)+' · 완료 '+Number(project.completed_count||0)+'</div>';
+      card.innerHTML='<div class="proj-card-top"><div><div class="proj-name">'+escapeHtml(project.name)+'</div><div class="task-path">'+[project.department_name,project.business_name||project.description,project.name].filter(Boolean).map(escapeHtml).join(' › ')+'</div></div><div class="proj-actions"><span style="font-size:11px;color:#bbb">최근 수정 '+escapeHtml(date)+'</span><button class="btn btn-o proj-edit" type="button">정보 수정</button><button class="btn btn-o proj-delete" type="button" style="color:var(--d)">삭제</button></div></div><div class="proj-meta"><span class="proj-chip">L1 구분 '+escapeHtml(project.department_name||'미등록')+'</span><span class="proj-chip">L2 대분류 '+escapeHtml(project.business_name||project.description||'미등록')+'</span><span class="proj-chip">L3 중분류 '+escapeHtml(project.name||'미등록')+'</span><span class="proj-chip">목적: '+escapeHtml(project.analysis_goal||'미등록')+'</span><span class="proj-chip">'+escapeHtml(formatPeriod(project))+'</span></div><div class="proj-participants">참여자: '+(participants.length?participants.map(escapeHtml).join(' · '):'미등록')+'</div><div class="proj-stats">과제 '+Number(project.task_count||0)+'건 · 진행중 '+Number(project.in_progress_count||0)+' · 완료 '+Number(project.completed_count||0)+'</div>';
       card.querySelector('.proj-edit').addEventListener('click',event=>{event.stopPropagation();openEditProjectForm(project.id);});
+      card.querySelector('.proj-delete').addEventListener('click',event=>{event.stopPropagation();deletePartnerProject(project);});
       card.addEventListener('click',()=>openTaskList(project.name,project.id));
       container.appendChild(card);
     });
   }catch(error){container.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
+}
+async function deletePartnerProject(project){
+  const taskCount=Number(project.task_count||0);
+  const warning='소속 과제 '+taskCount+'건과 프로세스·분석·저장 리포트가 Supabase에서 함께 삭제되며 되돌릴 수 없습니다.';
+  if(!await requestDeleteConfirmation(project.name+' 프로젝트',warning))return;
+  try{const result=await apiRequest('/projects/'+Number(project.id),{method:'DELETE'});alert(result.message);await loadCompanyProjects();}
+  catch(error){alert(error.message);}
 }
 
 function show(id){
@@ -1598,15 +1607,23 @@ async function saveTaskBasicDraft(){
   await savePanelDraft('task_basic',taskFormPayload(),{statusId:'taskDraftStatus',buttonId:'btnDraftTask',projectId:ctx.projectId});
 }
 async function loadTaskBasicDraft(){
-  const draft=await loadPanelDraft('task_basic',{statusId:'taskDraftStatus'});if(draft?.payload)applyTaskFormPayload(draft.payload);
+  const draft=await loadPanelDraft('task_basic',{statusId:'taskDraftStatus'});if(draft?.payload)applyTaskFormPayload(draft.payload);return draft;
 }
+function loadOfficialTaskBasic(){
+  if(!ctx.taskData)return;
+  document.getElementById('inpL1').value=ctx.taskData.l1||ctx.l1;document.getElementById('inpL2').value=ctx.taskData.l2||ctx.l2;document.getElementById('inpL3').value=ctx.taskData.l3||ctx.l3;
+  applyTaskFormPayload({l4:ctx.taskData.l4,name:ctx.taskData.name,goal:ctx.taskData.goal,start_date:ctx.taskData.start_date,end_date:ctx.taskData.end_date,participants:ctx.taskData.participants||[]});
+  document.getElementById('btnSaveTask').textContent='과제 정보 저장 → 인터뷰 →';
+}
+async function loadExistingTaskBasic(){loadOfficialTaskBasic();const draft=await loadTaskBasicDraft();if(!draft)setPanelDraftStatus('taskDraftStatus','✓ Supabase 등록 과제 자동 로딩','var(--s)');}
 async function openNewTaskForm(){
   if(!ctx.projectData){showValidationPopup('과제 등록 안내',['프로젝트 정보를 먼저 선택해 주세요.']);return;}
   document.getElementById('inpL1').value=ctx.l1;document.getElementById('inpL2').value=ctx.l2;document.getElementById('inpL3').value=ctx.l3;
   document.getElementById('inpTaskStartDate').min=ctx.projectData.start_date||'';document.getElementById('inpTaskStartDate').max=ctx.projectData.end_date||'';
   document.getElementById('inpTaskEndDate').min=ctx.projectData.start_date||'';document.getElementById('inpTaskEndDate').max=ctx.projectData.end_date||'';
   ['inpL4','inpTaskName','inpTaskStartDate','inpTaskEndDate','inpTaskGoal'].forEach(id=>document.getElementById(id).value='');
-  setParticipantRows('task');ctx.taskId=null;ctx.l4='';ctx.taskParticipants=[];ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;
+  setParticipantRows('task');ctx.taskId=null;ctx.taskData=null;ctx.l4='';ctx.taskParticipants=[];ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;
+  document.getElementById('btnSaveTask').textContent='과제 등록 → 인터뷰 시작 →';
   showFlowChrome();
   setHdrTrail(ctx.project||'프로젝트','과제 등록');
   go(1);
@@ -1628,14 +1645,14 @@ async function loadProjectTasks(){
   }catch(error){container.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
 }
 async function openTaskFlow(task){
-  ctx.taskId=task.id;ctx.l4=task.l4||task.name;ctx.l1=task.l1;ctx.l2=task.l2;ctx.l3=task.l3;
+  ctx.taskId=task.id;ctx.taskData=task;ctx.l4=task.l4||task.name;ctx.l1=task.l1;ctx.l2=task.l2;ctx.l3=task.l3;
   ctx.taskParticipants=task.participants||[];
   ctx.interviewId=null;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
   try{ctx.processes=await apiRequest('/interviews/project/'+ctx.projectId+'/processes?task_id='+ctx.taskId);}catch(error){alert(error.message);return;}
   showFlowChrome();setHdrTrail(ctx.project||'프로젝트',ctx.l4);
   document.getElementById('taskChip').textContent=ctx.l4+' (L4 모듈)';
   if(ctx.processes.length){await loadProcessEditorDraft();renderDraftTable();renderProcessEditor();renderFlowchart();go(3);}else go(2);
-  if(!ctx.processes.length){applyInterviewAnswersPayload({answers:[]});await loadInterviewAnswersDraft();}
+  if(!ctx.processes.length){await loadExistingInterviewAnswers();}
 }
 async function startTaskFlow(){
   if(!ctx.projectId){showValidationPopup('과제 등록 보완사항',['프로젝트를 먼저 선택해 주세요.']);return;}
@@ -1647,19 +1664,22 @@ async function startTaskFlow(){
   if(endDate&&projectEnd&&endDate>projectEnd)issues.push('과제 종료일은 상위 프로젝트 종료일('+projectEnd+')을 초과할 수 없습니다.');
   if(issues.length){showValidationPopup('과제 등록 보완사항',issues);return;}
   try{
-    const result=await apiRequest('/projects/'+ctx.projectId+'/tasks',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+    const editingExistingTask=Boolean(ctx.taskId);
+    const result=await apiRequest('/projects/'+ctx.projectId+'/tasks'+(editingExistingTask?'/'+ctx.taskId:''),{
+      method:editingExistingTask?'PUT':'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({name:taskName,l4:ctx.l4,goal,start_date:startDate,end_date:endDate,participants})
     });
     await clearPanelDraft('task_basic');
-    ctx.taskId=result.task.id;ctx.taskParticipants=result.task.participants||participants;ctx.processes=[];ctx.interviewId=null;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
+    ctx.taskId=result.task.id;ctx.taskData=result.task;ctx.taskParticipants=result.task.participants||participants;
+    if(!editingExistingTask){ctx.processes=[];ctx.interviewId=null;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;}
     setHdrTrail(ctx.project||'프로젝트',ctx.l4);
     document.getElementById('taskChip').textContent=ctx.l4+' (L4 모듈)';
     document.getElementById('draftBody').innerHTML='';
     document.getElementById('draftStatus').textContent='인터뷰 답변을 입력하고 생성하세요.';
     document.getElementById('draftSummary').textContent='AI Draft 생성 전입니다.';
     go(2);
-    applyInterviewAnswersPayload({answers:[]});await loadInterviewAnswersDraft();
+    if(editingExistingTask){await loadExistingInterviewAnswers();renderStoredInterviewDraft();}
+    else{applyInterviewAnswersPayload({answers:[]});await loadInterviewAnswersDraft();}
   }catch(error){showValidationPopup('과제 등록 보완사항',error.issues?.length?error.issues:[error.message]);}
 }
 
@@ -1670,7 +1690,24 @@ async function saveInterviewAnswersDraft(){
   await savePanelDraft('interview_answers',interviewAnswersPayload(),{statusId:'interviewDraftSaveStatus',buttonId:'btnDraftInterview',projectId:ctx.projectId,taskId:ctx.taskId});
 }
 async function loadInterviewAnswersDraft(){
-  const draft=await loadPanelDraft('interview_answers',{statusId:'interviewDraftSaveStatus'});if(draft?.payload)applyInterviewAnswersPayload(draft.payload);
+  const draft=await loadPanelDraft('interview_answers',{statusId:'interviewDraftSaveStatus'});if(draft?.payload)applyInterviewAnswersPayload(draft.payload);return draft;
+}
+async function loadInterviewOfficialAnswers(){
+  if(!ctx.projectId||!ctx.taskId)return;
+  try{
+    const interview=await apiRequest('/interviews/project/'+ctx.projectId+'/task/'+ctx.taskId+'/latest');
+    ctx.interviewId=interview?.id||ctx.interviewId;
+    applyInterviewAnswersPayload({answers:interview?.answers||[]});
+    if(interview)setPanelDraftStatus('interviewDraftSaveStatus','✓ Supabase 저장 인터뷰 자동 로딩','var(--s)');
+    else setPanelDraftStatus('interviewDraftSaveStatus','저장된 인터뷰 답변이 없습니다.');
+    return interview;
+  }catch(error){setPanelDraftStatus('interviewDraftSaveStatus','✕ 인터뷰 로딩 실패: '+error.message,'var(--d)');}
+}
+async function loadExistingInterviewAnswers(){const official=await loadInterviewOfficialAnswers();const draft=await loadInterviewAnswersDraft();if(official&&!draft)setPanelDraftStatus('interviewDraftSaveStatus','✓ Supabase 저장 인터뷰 자동 로딩','var(--s)');}
+function renderStoredInterviewDraft(){
+  if(!ctx.processes.length)return;
+  renderDraftTable();
+  const status=document.getElementById('draftStatus');status.style.color='var(--s)';status.textContent='✓ Supabase 저장 AI Draft '+ctx.processes.length+'건 자동 로딩';
 }
 
 function renderDraftTable(){
@@ -1719,7 +1756,8 @@ async function generateAIDraft(){
   const engineLabel={gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude'}[ctx.projectEngine]||ctx.projectEngine;
   button.disabled=true;button.textContent=engineLabel+' 분석 중...';status.style.color='var(--mt)';status.textContent='프로젝트에 등록된 '+engineLabel+' 엔진이 프로세스를 분석하고 있습니다.';
   try{
-    const interview=await apiRequest('/interviews/project/'+ctx.projectId,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({interview_type:'text',text:answers.join('\n')})});
+    const rawAnswers=interviewAnswersPayload().answers;
+    const interview=await apiRequest('/interviews/project/'+ctx.projectId,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({interview_type:'text',taskId:ctx.taskId,answers:rawAnswers,text:answers.join('\n')})});
     ctx.interviewId=interview.interview.id;
     const draft=await apiRequest('/interviews/'+ctx.interviewId+'/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectId:ctx.projectId,taskId:ctx.taskId})});
     ctx.processes=draft.analysis.processes||[];
@@ -1870,8 +1908,9 @@ function renderToBeComparison(toBeProcesses){
     const time=isToBe?Number(toBe?.estimated_execution_time??process.execution_time??0):Number(process.execution_time||0);
     const tool=isToBe&&applied?(toBe?.automation_method||'AI 자동화 도구'):(toolLabels[process.tool]||'기타 도구');
     const nodeClass=isToBe?(applied?'applied':systemAutomated?'system':'manual'):'asis';
-    const method=applied?'AI 자동화':(methodLabels[process.method]||'수작업');
-    const badge='<span class="automation-badge '+(applied?'ai':process.method==='system'?'system':'manual')+'">'+escapeHtml(method)+'</span>';
+    const method=isToBe&&applied?'AI 자동화':(methodLabels[process.method]||'수작업');
+    const badgeClass=isToBe&&applied?'ai':process.method==='system'?'system':'manual';
+    const badge='<span class="automation-badge '+badgeClass+'">'+escapeHtml(method)+'</span>';
     const meta='도구: '+escapeHtml(tool)+' · 수행시간: '+time+'분';
     const content='<div class="comparison-node '+nodeClass+'"><div class="comparison-node-name">'+(index+1)+'. '+escapeHtml(process.name)+badge+'</div><div class="comparison-node-meta">'+meta+'</div></div>';
     return content+(index<items.length-1?'<div class="comparison-arrow">↓</div>':'');
@@ -2027,15 +2066,15 @@ function go(n){
   renderTaskCtx();
 }
 async function navigateStep(n){
-  if(n===1){go(n);return;}
-  if(n===2){if(ctx.taskId)await loadInterviewAnswersDraft();go(n);return;}
+  if(n===1){if(ctx.taskId)await loadExistingTaskBasic();go(n);return;}
+  if(n===2){if(ctx.taskId){await loadExistingInterviewAnswers();renderStoredInterviewDraft();}go(n);return;}
   if(n===3){openProcessEditor();return;}
   if(n===4){if(ctx.bdw){renderBDW(ctx.bdw);go(4);}else await openBDWStep();return;}
   if(n===5){if(ctx.aiResult){renderAIFit(ctx.aiResult);go(5);}else await runAIFit();return;}
   if(n===6){await openReportStep();return;}
   go(n);
 }
-function prev(){ if(cur>1) go(cur-1); else openTaskListCurrent(); }
+async function prev(){ if(cur>1) await navigateStep(cur-1); else openTaskListCurrent(); }
 async function next(){
   if(cur===1&&!ctx.taskId){await startTaskFlow();return;}
   if(cur<6)await navigateStep(cur+1);

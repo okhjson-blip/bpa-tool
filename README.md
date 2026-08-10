@@ -72,7 +72,7 @@ npm start
 
 1. 관리자가 등록한 협력사를 선택하고 이름·이메일 입력 후 `시작하기`로 기존 사용자 접속 여부 확인, 미등록 사용자는 안내 후 `등록` 버튼으로 가입
 2. Supabase 로그인 세션 자동 복원 및 로그인 사용자의 활성 협력사 멤버십 확인
-3. 협력사별로 격리된 프로젝트 목록, L1 구분·L2 대분류·L3 중분류 프로젝트 생성·수정, 참여자 확인
+3. 협력사별로 격리된 프로젝트 목록, L1 구분·L2 대분류·L3 중분류 프로젝트 생성·수정·확인 후 삭제, 참여자 확인
 4. 프로젝트 계층과 연동된 L4 모듈 과제 등록
 5. 인터뷰 답변과 AI Draft 생성
 6. L4 모듈·L5 단위·L6 Act 프로세스 수정 및 플로우차트 확인
@@ -130,12 +130,14 @@ bpa-tool/
 - `GET|POST /api/projects`
 - `GET|PUT|DELETE /api/projects/:projectId`
 - `GET|POST /api/projects/:projectId/tasks`
+- `PUT /api/projects/:projectId/tasks/:taskId`: 기존 과제 기본정보 수정
 - `GET|PUT|DELETE /api/drafts/:panelKey`: 로그인 사용자별 패널 임시 저장본 조회·저장·정리(`project_basic`, `task_basic`, `interview_answers`, `process_editor`, `report_frequency`)
 - `GET /api/connections`: 로그인 협력사의 AI 엔진 등록 상태 조회(Key 원문 제외)
 - `PUT /api/connections/:engine`: 실제 연결 검증 후 협력사 Key 암호화 저장
 - `PUT /api/connections/:engine/default`: 새 프로젝트 기본 AI 엔진 지정
 - `DELETE /api/connections/:engine`: 협력사 AI API Key 삭제
 - `/api/interviews/*`: 실제 AI Draft 생성·저장과 작업별 프로세스 수정. 플로우차트 동기화는 단일 일괄 API 요청으로 처리합니다.
+- `GET /api/interviews/project/:projectId/task/:taskId/latest`: 과제별 최신 인터뷰 구조화 답변 복원
 - `/api/domains/*`: 업무 계층
 - `/api/analysis/*`: 작업별 BDW, AI FIT, To-Be, AX 성과지표 리포트
 - `GET /api/analysis/project/:projectId/report`: 저장 없이 최신 PDF 프리뷰 데이터 생성
@@ -154,6 +156,7 @@ bpa-tool/
 - 세 공급자 모두 공식 JSON Schema 구조화 출력을 사용합니다. 협력사 API Key는 연결 확인 후 AES-256-GCM으로 암호화해 저장하며 Draft·BDW·AI FIT 실행 시 백엔드에서만 복호화합니다.
 - 프로젝트 계층은 `department_name=L1 구분`, `description=L2 대분류`, `name=L3 중분류`로 저장하고 API에서는 L2를 `business_name` 별칭으로 제공합니다.
 - 프로젝트 및 과제 등록은 기간과 필수 역할 참여자를 프런트엔드와 API에서 이중 검증합니다.
+- 프로젝트 삭제는 `삭제하시겠습니까?` 확인창의 `네` 선택 후에만 실행되며 소속 과제·분석·리포트가 Supabase 외래키 관계로 함께 삭제됩니다.
 - 과제 기간은 선택한 상위 프로젝트 기간 안에 있어야 하며 프런트엔드와 API에서 이중 검증합니다.
 - `panel_drafts`는 사용자·협력사·패널·화면 범위별 최신 임시 저장본 한 건을 보관합니다. 자동 저장은 하지 않으며 정식 등록 또는 분석 저장이 완료되면 해당 임시 저장본을 삭제합니다. BDW 태그는 기존 즉시 저장을 유지하고 AI API Key는 임시 저장 대상에서 제외합니다.
 - AI Draft와 프로세스 편집 화면은 L6의 수행·대기·승인대기 시간 합계를 L5에, L5 합계를 L4에 반영합니다.
@@ -162,6 +165,7 @@ bpa-tool/
 - 리포트 수행 빈도는 일·주·월별 횟수를 연간으로 환산하여 AX 절감 시간과 FTE를 계산합니다.
 - AI Draft는 STATIK L1 구분~L6 Act 전체 정의를 따르며 L6 Act를 `목적어 + 단일 동사` 형태의 최소 행위로 생성합니다.
 - 결과 페이지는 PDF 프리뷰를 먼저 표시합니다. 사용자가 `결과 리포트 저장`을 누른 경우에만 프로젝트·과제 참여자를 포함한 `task_reports` 최신 PDF 리포트 스냅샷을 저장하며, 관리자 과제 목록의 `상세 조회` 버튼이 활성화됩니다. 미저장 과제의 버튼은 비활성화되고 `목록 새로고침`으로 최신 저장 여부를 반영합니다. PDF 출력은 숨김 인쇄 프레임을 사용하고 CSV의 AS-IS·To-Be는 `A > B > C` 형식의 프로세스 흐름으로 기록합니다.
+- 결과 리포트 저장 시 과제 상태와 현재 단계가 `completed`·6단계로 함께 갱신되어 사용자 및 관리자 과제 목록에 `완료`로 표시됩니다.
 
 ## Supabase 설정
 

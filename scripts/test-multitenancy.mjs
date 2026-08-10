@@ -259,12 +259,80 @@ async function main() {
   });
   assert.equal(outsideProjectPeriodTask.response.status, 400, '상위 프로젝트 기간을 벗어난 과제가 등록됨');
 
+  const taskParticipants = [
+    { name: '과제 리더', position: '팀장', role: '과제 리더', email: '' },
+    { name: '과제 담당자', position: '매니저', role: '과제 담당자', email: '' }
+  ];
+  const restorableTask = await api(`/projects/${created.data.project.id}/tasks`, {
+    token: userA.token,
+    method: 'POST',
+    body: {
+      name: '복원 검증 과제', l4: '기존 내용을 복원한다', goal: '과제와 인터뷰 재로딩 검증',
+      start_date: '2026-08-02', end_date: '2026-08-20', participants: taskParticipants
+    }
+  });
+  assert.equal(restorableTask.response.status, 201, `복원 검증 과제 생성 실패: ${restorableTask.text}`);
+  const updatedTask = await api(`/projects/${created.data.project.id}/tasks/${restorableTask.data.task.id}`, {
+    token: userA.token,
+    method: 'PUT',
+    body: {
+      name: '수정된 복원 검증 과제', l4: '기존 내용을 다시 불러온다', goal: '수정 후 Supabase 복원 검증',
+      start_date: '2026-08-03', end_date: '2026-08-21', participants: taskParticipants
+    }
+  });
+  assert.equal(updatedTask.response.status, 200, `기존 과제 수정 실패: ${updatedTask.text}`);
+  assert.equal(updatedTask.data.task.goal, '수정 후 Supabase 복원 검증');
+
+  const answerValues = ['업무 순서를 확인한다', '반복 작업을 확인한다', '승인 대기를 확인한다', '', '고객 불편을 확인한다'];
+  const savedInterview = await api(`/interviews/project/${created.data.project.id}`, {
+    token: userA.token,
+    method: 'POST',
+    body: {
+      interview_type: 'text', taskId: restorableTask.data.task.id, answers: answerValues,
+      text: answerValues.map((answer, index) => `답변 ${index + 1}: ${answer}`).join('\n')
+    }
+  });
+  assert.equal(savedInterview.response.status, 201, `구조화 인터뷰 저장 실패: ${savedInterview.text}`);
+  const restoredInterview = await api(`/interviews/project/${created.data.project.id}/task/${restorableTask.data.task.id}/latest`, { token: userA.token });
+  assert.equal(restoredInterview.response.status, 200, `인터뷰 답변 복원 실패: ${restoredInterview.text}`);
+  assert.deepEqual(restoredInterview.data.answers, answerValues);
+
   const listA = await api('/projects', { token: userA.token });
   assert.equal(listA.data.some((item) => item.id === created.data.project.id), true);
   const listB = await api('/projects', { token: userB.token });
   assert.equal(listB.data.some((item) => item.id === created.data.project.id), false);
   const directB = await api(`/projects/${created.data.project.id}`, { token: userB.token });
   assert.equal(directB.response.status, 404);
+
+  const disposableProject = await api('/projects', {
+    token: userA.token,
+    method: 'POST',
+    body: { ...projectBody, name: `삭제 검증 프로젝트 ${runId}` }
+  });
+  assert.equal(disposableProject.response.status, 201, `삭제 검증 프로젝트 생성 실패: ${disposableProject.text}`);
+  createdProjectIds.push(disposableProject.data.project.id);
+  const disposableTask = await api(`/projects/${disposableProject.data.project.id}/tasks`, {
+    token: userA.token,
+    method: 'POST',
+    body: {
+      name: '연쇄 삭제 검증 과제', l4: '삭제를 검증한다', goal: '프로젝트 삭제 연동 확인',
+      start_date: '2026-08-02', end_date: '2026-08-20', participants: taskParticipants
+    }
+  });
+  assert.equal(disposableTask.response.status, 201, `삭제 검증 과제 생성 실패: ${disposableTask.text}`);
+  const deletedProject = await api(`/projects/${disposableProject.data.project.id}`, {
+    token: userA.token,
+    method: 'DELETE'
+  });
+  assert.equal(deletedProject.response.status, 200, `사용자 프로젝트 삭제 실패: ${deletedProject.text}`);
+  const [deletedProjectRow, deletedTaskRow] = await Promise.all([
+    service.from('projects').select('id').eq('id', disposableProject.data.project.id).maybeSingle(),
+    service.from('tasks').select('id').eq('id', disposableTask.data.task.id).maybeSingle()
+  ]);
+  if (deletedProjectRow.error) throw deletedProjectRow.error;
+  if (deletedTaskRow.error) throw deletedTaskRow.error;
+  assert.equal(deletedProjectRow.data, null);
+  assert.equal(deletedTaskRow.data, null);
 
   const wrongAdmin = await api('/auth/admin-login', {
     method: 'POST',
@@ -393,6 +461,10 @@ async function main() {
     assert.equal(savedReport.report_data.project_participants.length, 3);
     assert.equal(savedReport.report_format, 'pdf');
     assert.equal(savedReport.report_title, `${cascadeTask.name} AX 분석 결과`);
+    const completedTask = await service.from('tasks').select('status,current_step').eq('id', cascadeTask.id).single();
+    if (completedTask.error) throw completedTask.error;
+    assert.equal(completedTask.data.status, 'completed');
+    assert.equal(completedTask.data.current_step, 6);
 
     const adminTaskReport = await api(`/admin/tasks/${cascadeTask.id}/report`, { cookie: adminCookie });
     assert.equal(adminTaskReport.response.status, 200, `관리자 저장 리포트 조회 실패: ${adminTaskReport.text}`);
@@ -658,7 +730,7 @@ async function main() {
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',
-      'project-create', 'panel-draft-save-load-isolation-delete', 'task-period-boundary', 'report-participants', 'api-company-isolation', 'direct-rls-isolation'
+      'project-create-and-cascade-delete', 'panel-draft-save-load-isolation-delete', 'task-period-boundary', 'task-update-and-interview-restore', 'report-participants-and-completion', 'api-company-isolation', 'direct-rls-isolation'
     ]
   }));
 }

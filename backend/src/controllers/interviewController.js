@@ -5,12 +5,19 @@ import { getCompanyApiKey } from '../services/companyCredentialService.js';
 
 export const createInterview = async (req, res) => {
   const { projectId } = req.params;
-  const { domain_l3_id, text, transcription, interview_type } = req.body;
+  const { domain_l3_id, text, transcription, interview_type, taskId, answers } = req.body;
 
   try {
     const project = await db.selectOne('projects', { id: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ error: '과제를 찾을 수 없습니다' });
+    }
+    let task = null;
+    if (taskId) {
+      task = await db.selectOne('tasks', { id: parseInt(taskId) });
+      if (!task || Number(task.project_id) !== parseInt(projectId)) {
+        return res.status(400).json({ error: '과제와 프로젝트가 일치하지 않습니다' });
+      }
     }
 
     // 데이터 마스킹
@@ -19,8 +26,10 @@ export const createInterview = async (req, res) => {
 
     const interview = await db.insert('interviews', {
       project_id: parseInt(projectId),
+      task_id: task ? Number(task.id) : null,
       domain_l3_id: domain_l3_id ? parseInt(domain_l3_id) : null,
       interview_type,
+      answers: Array.isArray(answers) ? answers.map((answer) => String(answer || '')) : null,
       text,
       text_masked: textMasked,
       transcription,
@@ -221,6 +230,33 @@ export const updateProcess = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: '프로세스 업데이트 중 오류가 발생했습니다' });
+  }
+};
+
+function parseStoredAnswers(interview) {
+  if (Array.isArray(interview?.answers)) return interview.answers.map((answer) => String(answer || ''));
+  const text = String(interview?.text || '');
+  if (!text) return [];
+  const matches = [...text.matchAll(/(?:^|\n)답변\s+\d+:\s*([\s\S]*?)(?=\n답변\s+\d+:|$)/g)];
+  return matches.map((match) => match[1].trim());
+}
+
+export const getLatestTaskInterview = async (req, res) => {
+  const projectId = parseInt(req.params.projectId);
+  const taskId = parseInt(req.params.taskId);
+  try {
+    const task = await db.selectOne('tasks', { id: taskId });
+    if (!task || Number(task.project_id) !== projectId) {
+      return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
+    }
+    const interviews = await db.select('interviews', { project_id: projectId, task_id: taskId });
+    const latest = interviews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] || null;
+    if (!latest) return res.json(null);
+    const { text_masked, transcription_masked, ...safe } = latest;
+    res.json({ ...safe, answers: parseStoredAnswers(latest) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '저장된 인터뷰 답변을 불러올 수 없습니다.' });
   }
 };
 

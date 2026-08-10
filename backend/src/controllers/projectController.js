@@ -194,7 +194,10 @@ export const updateProject = async (req, res) => {
 
 export const deleteProject = async (req, res) => {
   try {
-    await db.delete('projects', parseInt(req.params.projectId));
+    const projectId = parseInt(req.params.projectId);
+    const project = await db.selectOne('projects', { id: projectId });
+    if (!project) return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다.' });
+    await db.delete('projects', projectId);
     res.json({ message: '프로젝트가 삭제되었습니다.' });
   } catch (error) {
     console.error(error);
@@ -255,5 +258,43 @@ export const createTask = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: '과제 등록 중 오류가 발생했습니다.' });
+  }
+};
+
+export const updateTask = async (req, res) => {
+  const projectId = parseInt(req.params.projectId);
+  const taskId = parseInt(req.params.taskId);
+  try {
+    const project = await db.selectOne('projects', { id: projectId });
+    const existing = await db.selectOne('tasks', { id: taskId });
+    if (!project || !existing || Number(existing.project_id) !== projectId) {
+      return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
+    }
+    const participants = normalizeParticipants(req.body.participants, TASK_ROLES);
+    const values = {
+      name: cleanText(req.body.name),
+      l1: cleanText(project.department_name || project.l1_domain),
+      l2: cleanText(project.description),
+      l3: cleanText(project.name),
+      l4: cleanText(req.body.l4),
+      goal: cleanText(req.body.goal),
+      start_date: cleanText(req.body.start_date),
+      end_date: cleanText(req.body.end_date),
+      participants
+    };
+    const issues = [];
+    if (!values.l4) issues.push('L4 모듈 과제명을 입력해 주세요.');
+    if (!values.name) issues.push('과제명을 입력해 주세요.');
+    if (!values.goal) issues.push('과제 목표를 입력해 주세요.');
+    issues.push(...validateDateRange(values.start_date, values.end_date, '과제 기간'));
+    if (values.start_date && project.start_date && values.start_date < project.start_date) issues.push(`과제 시작일은 상위 프로젝트 시작일(${project.start_date})보다 빠를 수 없습니다.`);
+    if (values.end_date && project.end_date && values.end_date > project.end_date) issues.push(`과제 종료일은 상위 프로젝트 종료일(${project.end_date})을 초과할 수 없습니다.`);
+    issues.push(...validateParticipants(participants, TASK_ROLES, '과제 참여자'));
+    if (issues.length) return res.status(400).json({ error: '과제 정보를 보완해 주세요.', issues });
+    const task = await db.update('tasks', taskId, values);
+    res.json({ message: '과제 정보가 수정되었습니다.', task });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '과제 수정 중 오류가 발생했습니다.' });
   }
 };

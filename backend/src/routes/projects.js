@@ -50,6 +50,17 @@ router.post('/:projectId/tasks', requireCompanyWrite, [
   body('participants').isArray()
 ], validate, projectController.createTask);
 
+router.put('/:projectId/tasks/:taskId', requireCompanyWrite, [
+  param('projectId').isInt(),
+  param('taskId').isInt(),
+  body('name').trim().notEmpty(),
+  body('l4').trim().notEmpty(),
+  body('goal').trim().notEmpty(),
+  body('start_date').isISO8601({ strict: true }),
+  body('end_date').isISO8601({ strict: true }),
+  body('participants').isArray()
+], validate, projectController.updateTask);
+
 // Member route removed - no longer used
 
 export default router;
