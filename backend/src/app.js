@@ -12,6 +12,7 @@ import analysisRoutes from './routes/analysis.js';
 import connectionRoutes from './routes/connections.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
+import draftRoutes from './routes/drafts.js';
 import { authenticate, requireCompanyUser } from './middleware/auth.js';
 
 dotenv.config();
@@ -61,6 +62,7 @@ app.use('/api/domains', authenticate, requireCompanyUser, domainRoutes);
 app.use('/api/interviews', authenticate, requireCompanyUser, interviewRoutes);
 app.use('/api/analysis', authenticate, requireCompanyUser, analysisRoutes);
 app.use('/api/connections', authenticate, requireCompanyUser, connectionRoutes);
+app.use('/api/drafts', authenticate, requireCompanyUser, draftRoutes);
 
 // Error handler
 app.use(errorHandler);

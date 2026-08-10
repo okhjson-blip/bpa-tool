@@ -276,6 +276,22 @@ export const createToBe = async (req, res) => {
 };
 
 // 리포트 생성
+export const getSavedReport = async (req, res) => {
+  try {
+    const projectId = Number(req.params.projectId);
+    const taskId = Number(req.query.task_id);
+    const task = await db.selectOne('tasks', { id: taskId });
+    if (!task || Number(task.project_id) !== projectId) {
+      return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
+    }
+    const saved = await db.selectOne('task_reports', { task_id: taskId });
+    res.json(saved ? { report: saved.report_data, saved_at: saved.saved_at } : null);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '저장된 결과 리포트를 불러올 수 없습니다.' });
+  }
+};
+
 export const generateReport = async (req, res) => {
   try {
     const report = await buildTaskReport({

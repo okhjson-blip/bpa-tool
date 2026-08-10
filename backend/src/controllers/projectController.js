@@ -241,6 +241,12 @@ export const createTask = async (req, res) => {
     if (!values.name) issues.push('과제명을 입력해 주세요.');
     if (!values.goal) issues.push('과제 목표를 입력해 주세요.');
     issues.push(...validateDateRange(values.start_date, values.end_date, '과제 기간'));
+    if (values.start_date && project.start_date && values.start_date < project.start_date) {
+      issues.push(`과제 시작일은 상위 프로젝트 시작일(${project.start_date})보다 빠를 수 없습니다.`);
+    }
+    if (values.end_date && project.end_date && values.end_date > project.end_date) {
+      issues.push(`과제 종료일은 상위 프로젝트 종료일(${project.end_date})을 초과할 수 없습니다.`);
+    }
     issues.push(...validateParticipants(participants, TASK_ROLES, '과제 참여자'));
     if (issues.length) return res.status(400).json({ error: '과제 정보를 보완해 주세요.', issues });
 

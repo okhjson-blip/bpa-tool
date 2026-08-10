@@ -92,6 +92,8 @@ export async function buildTaskReport({
     project_name: project.name,
     task_name: task.name,
     task_goal: task.goal,
+    project_participants: Array.isArray(project.participants) ? project.participants : [],
+    task_participants: Array.isArray(task.participants) ? task.participants : [],
     task_start_date: task.start_date || null,
     task_end_date: task.end_date || null,
     hierarchy: { l1: task.l1, l2: task.l2, l3: task.l3, l4: task.l4 },

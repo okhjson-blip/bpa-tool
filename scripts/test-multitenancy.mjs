@@ -222,6 +222,43 @@ async function main() {
   assert.equal(created.response.status, 201, `프로젝트 생성 실패: ${created.text}`);
   createdProjectIds.push(created.data.project.id);
 
+  const draftScope = `project:${created.data.project.id}`;
+  const savedPanelDraft = await api('/drafts/project_basic', {
+    token: userA.token,
+    method: 'PUT',
+    body: {
+      scope_key: draftScope,
+      project_id: created.data.project.id,
+      payload: { name: '임시 프로젝트명', analysis_goal: '' }
+    }
+  });
+  assert.equal(savedPanelDraft.response.status, 200, `패널 임시 저장 실패: ${savedPanelDraft.text}`);
+  const loadedPanelDraft = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: userA.token });
+  assert.equal(loadedPanelDraft.response.status, 200, `패널 임시 저장 자동 로딩 실패: ${loadedPanelDraft.text}`);
+  assert.equal(loadedPanelDraft.data.payload.name, '임시 프로젝트명');
+  const isolatedPanelDraft = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: userB.token });
+  assert.equal(isolatedPanelDraft.response.status, 200);
+  assert.equal(isolatedPanelDraft.data, null, '다른 협력사 사용자가 임시 저장 내용을 조회함');
+  const deletedPanelDraft = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: userA.token, method: 'DELETE' });
+  assert.equal(deletedPanelDraft.response.status, 200, `패널 임시 저장 정리 실패: ${deletedPanelDraft.text}`);
+
+  const outsideProjectPeriodTask = await api(`/projects/${created.data.project.id}/tasks`, {
+    token: userA.token,
+    method: 'POST',
+    body: {
+      name: '기간 초과 검증 과제',
+      l4: '기간을 검증한다',
+      goal: '프로젝트 기간 밖 과제 차단',
+      start_date: '2026-07-31',
+      end_date: '2026-09-01',
+      participants: [
+        { name: '과제 리더', position: '팀장', role: '과제 리더', email: '' },
+        { name: '과제 담당자', position: '매니저', role: '과제 담당자', email: '' }
+      ]
+    }
+  });
+  assert.equal(outsideProjectPeriodTask.response.status, 400, '상위 프로젝트 기간을 벗어난 과제가 등록됨');
+
   const listA = await api('/projects', { token: userA.token });
   assert.equal(listA.data.some((item) => item.id === created.data.project.id), true);
   const listB = await api('/projects', { token: userB.token });
@@ -353,6 +390,7 @@ async function main() {
       .from('task_reports').select('*').eq('task_id', cascadeTask.id).single();
     if (savedReportError) throw savedReportError;
     assert.equal(savedReport.report_data.task_name, cascadeTask.name);
+    assert.equal(savedReport.report_data.project_participants.length, 3);
     assert.equal(savedReport.report_format, 'pdf');
     assert.equal(savedReport.report_title, `${cascadeTask.name} AX 분석 결과`);
 
@@ -620,7 +658,7 @@ async function main() {
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',
-      'project-create', 'api-company-isolation', 'direct-rls-isolation'
+      'project-create', 'panel-draft-save-load-isolation-delete', 'task-period-boundary', 'report-participants', 'api-company-isolation', 'direct-rls-isolation'
     ]
   }));
 }
