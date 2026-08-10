@@ -42,7 +42,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 - `profiles`: Supabase Auth `user_id`와 이름·이메일·애플리케이션 역할을 연결합니다.
 - `company_memberships`: 사용자와 협력사를 연결하고 `company_admin`, `company_editor`, `company_viewer` 역할을 관리합니다.
 - `company_user_accounts`: 관리자 사용자 선등록과 자유 가입을 연결하는 디렉터리입니다. `auth_user_id`는 최초 로그인 전에는 `NULL`이며, 같은 협력사·이메일로 접속하면 익명 Auth 사용자와 연결됩니다. 최근 세션 복원 시 `last_access_at`을 갱신합니다.
-- 자유 등록 사용자는 활성 협력사와 이름·이메일을 입력하며 이메일 형식 검증 후 Supabase 익명 세션과 `company_editor` 멤버십을 즉시 생성합니다. 이메일 승인 절차는 사용하지 않습니다.
+- 협력사 사용자는 활성 협력사와 이름·이메일을 입력하고 `시작하기`를 클릭합니다. 같은 협력사·이메일의 기존 디렉터리 계정은 기존 로그인 세션을 유지하면서 현재 Supabase 익명 세션에도 접근 멤버십을 연결합니다. 미등록 사용자는 안내 후 `등록`을 직접 클릭한 경우에만 프로필과 `company_editor` 멤버십을 생성합니다. 이메일 승인 절차는 사용하지 않습니다.
 - 브라우저는 Supabase 세션을 자동 복원하고 모든 보호 API에 Access Token을 전달합니다.
 - 백엔드 업무 데이터 클라이언트는 Publishable Key와 사용자 JWT를 사용합니다. 클라이언트 요청의 회사명이나 `company_id`를 신뢰하지 않고 RLS가 허용한 회사 데이터만 조회·변경합니다.
 - 관리자 비밀번호는 Supabase Edge Function Secret `BPA_ADMIN_PASSWORD`에만 저장합니다. Vercel 백엔드는 Secret Key로 `admin-password-verify` 함수를 호출해 일치 여부만 받은 뒤 8시간 유효한 HttpOnly 서명 쿠키를 발급합니다.

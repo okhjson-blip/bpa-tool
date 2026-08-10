@@ -83,6 +83,25 @@ export async function getActiveCompanies(_req, res) {
   }
 }
 
+export async function checkRegistration(req, res) {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const companyId = Number(req.body.company_id);
+  try {
+    const company = await serviceDb.selectOne('companies', { id: companyId });
+    if (!company || company.status !== 'active') {
+      return res.status(400).json({ error: '가입할 수 없는 협력사입니다.' });
+    }
+    const account = await serviceDb.selectOne('company_user_accounts', {
+      company_id: companyId,
+      email
+    });
+    res.json({ registered: Boolean(account) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '사용자 등록 여부를 확인할 수 없습니다.' });
+  }
+}
+
 export async function completeProfile(req, res) {
   const user = req.auth.user;
   const name = String(req.body.name || user.user_metadata?.name || '').trim();
@@ -101,6 +120,10 @@ export async function completeProfile(req, res) {
       return res.status(400).json({ error: '가입할 수 없는 협력사입니다.' });
     }
 
+    const directoryAccountBeforeLogin = await serviceDb.selectOne('company_user_accounts', {
+      company_id: companyId,
+      email
+    });
     const existingMemberships = await serviceDb.select('company_memberships', { user_id: user.id });
     const existingMembership = existingMemberships.find((item) => Number(item.company_id) === companyId);
     if (existingMemberships.length && !existingMembership) return alreadyRegistered(res);
@@ -161,7 +184,11 @@ export async function completeProfile(req, res) {
       }
     }
 
-    res.json({ profile, membership: { ...membership, company } });
+    res.json({
+      profile,
+      membership: { ...membership, company },
+      existing: Boolean(directoryAccountBeforeLogin)
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: '협력사 등록 정보를 저장할 수 없습니다.' });

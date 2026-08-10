@@ -37,7 +37,49 @@ async function removeBrowserFixture(companyId) {
   for (const userId of userIds) await service.auth.admin.deleteUser(userId);
 }
 
-if (mode === 'create') {
+if (mode === 'create-login-flow') {
+  const staleFixtures = await service.from('companies').select('id').like('name', 'BPA 브라우저 검증 로그인 %');
+  if (staleFixtures.error) throw staleFixtures.error;
+  for (const fixture of staleFixtures.data || []) await removeBrowserFixture(fixture.id);
+
+  const runId = `${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+  const email = `bpa-browser-login-flow-${runId}@example.com`;
+  const companyResult = await service.from('companies')
+    .insert({
+      name: `BPA 브라우저 검증 로그인 ${runId}`,
+      consulting_year: 2026,
+      consulting_half: '하반기',
+      status: 'active'
+    })
+    .select().single();
+  if (companyResult.error) throw companyResult.error;
+  console.log(JSON.stringify({
+    companyId: companyResult.data.id,
+    companyName: companyResult.data.name,
+    email,
+    name: '로그인 흐름 검증 사용자'
+  }));
+} else if (mode === 'inspect-login-flow') {
+  const companyId = Number(process.argv[3]);
+  const email = String(process.argv[4] || '').trim().toLowerCase();
+  if (!Number.isInteger(companyId) || !email.startsWith('bpa-browser-login-flow-')) {
+    throw new Error('조회할 로그인 테스트 식별자가 올바르지 않습니다.');
+  }
+  const account = await service.from('company_user_accounts').select('id,auth_user_id').eq('company_id', companyId).eq('email', email).maybeSingle();
+  if (account.error) throw account.error;
+  const memberships = await service.from('company_memberships').select('user_id').eq('company_id', companyId);
+  if (memberships.error) throw memberships.error;
+  const userIds = (memberships.data || []).map((item) => item.user_id);
+  const profiles = userIds.length
+    ? await service.from('profiles').select('user_id').in('user_id', userIds)
+    : { data: [], error: null };
+  if (profiles.error) throw profiles.error;
+  console.log(JSON.stringify({
+    accountCount: account.data ? 1 : 0,
+    membershipCount: userIds.length,
+    profileCount: profiles.data?.length || 0
+  }));
+} else if (mode === 'create') {
   const staleFixtures = await service.from('companies').select('id').like('name', 'BPA 브라우저 검증 %');
   if (staleFixtures.error) throw staleFixtures.error;
   for (const fixture of staleFixtures.data || []) await removeBrowserFixture(fixture.id);
@@ -154,5 +196,5 @@ if (mode === 'create') {
   await removeBrowserFixture(companyId);
   console.log(JSON.stringify({ ok: true }));
 } else {
-  throw new Error('create 또는 cleanup 모드를 지정하세요.');
+  throw new Error('create, create-login-flow, inspect-login-flow 또는 cleanup 모드를 지정하세요.');
 }

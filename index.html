@@ -396,16 +396,16 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
       <div class="welcome-card">
         <section class="welcome-section">
           <div class="welcome-section-title" id="authPanelTitle">협력사 로그인</div>
-          <div class="welcome-section-desc" id="authPanelDesc">관리자가 등록한 활성 협력사를 선택하고 이름과 이메일로 즉시 등록합니다.</div>
+          <div class="welcome-section-desc" id="authPanelDesc">활성 협력사를 선택하고 이름과 이메일을 입력한 뒤 시작하기를 클릭하세요.</div>
           <div class="auth-tabs">
             <button class="auth-tab on" id="partnerAuthTab" type="button" onclick="setAuthMode('partner')">협력사</button>
             <button class="auth-tab" id="adminAuthTab" type="button" onclick="setAuthMode('admin')">관리자</button>
           </div>
           <div id="partnerAuthFields">
-            <div class="frow"><div class="fg"><label class="fl" for="welcomeCompanySelect">협력사 <span class="req">*</span></label><select class="fi" id="welcomeCompanySelect"><option value="">협력사를 선택하세요</option></select></div><div class="fg"><label class="fl" for="welcomeUserName">이름 <span class="req">*</span></label><input class="fi" id="welcomeUserName" autocomplete="name" placeholder="예: 홍길동"></div></div>
+            <div class="frow"><div class="fg"><label class="fl" for="welcomeCompanySelect">협력사 <span class="req">*</span></label><select class="fi" id="welcomeCompanySelect" onchange="clearPendingPartnerRegistration()"><option value="">협력사를 선택하세요</option></select></div><div class="fg"><label class="fl" for="welcomeUserName">이름 <span class="req">*</span></label><input class="fi" id="welcomeUserName" autocomplete="name" placeholder="예: 홍길동" oninput="clearPendingPartnerRegistration()"></div></div>
             <div class="welcome-row">
-              <div class="fg"><label class="fl" for="welcomeUserEmail">이메일 주소 <span class="req">*</span></label><input class="fi" id="welcomeUserEmail" type="email" autocomplete="email" placeholder="name@company.com"></div>
-              <button class="btn btn-o register-btn" id="btnRegisterPartner" type="button" onclick="registerPartner()">등록</button>
+              <div class="fg"><label class="fl" for="welcomeUserEmail">이메일 주소 <span class="req">*</span></label><input class="fi" id="welcomeUserEmail" type="email" autocomplete="email" placeholder="name@company.com" oninput="clearPendingPartnerRegistration()"></div>
+              <button class="btn btn-o register-btn" id="btnRegisterPartner" type="button" onclick="registerPendingPartner()" style="display:none">등록</button>
             </div>
           </div>
           <div id="adminAuthFields" style="display:none">
@@ -417,7 +417,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
           <div class="welcome-status" id="authStatus" role="status" aria-live="polite"></div>
         </section>
         <div class="start-wrap">
-          <button class="btn btn-p start-btn" type="button" onclick="startApplication()">시작하기 →</button>
+          <button class="btn btn-p start-btn" id="btnStartApplication" type="button" onclick="startApplication()">시작하기 →</button>
           <div class="start-hint">로그인 후 협력사 설정에서 외부 AI API Key를 등록할 수 있습니다.</div>
         </div>
       </div>
@@ -937,6 +937,7 @@ let editingProjectId=null;
 let editingProjectEngine=null;
 let editingAdminUserId=null;
 let deleteConfirmationResolve=null;
+let pendingPartnerRegistration=null;
 const names=['','과제 등록','인터뷰 & Draft','프로세스 수정','BDW 진단','AI FIT 분석','결과 리포트'];
 const statikLevelLabels={L1:'L1 구분',L2:'L2 대분류',L3:'L3 중분류',L4:'L4 모듈',L5:'L5 단위',L6:'L6 Act'};
 const apiBase=window.location.protocol==='file:'?'http://localhost:5000/api':'/api';
@@ -972,7 +973,8 @@ function setAuthMode(mode){
   document.getElementById('partnerAuthFields').style.display=mode==='partner'?'block':'none';
   document.getElementById('adminAuthFields').style.display=mode==='admin'?'block':'none';
   document.getElementById('authPanelTitle').textContent=mode==='partner'?'협력사 로그인':'관리자 로그인';
-  document.getElementById('authPanelDesc').textContent=mode==='partner'?'관리자가 등록한 활성 협력사를 선택하고 이름과 이메일로 즉시 등록합니다.':'관리자 비밀번호로 전체 협력사 조회 화면에 접속합니다.';
+  document.getElementById('authPanelDesc').textContent=mode==='partner'?'활성 협력사를 선택하고 이름과 이메일을 입력한 뒤 시작하기를 클릭하세요.':'관리자 비밀번호로 전체 협력사 조회 화면에 접속합니다.';
+  clearPendingPartnerRegistration();
   document.getElementById('authStatus').textContent='';
 }
 async function loadActiveCompanies(){
@@ -983,30 +985,77 @@ async function loadActiveCompanies(){
   }catch(error){document.getElementById('authStatus').textContent='✕ '+error.message;}
 }
 function validEmail(email){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);}
-async function registerPartner(){
-  const email=document.getElementById('welcomeUserEmail').value.trim();
-  const name=document.getElementById('welcomeUserName').value.trim();
-  const companyId=Number(document.getElementById('welcomeCompanySelect').value);
-  const status=document.getElementById('authStatus');const button=document.getElementById('btnRegisterPartner');
-  if(!validEmail(email)){status.style.color='var(--d)';status.textContent='올바른 이메일 주소 형식으로 입력해 주세요.';return;}
-  if(!name||!Number.isInteger(companyId)){status.style.color='var(--d)';status.textContent='협력사와 이름을 입력해 주세요.';return;}
-  if(!window.bpaAuth?.configured){status.style.color='var(--d)';status.textContent='Supabase Auth 환경변수가 설정되지 않았습니다.';return;}
+function partnerLoginForm(){
+  return {
+    email:document.getElementById('welcomeUserEmail').value.trim().toLowerCase(),
+    name:document.getElementById('welcomeUserName').value.trim(),
+    companyId:Number(document.getElementById('welcomeCompanySelect').value)
+  };
+}
+function clearPendingPartnerRegistration(){
+  pendingPartnerRegistration=null;
+  const button=document.getElementById('btnRegisterPartner');
+  if(button){button.style.display='none';button.disabled=false;button.textContent='등록';}
+}
+function validatePartnerLoginForm({email,name,companyId},status){
+  if(!Number.isInteger(companyId)){status.style.color='var(--d)';status.textContent='협력사를 선택해 주세요.';return false;}
+  if(!name){status.style.color='var(--d)';status.textContent='이름을 입력해 주세요.';return false;}
+  if(!validEmail(email)){status.style.color='var(--d)';status.textContent='올바른 이메일 주소 형식으로 입력해 주세요.';return false;}
+  if(!window.bpaAuth?.configured){status.style.color='var(--d)';status.textContent='Supabase Auth 환경변수가 설정되지 않았습니다.';return false;}
+  return true;
+}
+async function ensurePartnerAuthSession({name,email,companyId}){
+  let session=await window.bpaAuth.getSession();
+  const sessionEmail=String(session?.user?.user_metadata?.email||'').trim().toLowerCase();
+  const sessionCompanyId=Number(session?.user?.user_metadata?.company_id);
+  if(session&&(sessionEmail!==email||sessionCompanyId!==companyId)){
+    await window.bpaAuth.signOut();session=null;
+  }
+  if(!session)session=await window.bpaAuth.registerAnonymously({name,email,company_id:companyId,auth_mode:'partner'});
+  return session;
+}
+async function completePartnerAccess(form){
+  const result=await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:form.name,email:form.email,company_id:form.companyId})});
+  const restored=await restoreAuthenticatedSession();
+  if(!restored)throw new Error('로그인 세션을 복원할 수 없습니다. 다시 시도해 주세요.');
+  return result;
+}
+async function loginRegisteredPartner(){
+  const form=partnerLoginForm();
+  const status=document.getElementById('authStatus');const button=document.getElementById('btnStartApplication');
+  clearPendingPartnerRegistration();
+  if(!validatePartnerLoginForm(form,status))return false;
+  button.disabled=true;button.textContent='가입 여부 확인 중...';partnerRegistrationInProgress=true;
+  try{
+    await ensurePartnerAuthSession(form);
+    const registration=await apiRequest('/auth/check-registration',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:form.email,company_id:form.companyId})});
+    if(!registration.registered){
+      pendingPartnerRegistration=form;
+      document.getElementById('btnRegisterPartner').style.display='inline-block';
+      status.style.color='var(--d)';status.textContent='등록되지 않은 사용자입니다. 등록 버튼을 클릭하여 가입해 주세요.';
+      return false;
+    }
+    await completePartnerAccess(form);
+    status.style.color='var(--s)';status.textContent='✓ 기존 등록자로 접속되었습니다.';
+    return true;
+  }catch(error){
+    status.style.color='var(--d)';status.textContent='✕ '+error.message;
+    return false;
+  }
+  finally{partnerRegistrationInProgress=false;button.disabled=false;button.textContent='시작하기 →';}
+}
+async function registerPendingPartner(){
+  const form=partnerLoginForm();const status=document.getElementById('authStatus');const button=document.getElementById('btnRegisterPartner');
+  const pending=pendingPartnerRegistration;
+  if(!pending||pending.email!==form.email||pending.name!==form.name||pending.companyId!==form.companyId){
+    clearPendingPartnerRegistration();status.style.color='var(--d)';status.textContent='입력 정보가 변경되었습니다. 시작하기를 눌러 등록 여부를 다시 확인해 주세요.';return;
+  }
   button.disabled=true;button.textContent='등록 중...';partnerRegistrationInProgress=true;
   try{
-    const existingSession=await window.bpaAuth.getSession();
-    if(!existingSession)await window.bpaAuth.registerAnonymously({name,email,company_id:companyId,auth_mode:'partner'});
-    const result=await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,company_id:companyId})});
-    const restored=await restoreAuthenticatedSession();
-    if(!restored)throw new Error('로그인 세션을 복원할 수 없습니다. 다시 시도해 주세요.');
-    status.style.color='var(--s)';status.textContent=result.existing?'✓ 기존 가입 세션으로 로그인되었습니다.':'✓ 협력사 등록과 로그인이 완료되었습니다.';
-  }catch(error){
-    if(error.code==='ALREADY_REGISTERED'){
-      const restored=await restoreAuthenticatedSession();
-      if(restored){status.style.color='var(--s)';status.textContent='✓ 기존 가입 세션으로 로그인되었습니다.';return;}
-    }
-    status.style.color='var(--d)';status.textContent='✕ '+error.message;
-  }
-  finally{partnerRegistrationInProgress=false;button.disabled=false;button.textContent='등록';}
+    await ensurePartnerAuthSession(form);await completePartnerAccess(form);clearPendingPartnerRegistration();
+    status.style.color='var(--s)';status.textContent='✓ 등록이 완료되었습니다.';setHeaderVisible(true);await openProjectList();
+  }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;button.disabled=false;button.textContent='등록';}
+  finally{partnerRegistrationInProgress=false;}
 }
 async function loginAdmin(){
   const password=document.getElementById('adminPassword').value;const status=document.getElementById('authStatus');const button=document.getElementById('btnAdminLogin');
@@ -1039,9 +1088,10 @@ async function restoreAuthenticatedSession(){
     let me=await apiRequest('/auth/me');
     if(!me.profile&&session.user.user_metadata?.auth_mode==='partner'){
       const membership=(me.memberships||[]).find(item=>item.status==='active'&&item.company?.status==='active')||(me.memberships||[])[0];
-      const recoveryCompanyId=Number(membership?.company_id||session.user.user_metadata.company_id);
-      await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:session.user.user_metadata.name,email:session.user.user_metadata.email,company_id:recoveryCompanyId})});
-      me=await apiRequest('/auth/me');
+      if(membership){
+        await apiRequest('/auth/complete-profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:session.user.user_metadata.name,email:session.user.user_metadata.email,company_id:Number(membership.company_id)})});
+        me=await apiRequest('/auth/me');
+      }
     }
     applyPartnerSession(me);
     try{await refreshAIConnectionState();}catch(error){console.warn('AI API 설정을 불러오지 못했습니다.',error);appState.aiConnections={};}
@@ -1059,9 +1109,8 @@ async function logoutApplication(){
 }
 async function startApplication(){
   if(!appState.isAdmin){
-    const status=document.getElementById('authStatus');status.style.color='var(--mt)';status.textContent='저장된 로그인 세션을 확인하고 있습니다...';
-    const restored=await restoreAuthenticatedSession();
-    if(!restored){if(status.textContent==='저장된 로그인 세션을 확인하고 있습니다...'){status.style.color='var(--d)';status.textContent='협력사 등록 또는 관리자 로그인을 먼저 완료해 주세요.';}return;}
+    if(appState.authMode!=='partner'){const status=document.getElementById('authStatus');status.style.color='var(--d)';status.textContent='관리자 로그인을 먼저 완료해 주세요.';return;}
+    if(!await loginRegisteredPartner())return;
   }
   if(appState.isAdmin){await openAdminDashboard();return;}
   if(!appState.companyRegistered){document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='활성 협력사 멤버십이 필요합니다.';return;}

@@ -70,7 +70,7 @@ npm start
 
 ## 주요 화면
 
-1. 관리자가 등록한 협력사를 선택하고 이름·이메일 형식 확인만으로 즉시 자유 등록
+1. 관리자가 등록한 협력사를 선택하고 이름·이메일 입력 후 `시작하기`로 기존 사용자 접속 여부 확인, 미등록 사용자는 안내 후 `등록` 버튼으로 가입
 2. Supabase 로그인 세션 자동 복원 및 로그인 사용자의 활성 협력사 멤버십 확인
 3. 협력사별로 격리된 프로젝트 목록, L1 구분·L2 대분류·L3 중분류 프로젝트 생성·수정, 참여자 확인
 4. 프로젝트 계층과 연동된 L4 모듈 과제 등록
@@ -108,7 +108,8 @@ bpa-tool/
 - `GET /api/health`: Supabase Data API 실제 조회를 포함한 상태 확인
 - `GET /api/auth/companies`: 가입 가능한 활성 협력사 목록
 - `GET /api/auth/me`: 현재 사용자·프로필·멤버십
-- `POST /api/auth/complete-profile`: 최초 협력사 등록 완료
+- `POST /api/auth/check-registration`: 협력사·이메일 기존 등록 여부 확인
+- `POST /api/auth/complete-profile`: 기존 계정의 현재 세션 연결 또는 사용자가 승인한 신규 등록 완료
 - `POST /api/auth/admin-login`: Supabase Edge Function 비밀번호 검증 및 HttpOnly 관리자 세션 발급
 - `GET /api/auth/admin-session`: 관리자 세션 복원
 - `POST /api/auth/admin-logout`: 관리자 세션 종료

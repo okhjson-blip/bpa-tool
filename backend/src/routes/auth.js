@@ -11,6 +11,10 @@ router.post('/admin-login', [body('password').isString().notEmpty()], validate, 
 router.get('/admin-session', authenticateAdminSession, authController.getAdminSession);
 router.post('/admin-logout', authController.adminLogout);
 router.get('/me', authenticate, authController.getMe);
+router.post('/check-registration', authenticate, [
+  body('email').isEmail().normalizeEmail(),
+  body('company_id').isInt()
+], validate, authController.checkRegistration);
 router.post('/complete-profile', authenticate, [
   body('name').trim().notEmpty(),
   body('email').isEmail().normalizeEmail(),

@@ -100,6 +100,14 @@ async function main() {
   ]);
 
   for (const [user, company, name] of [[userA, companyA, '검증 사용자 A'], [userB, companyB, '검증 사용자 B']]) {
+    const unregisteredCheck = await api('/auth/check-registration', {
+      token: user.token,
+      method: 'POST',
+      body: { email: user.email, company_id: company.id }
+    });
+    assert.equal(unregisteredCheck.response.status, 200, `미등록 사용자 확인 실패: ${unregisteredCheck.text}`);
+    assert.equal(unregisteredCheck.data.registered, false, '미등록 사용자가 기존 등록자로 판별됨');
+
     const completed = await Promise.all([1, 2].map(() => api('/auth/complete-profile', {
       token: user.token,
       method: 'POST',
@@ -118,6 +126,13 @@ async function main() {
     });
     assert.equal(repeatedLogin.response.status, 200, `기존 가입 세션 재로그인 실패: ${repeatedLogin.text}`);
     assert.equal(repeatedLogin.data.existing, true);
+    const registeredCheck = await api('/auth/check-registration', {
+      token: user.token,
+      method: 'POST',
+      body: { email: user.email, company_id: company.id }
+    });
+    assert.equal(registeredCheck.response.status, 200, `기존 등록 사용자 확인 실패: ${registeredCheck.text}`);
+    assert.equal(registeredCheck.data.registered, true, '등록 완료 사용자를 미등록자로 판별함');
   }
 
   const returningClient = userClient();
@@ -126,6 +141,13 @@ async function main() {
   });
   if (returningAuthError) throw returningAuthError;
   createdUserIds.push(returningAuth.user.id);
+  const returningRegistrationCheck = await api('/auth/check-registration', {
+    token: returningAuth.session.access_token,
+    method: 'POST',
+    body: { email: userA.email, company_id: companyA.id }
+  });
+  assert.equal(returningRegistrationCheck.response.status, 200, `재접속 사용자 등록 확인 실패: ${returningRegistrationCheck.text}`);
+  assert.equal(returningRegistrationCheck.data.registered, true, '새 세션의 기존 이메일을 등록자로 확인하지 못함');
   const returningLogin = await api('/auth/complete-profile', {
     token: returningAuth.session.access_token,
     method: 'POST',
@@ -593,7 +615,7 @@ async function main() {
   console.log(JSON.stringify({
     ok: true,
     checks: [
-      'health', 'anonymous-free-registration', 'idempotent-free-signup-membership', 'email-only-session-rebind',
+      'health', 'registration-status-check', 'explicit-profile-membership-registration', 'idempotent-signup-membership', 'email-only-session-rebind',
       testAdminPassword ? 'admin-user-crud-report-status-delete-cascade-and-bulk-process-sync' : 'admin-login-skipped',
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
