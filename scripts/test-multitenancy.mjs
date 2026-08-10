@@ -297,6 +297,63 @@ async function main() {
   assert.equal(restoredInterview.response.status, 200, `인터뷰 답변 복원 실패: ${restoredInterview.text}`);
   assert.deepEqual(restoredInterview.data.answers, answerValues);
 
+  const coreProcessSync = await api('/interviews/processes/sync', {
+    token: userA.token,
+    method: 'PUT',
+    body: {
+      projectId: created.data.project.id,
+      taskId: restorableTask.data.task.id,
+      interviewId: savedInterview.data.interview.id,
+      deleted_process_ids: [],
+      processes: [
+        { level: 'L5', name: '데이터 검토', description: '', execution_time: 25, waiting_time: 0, approval_waiting_time: 0, method: 'manual', tool: 'excel' },
+        { level: 'L6', name: '판매 데이터를 검토한다', description: '', execution_time: 25, waiting_time: 0, approval_waiting_time: 0, method: 'manual', tool: 'excel' }
+      ]
+    }
+  });
+  assert.equal(coreProcessSync.response.status, 200, `프로세스 행 추가·순서 동기화 실패: ${coreProcessSync.text}`);
+  assert.equal(coreProcessSync.data.processes[0].sort_order, 0);
+  assert.equal(coreProcessSync.data.processes[0].method, null);
+  assert.equal(coreProcessSync.data.processes[0].tool, null);
+  assert.equal(coreProcessSync.data.processes[1].sort_order, 1);
+
+  const coreL5Id = coreProcessSync.data.processes[0].id;
+  const coreL6 = coreProcessSync.data.processes[1];
+  const coreProcessDelete = await api('/interviews/processes/sync', {
+    token: userA.token,
+    method: 'PUT',
+    body: {
+      projectId: created.data.project.id,
+      taskId: restorableTask.data.task.id,
+      interviewId: savedInterview.data.interview.id,
+      deleted_process_ids: [coreL5Id],
+      processes: [{
+        id: coreL6.id,
+        level: 'L6',
+        name: coreL6.name,
+        description: '',
+        execution_time: 25,
+        waiting_time: 0,
+        approval_waiting_time: 0,
+        method: 'manual',
+        tool: 'excel'
+      }]
+    }
+  });
+  assert.equal(coreProcessDelete.response.status, 200, `프로세스 행 삭제 동기화 실패: ${coreProcessDelete.text}`);
+  assert.equal(coreProcessDelete.data.processes[0].sort_order, 0);
+  await assertNoRows('processes', 'id', coreL5Id, '삭제한 L5 프로세스가 남아 있습니다.');
+
+  const coreReport = await api(`/analysis/project/${created.data.project.id}/report?task_id=${restorableTask.data.task.id}`, { token: userA.token });
+  assert.equal(coreReport.response.status, 200, `과제 리포트 생성 실패: ${coreReport.text}`);
+  assert.equal(coreReport.data.task_participants.length, 2);
+  assert.equal(coreReport.data.as_is_processes[0].method, 'manual');
+  assert.equal(coreReport.data.as_is_processes[0].tool, 'excel');
+  const coreCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
+  assert.equal(coreCsv.response.status, 200, `과제정보 CSV 생성 실패: ${coreCsv.text}`);
+  assert.match(coreCsv.data.raw || '', /^﻿?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
+  assert.match(coreCsv.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 25분\]/);
+
   const listA = await api('/projects', { token: userA.token });
   assert.equal(listA.data.some((item) => item.id === created.data.project.id), true);
   const listB = await api('/projects', { token: userB.token });
@@ -423,8 +480,22 @@ async function main() {
       token: userA.token,
       method: 'PUT',
       body: {
+        projectId: created.data.project.id,
+        taskId: cascadeTask.id,
+        interviewId: null,
+        deleted_process_ids: [],
         processes: [{
+          level: 'L5',
+          name: 'SNS 채널 관리 단위',
+          description: '',
+          execution_time: 60,
+          waiting_time: 0,
+          approval_waiting_time: 0,
+          method: 'manual',
+          tool: 'web'
+        }, {
           id: syncProcess.id,
+          level: 'L6',
           name: syncProcess.name,
           description: '',
           execution_time: 60,
@@ -436,9 +507,39 @@ async function main() {
       }
     });
     assert.equal(syncedProcesses.response.status, 200, `프로세스 일괄 동기화 실패: ${syncedProcesses.text}`);
-    assert.equal(syncedProcesses.data.processes[0].execution_time, 60);
-    assert.equal(syncedProcesses.data.processes[0].method, 'manual');
-    assert.equal(syncedProcesses.data.processes[0].tool, 'web');
+    assert.equal(syncedProcesses.data.processes[0].level, 'L5');
+    assert.equal(syncedProcesses.data.processes[0].method, null);
+    assert.equal(syncedProcesses.data.processes[0].tool, null);
+    assert.equal(syncedProcesses.data.processes[0].sort_order, 0);
+    assert.equal(syncedProcesses.data.processes[1].execution_time, 60);
+    assert.equal(syncedProcesses.data.processes[1].method, 'manual');
+    assert.equal(syncedProcesses.data.processes[1].tool, 'web');
+    assert.equal(syncedProcesses.data.processes[1].sort_order, 1);
+
+    const deletedAddedProcess = await api('/interviews/processes/sync', {
+      token: userA.token,
+      method: 'PUT',
+      body: {
+        projectId: created.data.project.id,
+        taskId: cascadeTask.id,
+        interviewId: null,
+        deleted_process_ids: [syncedProcesses.data.processes[0].id],
+        processes: [{
+          id: syncProcess.id,
+          level: 'L6',
+          name: syncProcess.name,
+          description: '',
+          execution_time: 60,
+          waiting_time: 0,
+          approval_waiting_time: 0,
+          method: 'manual',
+          tool: 'web'
+        }]
+      }
+    });
+    assert.equal(deletedAddedProcess.response.status, 200, `추가 행 삭제 동기화 실패: ${deletedAddedProcess.text}`);
+    assert.equal(deletedAddedProcess.data.processes[0].sort_order, 0);
+    await assertNoRows('processes', 'id', syncedProcesses.data.processes[0].id, '삭제한 프로세스 행이 남아 있습니다.');
 
     const generatedReport = await api(`/analysis/project/${created.data.project.id}/report?task_id=${cascadeTask.id}`, {
       token: userA.token
@@ -459,12 +560,20 @@ async function main() {
     if (savedReportError) throw savedReportError;
     assert.equal(savedReport.report_data.task_name, cascadeTask.name);
     assert.equal(savedReport.report_data.project_participants.length, 3);
+    assert.equal(savedReport.report_data.task_participants.length, 0);
     assert.equal(savedReport.report_format, 'pdf');
     assert.equal(savedReport.report_title, `${cascadeTask.name} AX 분석 결과`);
     const completedTask = await service.from('tasks').select('status,current_step').eq('id', cascadeTask.id).single();
     if (completedTask.error) throw completedTask.error;
     assert.equal(completedTask.data.status, 'completed');
     assert.equal(completedTask.data.current_step, 6);
+
+    const taskCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${cascadeTask.id}`, {
+      token: userA.token
+    });
+    assert.equal(taskCsv.response.status, 200, `과제정보 CSV 생성 실패: ${taskCsv.text}`);
+    assert.match(taskCsv.data.raw || '', /^﻿?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
+    assert.match(taskCsv.data.raw || '', /SNS 채널을 관리한다 \[수작업 \| 웹 \| 60분\]/);
 
     const adminTaskReport = await api(`/admin/tasks/${cascadeTask.id}/report`, { cookie: adminCookie });
     assert.equal(adminTaskReport.response.status, 200, `관리자 저장 리포트 조회 실패: ${adminTaskReport.text}`);
@@ -730,7 +839,8 @@ async function main() {
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',
-      'project-create-and-cascade-delete', 'panel-draft-save-load-isolation-delete', 'task-period-boundary', 'task-update-and-interview-restore', 'report-participants-and-completion', 'api-company-isolation', 'direct-rls-isolation'
+      'project-create-and-cascade-delete', 'panel-draft-save-load-isolation-delete', 'task-period-boundary', 'task-update-and-interview-restore', 'report-participants-and-completion', 'api-company-isolation', 'direct-rls-isolation',
+      'process-add-reorder-delete-l6-fields-and-task-csv'
     ]
   }));
 }

@@ -95,15 +95,16 @@ export const analyzeInterview = async (req, res) => {
     const allowedTools = new Set(['email', 'document', 'excel', 'web', 'erp', 'other']);
     const normalizedProcesses = (analysisResult.processes || [])
       .filter((proc) => allowedLevels.has(proc.level) && String(proc.name || '').trim())
-      .map((proc) => ({
+      .map((proc, index) => ({
         ...proc,
         name: String(proc.name).trim(),
         description: String(proc.description || '').trim(),
         execution_time: Math.max(0, Math.round(Number(proc.execution_time) || 0)),
         waiting_time: Math.max(0, Number(proc.waiting_time) || 0),
         approval_waiting_time: Math.max(0, Number(proc.approval_waiting_time) || 0),
-        method: allowedMethods.has(proc.method) ? proc.method : 'manual',
-        tool: allowedTools.has(proc.tool) ? proc.tool : 'other'
+        method: proc.level === 'L6' ? (allowedMethods.has(proc.method) ? proc.method : 'manual') : null,
+        tool: proc.level === 'L6' ? (allowedTools.has(proc.tool) ? proc.tool : 'other') : null,
+        sort_order: index
       }));
     if (!normalizedProcesses.length || !normalizedProcesses.some((proc) => proc.level === 'L6')) {
       return res.status(502).json({ error: 'AI 엔진이 프로세스 Draft를 반환하지 않았습니다' });
@@ -146,6 +147,7 @@ export const analyzeInterview = async (req, res) => {
         approval_waiting_time: proc.approval_waiting_time,
         method: proc.method,
         tool: proc.tool,
+        sort_order: proc.sort_order,
         status: 'draft'
       });
       processes.push(savedProcess);
@@ -191,7 +193,8 @@ export const getProcesses = async (req, res) => {
   try {
     const condition = { project_id: parseInt(projectId) };
     if (req.query.task_id) condition.task_id = parseInt(req.query.task_id);
-    const processes = await db.select('processes', condition);
+    const processes = (await db.select('processes', condition))
+      .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || Number(a.id) - Number(b.id));
 
     res.json(processes);
   } catch (error) {
@@ -208,16 +211,27 @@ export const updateProcess = async (req, res) => {
   } = req.body;
 
   try {
-    const process = await db.update('processes', parseInt(processId), {
+    const current = await db.selectOne('processes', { id: parseInt(processId) });
+    if (!current) {
+      return res.status(404).json({ error: '프로세스를 찾을 수 없습니다' });
+    }
+    const values = {
       name,
       description,
       execution_time,
       waiting_time,
       approval_waiting_time,
-      method,
-      tool,
       status
-    });
+    };
+    if (current.level === 'L6') {
+      values.method = method;
+      values.tool = tool;
+    } else {
+      values.method = null;
+      values.tool = null;
+    }
+    Object.keys(values).forEach((key) => values[key] === undefined && delete values[key]);
+    const process = await db.update('processes', parseInt(processId), values);
 
     if (!process) {
       return res.status(404).json({ error: '프로세스를 찾을 수 없습니다' });
@@ -263,29 +277,56 @@ export const getLatestTaskInterview = async (req, res) => {
 export const syncProcesses = async (req, res) => {
   const requestedProcesses = req.body.processes || [];
   try {
-    const ids = requestedProcesses.map((process) => Number(process.id));
+    const projectId = Number(req.body.projectId);
+    const taskId = Number(req.body.taskId);
+    const interviewId = req.body.interviewId ? Number(req.body.interviewId) : null;
+    const task = await db.selectOne('tasks', { id: taskId });
+    if (!task || Number(task.project_id) !== projectId) {
+      return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
+    }
+    const ids = requestedProcesses.filter((process) => process.id != null).map((process) => Number(process.id));
     if (new Set(ids).size !== ids.length) {
       return res.status(400).json({ error: '중복된 프로세스가 포함되어 있습니다.' });
     }
 
-    const accessibleProcesses = await db.select('processes');
+    const accessibleProcesses = await db.select('processes', { project_id: projectId, task_id: taskId });
     const accessibleIds = new Set(accessibleProcesses.map((process) => Number(process.id)));
     if (ids.some((id) => !accessibleIds.has(id))) {
       return res.status(404).json({ error: '접근할 수 없는 프로세스가 포함되어 있습니다.' });
     }
+    const deletedIds = (req.body.deleted_process_ids || []).map(Number);
+    if (new Set(deletedIds).size !== deletedIds.length || deletedIds.some((id) => ids.includes(id))) {
+      return res.status(400).json({ error: '삭제 목록에 중복되거나 현재 저장할 프로세스가 포함되어 있습니다.' });
+    }
+    if (deletedIds.some((id) => !accessibleIds.has(id))) {
+      return res.status(404).json({ error: '삭제할 수 없는 프로세스가 포함되어 있습니다.' });
+    }
+    await Promise.all(deletedIds.map((id) => db.delete('processes', id)));
 
-    const processes = await Promise.all(requestedProcesses.map((process) =>
-      db.update('processes', Number(process.id), {
+    const processes = [];
+    for (let index = 0; index < requestedProcesses.length; index += 1) {
+      const process = requestedProcesses[index];
+      const level = process.level;
+      const values = {
+        level,
         name: process.name,
         description: process.description || '',
         execution_time: Number(process.execution_time) || 0,
         waiting_time: Number(process.waiting_time) || 0,
         approval_waiting_time: Number(process.approval_waiting_time) || 0,
-        method: process.method || 'manual',
-        tool: process.tool || 'other',
+        method: level === 'L6' ? (process.method || 'manual') : null,
+        tool: level === 'L6' ? (process.tool || 'other') : null,
+        sort_order: index,
         status: 'confirmed'
-      })
-    ));
+      };
+      if (process.id != null) processes.push(await db.update('processes', Number(process.id), values));
+      else processes.push(await db.insert('processes', {
+        project_id: projectId,
+        task_id: taskId,
+        interview_id: interviewId,
+        ...values
+      }));
+    }
 
     res.json({
       message: `${processes.length}개 프로세스를 저장하고 플로우차트와 동기화했습니다.`,

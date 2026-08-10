@@ -49,14 +49,20 @@ router.get('/project/:projectId/processes', [
 
 router.put('/processes/sync', requireCompanyWrite, [
   body('processes').isArray({ min: 1, max: 500 }),
-  body('processes.*.id').isInt(),
+  body('projectId').isInt(),
+  body('taskId').isInt(),
+  body('interviewId').isInt().optional({ nullable: true }),
+  body('deleted_process_ids').isArray().optional(),
+  body('deleted_process_ids.*').isInt(),
+  body('processes.*.id').isInt().optional({ nullable: true }),
+  body('processes.*.level').isIn(['L4', 'L5', 'L6']),
   body('processes.*.name').trim().notEmpty(),
   body('processes.*.description').isString().optional(),
   body('processes.*.execution_time').isInt({ min: 0 }),
   body('processes.*.waiting_time').isFloat({ min: 0 }),
   body('processes.*.approval_waiting_time').isFloat({ min: 0 }),
-  body('processes.*.method').isIn(['manual', 'system']),
-  body('processes.*.tool').isIn(['email', 'document', 'excel', 'web', 'erp', 'other'])
+  body('processes.*.method').isIn(['manual', 'system']).optional({ nullable: true }),
+  body('processes.*.tool').isIn(['email', 'document', 'excel', 'web', 'erp', 'other']).optional({ nullable: true })
 ], validate, interviewController.syncProcesses);
 
 // 개별 프로세스 업데이트

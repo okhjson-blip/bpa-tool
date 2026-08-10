@@ -63,7 +63,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 - ProcessNode: L4 모듈, L5 단위, L6 Act
 - Interview: 기본 질문 및 담당자 답변
 - BDWTag: bottleneck, delay, waste, normal
-- AIFit: AI 적용 가능성, 비효율성, A/B/C/D 분류
+- AIFit: AI 적용 가능성, 비효율성, A/B/C/D 분류, 비개발자 관점 구현 난이도(low/medium/high)
 - ToBeProcess: AI 적용 후 시간과 자동화 방식
 
 ## 5. 구현 원칙
@@ -75,7 +75,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 5. LLM 전달 전 개인정보 마스킹 단계를 유지합니다.
 6. API Key, 토큰, `.env`는 저장소에 커밋하지 않습니다.
 7. 프런트엔드 API는 상대 경로 `/api`를 사용합니다.
-8. 편집 테이블과 플로우차트는 동일한 API 응답 상태를 렌더링하며 저장 성공 후 함께 갱신합니다. 동기화는 프로세스별 병렬 HTTP 요청 대신 인증 확인이 한 번만 수행되는 일괄 API를 사용합니다. 일반 프로세스 플로우 노드는 기존처럼 업무명 아래에 작업방식·사용 도구·수행 및 대기시간을 보조 문장으로 표시합니다.
+8. 편집 테이블과 플로우차트는 동일한 `sort_order` 순서의 API 응답 상태를 렌더링하며 저장 성공 후 함께 갱신합니다. 동기화는 프로세스별 병렬 HTTP 요청 대신 행 추가·이동·삭제·레벨 변경을 처리하는 단일 일괄 API를 사용합니다. 작업방식과 도구는 L6 Act에만 저장·편집·표시하고, L4·L5는 항상 `NULL`로 정규화합니다.
 9. AI FIT As-Is/To-Be 비교 노드는 프로세스 순서로 정렬하며 작업방식은 배지, 도구·수행시간은 보조 문장으로 표시합니다. To-Be의 `ai_applied` 또는 시스템 작업방식에 따라 자동화 배지를 표시합니다.
 10. 프로젝트는 프로젝트 리더·담당자·컨설턴트를, 과제는 과제 리더·담당자를 최소 1명씩 포함해야 합니다.
 11. 프로젝트·과제 기간은 ISO 날짜 시작일/종료일로 저장하고 종료일이 시작일보다 빠를 수 없습니다. 과제 기간은 상위 프로젝트 기간을 벗어날 수 없습니다.
@@ -100,7 +100,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 외주 개발비 = 수락·반영 L6 Act 수 × 1.0 M/M × 8,321,500원
 ```
 
-결과 리포트 API는 `project_id`와 `task_id`에 속한 L6 Act, BDW, AI FIT, To-Be 데이터만 집계합니다. PDF 출력은 전체 분석 섹션을 숨김 인쇄 프레임으로 구성합니다. `GET /api/analysis/project/:projectId/report.csv?task_id=:taskId`는 UTF-8 과제정보 CSV를 첨부파일로 반환합니다. CSV는 과제당 한 행으로 생성하며 STATIK 계층·목표·기간과 AS-IS 및 To-Be 프로세스 흐름을 각각 한 컬럼에 `A > B > C` 형식으로 기록합니다.
+결과 리포트 API는 `project_id`와 `task_id`에 속한 L6 Act, BDW, AI FIT, To-Be 데이터만 집계합니다. PDF 출력은 과제 참여자, BDW 요약·전체 목록, 작업방식·도구를 포함한 L6 AS-IS·To-Be 등 전체 분석 섹션을 숨김 인쇄 프레임으로 구성합니다. `GET /api/analysis/project/:projectId/report.csv?task_id=:taskId`는 UTF-8 과제정보 CSV를 첨부파일로 반환합니다. CSV는 과제당 한 행이며 헤더는 `과제명, 시작일, 완료일, 성과목표, As-Is, To-Be, 난이도`입니다. As-Is와 To-Be는 플로우차트와 같은 L6 순서로 `업무명 [작업방식 | 도구 | 수행시간] > ...` 형식으로 기록하고, 난이도는 수락되어 AI 자동화된 전체 Act의 구현 난이도 평균을 상·중·하로 환산합니다.
 
 To-Be 생성 API는 클라이언트가 전달한 분석 수치를 신뢰하지 않고 `accepted_process_ids`만 받아, 서버에 저장된 해당 프로젝트·과제의 AI FIT 결과로 처리시간과 적용 방식을 계산합니다.
 

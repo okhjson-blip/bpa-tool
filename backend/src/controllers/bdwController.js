@@ -7,7 +7,8 @@ async function getTaskL6Processes(projectId, taskId) {
   const condition = { project_id: parseInt(projectId) };
   if (taskId) condition.task_id = parseInt(taskId);
   return (await db.select('processes', condition))
-    .filter((process) => process.level === 'L6');
+    .filter((process) => process.level === 'L6')
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || Number(a.id) - Number(b.id));
 }
 
 function requireCompleteAnalysis(items, processes, fieldName) {
@@ -174,6 +175,7 @@ export const analyzeAIFit = async (req, res) => {
         inefficiency,
         fit_category: category,
         recommended_tech: String(generated.recommended_tech || '업무 표준화'),
+        difficulty: ['low', 'medium', 'high'].includes(generated.difficulty) ? generated.difficulty : 'medium',
         estimated_time_savings: Math.round(clamp(generated.estimated_time_savings, 0, executionTime)),
         rationale: String(generated.rationale || '')
       };
@@ -353,6 +355,39 @@ function csvCell(value) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+function processMethodLabel(method, aiApplied = false) {
+  if (aiApplied) return 'AI 자동화';
+  return method === 'system' ? '시스템' : '수작업';
+}
+
+function processToolLabel(tool) {
+  const labels = {
+    email: '이메일',
+    document: '문서',
+    excel: '엑셀',
+    web: '웹',
+    erp: 'ERP',
+    other: '기타 도구'
+  };
+  return labels[tool] || String(tool || '기타 도구');
+}
+
+function flowNodeText({ name, method, tool, executionTime, aiApplied = false }) {
+  return `${name} [${processMethodLabel(method, aiApplied)} | ${processToolLabel(tool)} | ${Number(executionTime) || 0}분]`;
+}
+
+function averageAutomationDifficulty(toBeProcesses, analysisByProcessId) {
+  const scores = toBeProcesses
+    .filter((process) => process.ai_applied === true)
+    .map((process) => {
+      const difficulty = analysisByProcessId.get(Number(process.original_process_id))?.difficulty || 'medium';
+      return { low: 1, medium: 2, high: 3 }[difficulty] || 2;
+    });
+  if (!scores.length) return '해당 없음';
+  const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+  return average < 1.5 ? '하' : average < 2.5 ? '중' : '상';
+}
+
 // 과제당 한 행으로 구성된 CSV 다운로드
 export const exportTaskCsv = async (req, res) => {
   const projectId = parseInt(req.params.projectId);
@@ -367,19 +402,42 @@ export const exportTaskCsv = async (req, res) => {
 
     const processes = await getTaskL6Processes(projectId, taskId);
     const processIds = new Set(processes.map((process) => Number(process.id)));
-    const toBeProcesses = (await db.select('to_be_processes', { project_id: projectId }))
+    const [projectToBeProcesses, projectAiAnalysis] = await Promise.all([
+      db.select('to_be_processes', { project_id: projectId }),
+      db.select('ai_analysis', { project_id: projectId })
+    ]);
+    const toBeProcesses = projectToBeProcesses
       .filter((process) => processIds.has(Number(process.original_process_id)));
+    const aiAnalysis = projectAiAnalysis
+      .filter((analysis) => processIds.has(Number(analysis.process_id)));
     const toBeByProcessId = new Map(
       toBeProcesses.map((process) => [Number(process.original_process_id), process])
     );
-    const asIsFlow = processes.map((process) => process.name).join(' > ');
+    const analysisByProcessId = new Map(
+      aiAnalysis.map((analysis) => [Number(analysis.process_id), analysis])
+    );
+    const asIsFlow = processes.map((process) => flowNodeText({
+      name: process.name,
+      method: process.method,
+      tool: process.tool,
+      executionTime: process.execution_time
+    })).join(' > ');
     const toBeFlow = processes
-      .map((process) => toBeByProcessId.get(Number(process.id))?.name || process.name)
+      .map((process) => {
+        const toBe = toBeByProcessId.get(Number(process.id));
+        return flowNodeText({
+          name: toBe?.name || process.name,
+          method: process.method,
+          tool: toBe?.ai_applied ? toBe.automation_method : process.tool,
+          executionTime: toBe?.estimated_execution_time ?? process.execution_time,
+          aiApplied: toBe?.ai_applied === true
+        });
+      })
       .join(' > ');
-    const taskPeriod = [task.start_date, task.end_date].filter(Boolean).join(' ~ ');
+    const averageDifficulty = averageAutomationDifficulty(toBeProcesses, analysisByProcessId);
     const rows = [
-      ['프로젝트명', '과제명', 'L1 구분', 'L2 대분류', 'L3 중분류', 'L4 모듈', '과제 목표', '과제 기간', 'AS-IS 프로세스', 'To-Be 프로세스'],
-      [project.name, task.name, task.l1, task.l2, task.l3, task.l4, task.goal || '', taskPeriod, asIsFlow, toBeFlow]
+      ['과제명', '시작일', '완료일', '성과목표', 'As-Is', 'To-Be', '난이도'],
+      [task.name, task.start_date || '', task.end_date || '', task.goal || '', asIsFlow, toBeFlow, averageDifficulty]
     ];
     const content = `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}`;
     const safeBaseName = `${project.name}_${task.name}_task`.replace(/[\\/:*?"<>|]/g, '_');

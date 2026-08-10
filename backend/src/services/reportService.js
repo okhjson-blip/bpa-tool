@@ -49,7 +49,8 @@ export async function buildTaskReport({
   const processes = (await database.select('processes', {
     project_id: normalizedProjectId,
     task_id: normalizedTaskId
-  })).filter((process) => process.level === 'L6');
+  })).filter((process) => process.level === 'L6')
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || Number(a.id) - Number(b.id));
   const processIds = new Set(processes.map((process) => Number(process.id)));
   const [allBdwTags, projectAiAnalysis, projectToBeProcesses] = await Promise.all([
     database.select('bdw_tags'),
@@ -57,11 +58,17 @@ export async function buildTaskReport({
     database.select('to_be_processes', { project_id: normalizedProjectId })
   ]);
   const bdwTags = allBdwTags.filter((tag) => processIds.has(Number(tag.process_id)));
-  const aiAnalysis = projectAiAnalysis.filter((analysis) => processIds.has(Number(analysis.process_id)));
+  const processOrder = new Map(processes.map((process, index) => [Number(process.id), index]));
+  const aiAnalysis = projectAiAnalysis
+    .filter((analysis) => processIds.has(Number(analysis.process_id)))
+    .sort((a, b) => (processOrder.get(Number(a.process_id)) ?? Number.MAX_SAFE_INTEGER) -
+      (processOrder.get(Number(b.process_id)) ?? Number.MAX_SAFE_INTEGER));
   const toBeProcesses = projectToBeProcesses.filter((process) =>
     processIds.has(Number(process.original_process_id))
   );
   const bdwByProcessId = new Map(bdwTags.map((tag) => [Number(tag.process_id), tag.bdw_type]));
+  const bdwSeverityByProcessId = new Map(bdwTags.map((tag) => [Number(tag.process_id), tag.severity || 'medium']));
+  const analysisByProcessId = new Map(aiAnalysis.map((analysis) => [Number(analysis.process_id), analysis]));
   const toBeByProcessId = new Map(
     toBeProcesses.map((process) => [Number(process.original_process_id), process])
   );
@@ -82,6 +89,14 @@ export async function buildTaskReport({
     : normalizedCount * frequencyMultipliers[normalizedUnit];
   const annualSavingsHours = (timeSavings * normalizedAnnualFrequency) / 60;
   const automatedCount = toBeProcesses.filter((process) => process.ai_applied === true).length;
+  const automatedDifficultyScores = toBeProcesses.filter((process) => process.ai_applied === true).map((process) => {
+    const difficulty = analysisByProcessId.get(Number(process.original_process_id))?.difficulty || 'medium';
+    return { low: 1, medium: 2, high: 3 }[difficulty] || 2;
+  });
+  const averageDifficultyScore = automatedDifficultyScores.length
+    ? automatedDifficultyScores.reduce((sum, score) => sum + score, 0) / automatedDifficultyScores.length
+    : 0;
+  const averageDifficulty = averageDifficultyScore === 0 ? '해당 없음' : averageDifficultyScore < 1.5 ? '하' : averageDifficultyScore < 2.5 ? '중' : '상';
   const automationRate = processes.length ? Math.round((automatedCount / processes.length) * 100) : 0;
   const timeSavingsRate = asIsTime ? Math.round((timeSavings / asIsTime) * 100) : 0;
 
@@ -113,7 +128,8 @@ export async function buildTaskReport({
       annual_frequency: normalizedAnnualFrequency,
       annual_savings_hours: Math.round(annualSavingsHours * 10) / 10,
       fte_equivalent: Math.round((annualSavingsHours / 2248) * 1000) / 1000,
-      estimated_development_cost: automatedCount * 8321500
+      estimated_development_cost: automatedCount * 8321500,
+      automation_difficulty: averageDifficulty
     },
     bdw_diagnosis: {
       bottlenecks: bdwTags.filter((tag) => tag.bdw_type === 'bottleneck').length,
@@ -122,19 +138,24 @@ export async function buildTaskReport({
     },
     as_is_processes: processes.map((process) => ({
       ...process,
-      bdw_type: bdwByProcessId.get(Number(process.id)) || 'normal'
+      bdw_type: bdwByProcessId.get(Number(process.id)) || 'normal',
+      bdw_severity: bdwSeverityByProcessId.get(Number(process.id)) || 'medium'
     })),
     to_be_processes: processes.map((process) => {
       const toBe = toBeByProcessId.get(Number(process.id));
       return {
         original_process_id: process.id,
+        level: 'L6',
         name: toBe?.name || process.name,
         ai_applied: toBe?.ai_applied ?? false,
         original_execution_time: Number(process.execution_time) || 0,
         estimated_execution_time: toBe
           ? Number(toBe.estimated_execution_time) || 0
           : Number(process.execution_time) || 0,
-        automation_method: toBe?.automation_method || 'manual'
+        automation_method: toBe?.automation_method || 'manual',
+        method: toBe?.ai_applied ? 'ai' : (process.method || 'manual'),
+        tool: toBe?.ai_applied ? (toBe?.automation_method || 'AI') : (process.tool || 'other'),
+        difficulty: analysisByProcessId.get(Number(process.id))?.difficulty || 'medium'
       };
     }),
     ai_fit_analysis: aiAnalysis,

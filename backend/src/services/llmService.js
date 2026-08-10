@@ -22,8 +22,8 @@ const PROCESS_SCHEMA = {
           execution_time: { type: 'integer' },
           waiting_time: { type: 'number' },
           approval_waiting_time: { type: 'number' },
-          method: { type: 'string', enum: ['manual', 'system'] },
-          tool: { type: 'string', enum: ['email', 'document', 'excel', 'web', 'erp', 'other'] }
+          method: { type: ['string', 'null'], enum: ['manual', 'system', null] },
+          tool: { type: ['string', 'null'], enum: ['email', 'document', 'excel', 'web', 'erp', 'other', null] }
         },
         required: [
           'level', 'name', 'description', 'execution_time', 'waiting_time',
@@ -71,11 +71,12 @@ const AI_FIT_SCHEMA = {
           ai_possibility: { type: 'number' },
           inefficiency: { type: 'number' },
           recommended_tech: { type: 'string' },
+          difficulty: { type: 'string', enum: ['low', 'medium', 'high'] },
           estimated_time_savings: { type: 'integer' },
           rationale: { type: 'string' }
         },
         required: [
-          'process_id', 'ai_possibility', 'inefficiency', 'recommended_tech',
+          'process_id', 'ai_possibility', 'inefficiency', 'recommended_tech', 'difficulty',
           'estimated_time_savings', 'rationale'
         ],
         additionalProperties: false
@@ -160,6 +161,7 @@ class LLMProvider {
 - 출력 순서는 L4 모듈 1개 다음에 각 L5 단위와 그에 속하는 L6 Act들을 실제 수행 순서대로 배치하세요.
 - L6 Act execution_time은 분 단위 정수, waiting_time과 approval_waiting_time은 시간 단위 숫자입니다.
 - L4 모듈과 L5 단위의 모든 시간 값은 0으로 작성하세요. 인터뷰에 명시되지 않은 시간은 합리적인 보수 추정값을 사용하세요.
+- 작업방식(method)과 도구(tool)는 L6 Act에만 지정하고 L4 모듈과 L5 단위는 null로 작성하세요.
 
 [등록된 업무 계층]
 L1 구분: ${taskContext.l1 || '미등록'}
@@ -184,7 +186,7 @@ ${JSON.stringify(compactProcesses(processes))}`;
 
   analyzeAIFit(processes) {
     const prompt = `다음 L6 Act별 AI 적용 가능성과 현재 비효율성을 각각 1.0~5.0으로 평가하세요.
-추천 기술, 현재 수행시간을 넘지 않는 예상 절감시간(분), 짧은 근거를 제공하고 모든 process_id를 정확히 한 번씩 포함하세요.
+추천 기술, 비개발자 관점 구현 난이도(low=하, medium=중, high=상), 현재 수행시간을 넘지 않는 예상 절감시간(분), 짧은 근거를 제공하고 모든 process_id를 정확히 한 번씩 포함하세요.
 
 [프로세스]
 ${JSON.stringify(compactProcesses(processes))}`;
