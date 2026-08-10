@@ -35,6 +35,7 @@ export const createInterview = async (req, res) => {
       transcription,
       transcription_masked: transcriptionMasked
     });
+    if (task) await db.update('tasks', Number(task.id), { current_step: 2 });
 
     res.status(201).json({
       message: '인터뷰가 저장되었습니다',
@@ -152,6 +153,7 @@ export const analyzeInterview = async (req, res) => {
       });
       processes.push(savedProcess);
     }
+    if (taskId) await db.update('tasks', parseInt(taskId), { current_step: 2 });
 
     res.json({
       message: 'AI 분석이 완료되었습니다',
@@ -327,6 +329,7 @@ export const syncProcesses = async (req, res) => {
         ...values
       }));
     }
+    await db.update('tasks', taskId, { current_step: 3 });
 
     res.json({
       message: `${processes.length}개 프로세스를 저장하고 플로우차트와 동기화했습니다.`,

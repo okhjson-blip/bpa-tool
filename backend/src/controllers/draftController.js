@@ -54,6 +54,9 @@ export async function saveDraft(req, res) {
       saved_at: now,
       updated_at: now
     }, { onConflict: 'company_id,user_id,panel_key,scope_key' });
+    const stepByPanel = { task_basic: 1, interview_answers: 2, process_editor: 3, report_frequency: 6 };
+    const savedStep = stepByPanel[req.params.panelKey];
+    if (taskId && savedStep) await db.update('tasks', taskId, { current_step: savedStep });
     res.json({ message: '임시 저장되었습니다.', draft });
   } catch (error) {
     console.error(error);

@@ -38,6 +38,8 @@ export const tagBDW = async (req, res) => {
       bdw_type, // 'bottleneck', 'delay', 'waste', 'normal'
       severity: req.body.severity || 'medium'
     });
+    const process = await db.selectOne('processes', { id: parseInt(processId) });
+    if (process?.task_id) await db.update('tasks', Number(process.task_id), { current_step: 4 });
 
     res.json({ message: 'BDW 태그가 부착되었습니다', bdwTag });
   } catch (error) {
@@ -75,6 +77,7 @@ export const analyzeBDW = async (req, res) => {
       });
       return { ...saved, process_name: process.name, rationale: diagnosis.rationale };
     }));
+    if (taskId) await db.update('tasks', Number(taskId), { current_step: 4 });
 
     res.json({
       message: '등록된 AI 엔진으로 BDW 진단을 완료했습니다.',
@@ -188,6 +191,7 @@ export const analyzeAIFit = async (req, res) => {
     await Promise.all(fitAnalysis.map(({ rationale, ...analysis }) =>
       db.insert('ai_analysis', analysis)
     ));
+    if (taskId) await db.update('tasks', Number(taskId), { current_step: 5 });
 
     // 통계
     const categoryA = fitAnalysis.filter((a) => a.fit_category === 'A');
@@ -209,6 +213,43 @@ export const analyzeAIFit = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(502).json({ error: error.message || 'AI FIT 분석 중 오류' });
+  }
+};
+
+export const getStoredAIFit = async (req, res) => {
+  const projectId = Number(req.params.projectId);
+  const taskId = Number(req.query.task_id);
+  try {
+    const task = await db.selectOne('tasks', { id: taskId });
+    if (!task || Number(task.project_id) !== projectId) {
+      return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
+    }
+    const processes = await getTaskL6Processes(projectId, taskId);
+    const processOrder = new Map(processes.map((process, index) => [Number(process.id), index]));
+    const processIds = new Set(processes.map((process) => Number(process.id)));
+    const [storedAnalysis, projectToBe] = await Promise.all([
+      db.select('ai_analysis', { project_id: projectId }),
+      db.select('to_be_processes', { project_id: projectId })
+    ]);
+    const analysis = storedAnalysis
+      .filter((item) => processIds.has(Number(item.process_id)))
+      .sort((a, b) => (processOrder.get(Number(a.process_id)) ?? Number.MAX_SAFE_INTEGER) -
+        (processOrder.get(Number(b.process_id)) ?? Number.MAX_SAFE_INTEGER));
+    const toBeProcesses = projectToBe.filter((item) => processIds.has(Number(item.original_process_id)));
+    const immediateCount = analysis.filter((item) => item.fit_category === 'A').length;
+    res.json({
+      model_used: null,
+      analysis,
+      toBeProcesses,
+      summary: {
+        immediate_application_count: immediateCount,
+        automation_rate: analysis.length ? Math.round((immediateCount / analysis.length) * 100) : 0,
+        estimated_total_time_savings: analysis.reduce((sum, item) => sum + Number(item.estimated_time_savings || 0), 0)
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '저장된 AI FIT 분석을 불러올 수 없습니다.' });
   }
 };
 
@@ -265,6 +306,7 @@ export const createToBe = async (req, res) => {
         automation_method: analysis?.recommended_tech || 'manual'
       });
     }));
+    await db.update('tasks', Number(taskId), { current_step: 5 });
 
     res.json({
       message: 'To-Be 프로세스가 생성되었습니다',

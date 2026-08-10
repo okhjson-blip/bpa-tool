@@ -310,7 +310,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .proj-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
 .proj-name{font-size:16px;font-weight:800}
 .proj-actions{display:flex;align-items:center;gap:8px}
-.proj-edit{font-size:11px;padding:4px 9px}
+.proj-edit,.proj-delete{font-size:11px;padding:4px 9px;min-width:64px;text-align:center}
 .process-row-selected{outline:2px solid var(--p);outline-offset:-2px;background:#eef2ff!important}
 .difficulty-badge{display:inline-flex;min-width:28px;justify-content:center;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:800}.difficulty-low{background:#e8f5e9;color:#2e7d32}.difficulty-medium{background:#fff3e0;color:#e65100}.difficulty-high{background:#ffebee;color:#c62828}
 .proj-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
@@ -320,7 +320,8 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .task-card{display:flex;justify-content:space-between;align-items:center}
 .task-name{font-size:16px;font-weight:800;margin-bottom:3px}
 .task-path{font-size:11px;color:#999}
-.task-r{text-align:right}
+.task-r{display:flex;align-items:center;justify-content:flex-end;gap:8px;text-align:right;flex-wrap:wrap}
+.task-detail{font-size:11px;padding:4px 9px;min-width:72px}
 .status-chip{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:700;display:inline-block;margin-bottom:4px}
 .st-done{background:#e8f5e9;color:var(--s)}
 .st-prog{background:#fff3e0;color:var(--w)}
@@ -857,11 +858,11 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="split">
     <div class="sl">
       <div class="card">
-        <div class="card-title">리포트 수행 빈도 <span class="ct-b">연간 자동 환산</span></div>
+        <div class="card-title">수행 빈도 <span class="ct-b">연간 자동 환산</span></div>
         <div>
           <span class="fl">수행 빈도</span>
           <div class="frequency-grid">
-            <select class="fi" id="reportFrequencyUnit" onchange="updateFrequencyPreview(true)"><option value="day">일</option><option value="week" selected>주</option><option value="month">월</option></select>
+            <select class="fi" id="reportFrequencyUnit" onchange="updateFrequencyPreview(true)"><option value="day">일</option><option value="week" selected>주</option><option value="month">월</option><option value="year">년</option></select>
             <input class="fi" id="reportFrequencyCount" type="number" min="1" max="10000" value="1" inputmode="numeric" aria-label="기간당 수행 횟수" onchange="updateFrequencyPreview(true)" oninput="updateFrequencyPreview(false)">
           </div>
           <div class="frequency-preview" id="reportFrequencyPreview">주 1회 · 연간 52회로 환산</div>
@@ -1391,7 +1392,7 @@ async function adminChangeCompanyStatus(companyId,status){
 }
 async function openAdminTaskReport(taskId){
   const popup=document.getElementById('adminTaskReportPopup');const meta=document.getElementById('adminTaskReportMeta');const body=document.getElementById('adminTaskReportBody');
-  popup.classList.add('open');meta.textContent='협력사 모드에서 생성된 결과 리포트를 불러오는 중입니다.';body.innerHTML='<div class="loading-state">저장된 리포트 데이터를 조회하고 있습니다...</div>';
+  popup.classList.add('open');document.getElementById('adminTaskReportTitle').textContent='저장된 PDF 과제 결과 리포트';meta.textContent='협력사 모드에서 생성된 결과 리포트를 불러오는 중입니다.';body.innerHTML='<div class="loading-state">저장된 리포트 데이터를 조회하고 있습니다...</div>';
   try{
     const report=await apiRequest('/admin/tasks/'+Number(taskId)+'/report');
     document.getElementById('adminTaskReportTitle').textContent=(report.task_name||'과제')+' 결과 리포트';
@@ -1607,7 +1608,7 @@ function applyTaskFormPayload(payload={}){
   document.getElementById('inpTaskStartDate').value=payload.start_date||'';document.getElementById('inpTaskEndDate').value=payload.end_date||'';setParticipantRows('task',payload.participants||[]);
 }
 async function saveTaskBasicDraft(){
-  await savePanelDraft('task_basic',taskFormPayload(),{statusId:'taskDraftStatus',buttonId:'btnDraftTask',projectId:ctx.projectId});
+  await savePanelDraft('task_basic',taskFormPayload(),{statusId:'taskDraftStatus',buttonId:'btnDraftTask',projectId:ctx.projectId,taskId:ctx.taskId});
 }
 async function loadTaskBasicDraft(){
   const draft=await loadPanelDraft('task_basic',{statusId:'taskDraftStatus'});if(draft?.payload)applyTaskFormPayload(draft.payload);return draft;
@@ -1642,26 +1643,62 @@ async function loadProjectTasks(){
     tasks.forEach(task=>{
       const card=document.createElement('div');card.className='task-card';
       const date=task.updated_at||task.created_at;
-      card.innerHTML='<div class="task-l"><div class="task-name">🗂 '+escapeHtml(task.l4||task.name)+' <span style="font-size:11px;color:#999;font-weight:400">(L4 모듈)</span></div><div class="task-path">'+[task.l1,task.l2,task.l3].map(escapeHtml).join(' › ')+'</div></div><div class="task-r"><span class="status-chip '+(task.status==='completed'?'st-done':'st-prog')+'">'+escapeHtml(task.status==='completed'?'✓ 완료':'진행중')+'</span><div class="task-date">'+(date?new Date(date).toLocaleDateString('ko-KR'):'-')+'</div></div>';
+      const completed=task.status==='completed'||task.has_report;
+      const detailButton=completed
+        ? '<button class="btn btn-o task-detail" type="button" '+(task.has_report?'':'disabled title="저장된 결과 리포트가 없습니다."')+'>과제 상세</button>'
+        : '';
+      card.innerHTML='<div class="task-l"><div class="task-name">🗂 '+escapeHtml(task.l4||task.name)+' <span style="font-size:11px;color:#999;font-weight:400">(L4 모듈)</span></div><div class="task-path">'+[task.l1,task.l2,task.l3].map(escapeHtml).join(' › ')+'</div></div><div class="task-r"><span class="status-chip '+(completed?'st-done':'st-prog')+'">'+escapeHtml(completed?'✓ 완료':'진행중')+'</span><div class="task-date">'+(date?new Date(date).toLocaleDateString('ko-KR'):'-')+'</div>'+detailButton+'</div>';
+      card.querySelector('.task-detail')?.addEventListener('click',event=>{event.stopPropagation();openPartnerTaskReport(task);});
       card.addEventListener('click',()=>openTaskFlow(task));container.appendChild(card);
     });
   }catch(error){container.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
 }
+
+async function openPartnerTaskReport(task){
+  const popup=document.getElementById('adminTaskReportPopup');const meta=document.getElementById('adminTaskReportMeta');const body=document.getElementById('adminTaskReportBody');
+  popup.classList.add('open');document.getElementById('adminTaskReportTitle').textContent=(task.name||task.l4||'과제')+' 결과 리포트';meta.textContent='저장된 결과 리포트를 불러오는 중입니다.';body.innerHTML='<div class="loading-state">PDF 리포트 내용을 조회하고 있습니다...</div>';
+  try{
+    const saved=await apiRequest('/analysis/project/'+ctx.projectId+'/report/saved?task_id='+Number(task.id));
+    if(!saved?.report)throw new Error('저장된 결과 리포트가 없습니다.');
+    const report=saved.report;meta.innerHTML='프로젝트: <b>'+escapeHtml(report.project_name||ctx.project||'-')+'</b> · 과제 기간: '+escapeHtml([report.task_start_date,report.task_end_date].filter(Boolean).join(' ~ ')||'미등록')+' · 리포트 저장: '+escapeHtml(saved.saved_at?new Date(saved.saved_at).toLocaleString('ko-KR'):'-');body.innerHTML=buildPrintableReport(report);
+  }catch(error){meta.textContent='과제 상세 조회 실패';body.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
+}
+
+async function restoreStoredAIFitState(){
+  const result=await apiRequest('/analysis/project/'+ctx.projectId+'/ai-fit?task_id='+ctx.taskId);
+  const toBeProcesses=result.toBeProcesses||[];ctx.acceptedAiProcessIds=toBeProcesses.filter(item=>item.ai_applied).map(item=>Number(item.original_process_id));ctx.toBeApplied=toBeProcesses.length>0;ctx.aiResult=result;
+  renderAIFit(result);if(toBeProcesses.length)renderToBeComparison(toBeProcesses);return result;
+}
+
+async function restoreTaskWorkflowStep(task){
+  const savedStep=Math.max(1,Math.min(6,Number(task.current_step)||1));
+  const targetStep=savedStep===1&&ctx.processes.length?3:savedStep;
+  if(targetStep===1){await loadExistingTaskBasic();go(1);return;}
+  if(targetStep===2){await loadExistingInterviewAnswers();renderStoredInterviewDraft();go(2);return;}
+  if(targetStep===3){renderProcessEditor();renderFlowchart();go(3);return;}
+  if(targetStep===4){await loadBDW();go(4);return;}
+  if(targetStep===5){await restoreStoredAIFitState();go(5);return;}
+  if(targetStep===6){await restoreStoredAIFitState();await openReportStep();return;}
+}
+
 async function openTaskFlow(task){
   ctx.taskId=task.id;ctx.taskData=task;ctx.l4=task.l4||task.name;ctx.l1=task.l1;ctx.l2=task.l2;ctx.l3=task.l3;
   ctx.taskParticipants=task.participants||[];
   ctx.interviewId=null;ctx.deletedProcessIds=[];selectedProcessIndex=-1;ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
   try{ctx.processes=await apiRequest('/interviews/project/'+ctx.projectId+'/processes?task_id='+ctx.taskId);}catch(error){alert(error.message);return;}
-  if(task.status==='completed'){
+  if(task.status==='completed'||task.has_report){
     try{
       const savedReport=await apiRequest('/analysis/project/'+ctx.projectId+'/report/saved?task_id='+ctx.taskId);
-      if(savedReport?.report){ctx.report=savedReport.report;ctx.toBeApplied=true;}
+      if(savedReport?.report){
+        ctx.report=savedReport.report;ctx.toBeApplied=true;showFlowChrome();setHdrTrail(ctx.project||'프로젝트',ctx.l4);document.getElementById('taskChip').textContent=ctx.l4+' (L4 모듈)';
+        const savedStats=ctx.report.statistics||{};document.getElementById('reportFrequencyUnit').value=savedStats.frequency_unit||'week';document.getElementById('reportFrequencyCount').value=Number(savedStats.frequency_count)||1;updateFrequencyPreview(false);renderReport(ctx.report);document.getElementById('reportSaveStatus').textContent='✓ 저장된 결과 리포트 '+(savedReport.saved_at?new Date(savedReport.saved_at).toLocaleString('ko-KR'):'');document.getElementById('reportSaveStatus').style.color='var(--s)';go(6);return;
+      }
     }catch(error){console.warn('저장된 결과 리포트 상태 복원 실패',error);}
   }
   showFlowChrome();setHdrTrail(ctx.project||'프로젝트',ctx.l4);
   document.getElementById('taskChip').textContent=ctx.l4+' (L4 모듈)';
-  if(ctx.processes.length){await loadProcessEditorDraft();renderDraftTable();renderProcessEditor();renderFlowchart();go(3);}else go(2);
-  if(!ctx.processes.length){await loadExistingInterviewAnswers();}
+  if(ctx.processes.length){await loadProcessEditorDraft();renderDraftTable();renderProcessEditor();renderFlowchart();}
+  await restoreTaskWorkflowStep(task);
 }
 async function startTaskFlow(){
   if(!ctx.projectId){showValidationPopup('과제 등록 보완사항',['프로젝트를 먼저 선택해 주세요.']);return;}
@@ -1983,7 +2020,7 @@ function renderReport(report){
   document.getElementById('reportAutomationRate').textContent=Number(stats.automation_rate||0)+'%';
   document.getElementById('reportDevCost').textContent='₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR');
   document.getElementById('reportCostFormula').textContent='수락·반영 '+Number(stats.automated_process_count||0)+'개 × 1.0 M/M/개 × ₩8,321,500';
-  const unitLabels={day:'일',week:'주',month:'월'};const frequencyLabel=(unitLabels[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회';
+  const unitLabels={day:'일',week:'주',month:'월',year:'년'};const frequencyLabel=(unitLabels[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회';
   document.getElementById('reportMetricBasis').textContent='과제 「'+(report.task_name||'')+'」의 L6 Act '+Number(stats.total_processes||0)+'개 기준 · '+frequencyLabel+' → 연간 '+Number(stats.annual_frequency||52)+'회 환산 · AS-IS 대기 '+Number(stats.as_is_waiting_hours||0)+'시간';
   document.getElementById('reportStatus').style.color='var(--s)';
   document.getElementById('reportStatus').textContent='✓ '+report.project_name+' / '+report.task_name+' 기준 리포트 데이터 준비 완료';
@@ -1999,8 +2036,8 @@ function renderReportPdfPreview(report){
 function getReportFrequency(){
   const unit=document.getElementById('reportFrequencyUnit')?.value||'week';
   const count=Math.max(1,Math.min(10000,Number(document.getElementById('reportFrequencyCount')?.value)||1));
-  const multiplier={day:365,week:52,month:12}[unit]||52;
-  return {unit,count,annual:count*multiplier,label:{day:'일',week:'주',month:'월'}[unit]||'주'};
+  const multiplier={day:365,week:52,month:12,year:1}[unit]||52;
+  return {unit,count,annual:count*multiplier,label:{day:'일',week:'주',month:'월',year:'년'}[unit]||'주'};
 }
 function updateFrequencyPreview(refreshReport){
   const frequency=getReportFrequency();
@@ -2068,7 +2105,7 @@ function buildPrintableReport(report){
   parts.push('<section><h2>BDW 진단</h2><p>요약: 병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p>'+reportTable(['순번','레벨','단위 업무','수행(분)','대기(h)','승인대기(h)','BDW 태그','심각도'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,item.execution_time||0,item.waiting_time||0,item.approval_waiting_time||0,bdwLabels[item.bdw_type]||item.bdw_type||'정상',severityLabels[item.bdw_severity]||item.bdw_severity||'중']))+'</section>');
   parts.push('<section><h2>AI FIT 분석</h2>'+reportTable(['순번','단위 업무','추천 AI 기술','구현 난이도','AI 가능성','비효율성','분류'],(report.ai_fit_analysis||[]).map((item,index)=>[index+1,item.name||'',item.recommended_tech||'',difficultyLabels[item.difficulty]||'중',item.ai_possibility||0,item.inefficiency||0,item.fit_category||'']))+'</section>');
   parts.push('<section><h2>To-Be 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','To-Be 프로세스','작업방식','도구','예상 수행(분)','구현 난이도'],report.to_be_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',toolLabels[item.tool]||item.tool||'기타 도구',item.estimated_execution_time||0,item.ai_applied?(difficultyLabels[item.difficulty]||'중'):'-']))+'</section>');
-  parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',stats.as_is_total_time+'분'],['To-Be 수행시간',stats.to_be_total_time+'분'],['건당 절감시간',stats.time_savings+'분'],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['AI 자동화 구현 난이도',stats.automation_difficulty||'해당 없음'],['수행 빈도',({day:'일',week:'주',month:'월'}[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회 (연간 '+Number(stats.annual_frequency||52)+'회)'],['연간 절감시간',stats.annual_savings_hours+'시간'],['절감 FTE',stats.fte_equivalent],['예상 개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
+  parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',stats.as_is_total_time+'분'],['To-Be 수행시간',stats.to_be_total_time+'분'],['건당 절감시간',stats.time_savings+'분'],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['AI 자동화 구현 난이도',stats.automation_difficulty||'해당 없음'],['수행 빈도',({day:'일',week:'주',month:'월',year:'년'}[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회 (연간 '+Number(stats.annual_frequency||52)+'회)'],['연간 절감시간',stats.annual_savings_hours+'시간'],['절감 FTE',stats.fte_equivalent],['예상 개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
   return parts.join('');
 }
 function exportReportPDF(){

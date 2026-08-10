@@ -210,7 +210,19 @@ export const getTasks = async (req, res) => {
     const projectId = parseInt(req.params.projectId);
     const project = await db.selectOne('projects', { id: projectId });
     if (!project) return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다.' });
-    res.json(await db.select('tasks', { project_id: projectId }));
+    const [tasks, reports] = await Promise.all([
+      db.select('tasks', { project_id: projectId }),
+      db.select('task_reports', { project_id: projectId })
+    ]);
+    const reportByTaskId = new Map(reports.map((report) => [Number(report.task_id), report]));
+    res.json(tasks.map((task) => {
+      const report = reportByTaskId.get(Number(task.id));
+      return {
+        ...task,
+        has_report: Boolean(report),
+        report_saved_at: report?.saved_at || report?.generated_at || null
+      };
+    }));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: '과제 조회 중 오류가 발생했습니다.' });

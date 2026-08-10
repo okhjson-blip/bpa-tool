@@ -30,6 +30,11 @@ router.post('/project/:projectId/ai-fit', requireCompanyWrite, [
   body('taskId').isInt()
 ], validate, bdwController.analyzeAIFit);
 
+router.get('/project/:projectId/ai-fit', [
+  param('projectId').isInt(),
+  query('task_id').isInt()
+], validate, bdwController.getStoredAIFit);
+
 // To-Be 프로세스 생성
 router.post('/project/:projectId/to-be', requireCompanyWrite, [
   param('projectId').isInt(),
@@ -47,7 +52,7 @@ router.get('/project/:projectId/report/saved', [
 router.get('/project/:projectId/report', requireCompanyWrite, [
   param('projectId').isInt(),
   query('task_id').isInt(),
-  query('frequency_unit').isIn(['day', 'week', 'month']).optional(),
+  query('frequency_unit').isIn(['day', 'week', 'month', 'year']).optional(),
   query('frequency_count').isInt({ min: 1, max: 10000 }).optional(),
   query('annual_frequency').isInt({ min: 1, max: 1000000 }).optional()
 ], validate, bdwController.generateReport);
@@ -55,7 +60,7 @@ router.get('/project/:projectId/report', requireCompanyWrite, [
 router.post('/project/:projectId/report/save', requireCompanyWrite, [
   param('projectId').isInt(),
   body('taskId').isInt(),
-  body('frequency_unit').isIn(['day', 'week', 'month']).optional(),
+  body('frequency_unit').isIn(['day', 'week', 'month', 'year']).optional(),
   body('frequency_count').isInt({ min: 1, max: 10000 }).optional(),
   body('annual_frequency').isInt({ min: 1, max: 1000000 }).optional()
 ], validate, bdwController.saveReport);

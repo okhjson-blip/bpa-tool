@@ -293,6 +293,9 @@ async function main() {
     }
   });
   assert.equal(savedInterview.response.status, 201, `구조화 인터뷰 저장 실패: ${savedInterview.text}`);
+  const interviewStep = await service.from('tasks').select('current_step').eq('id', restorableTask.data.task.id).single();
+  if (interviewStep.error) throw interviewStep.error;
+  assert.equal(interviewStep.data.current_step, 2, '인터뷰 저장 후 현재 단계가 2로 기록되지 않았습니다.');
   const restoredInterview = await api(`/interviews/project/${created.data.project.id}/task/${restorableTask.data.task.id}/latest`, { token: userA.token });
   assert.equal(restoredInterview.response.status, 200, `인터뷰 답변 복원 실패: ${restoredInterview.text}`);
   assert.deepEqual(restoredInterview.data.answers, answerValues);
@@ -343,6 +346,9 @@ async function main() {
   assert.equal(coreProcessDelete.response.status, 200, `프로세스 행 삭제 동기화 실패: ${coreProcessDelete.text}`);
   assert.equal(coreProcessDelete.data.processes[0].sort_order, 0);
   await assertNoRows('processes', 'id', coreL5Id, '삭제한 L5 프로세스가 남아 있습니다.');
+  const processStep = await service.from('tasks').select('current_step').eq('id', restorableTask.data.task.id).single();
+  if (processStep.error) throw processStep.error;
+  assert.equal(processStep.data.current_step, 3, '프로세스 저장 후 현재 단계가 3으로 기록되지 않았습니다.');
 
   const coreReport = await api(`/analysis/project/${created.data.project.id}/report?task_id=${restorableTask.data.task.id}`, { token: userA.token });
   assert.equal(coreReport.response.status, 200, `과제 리포트 생성 실패: ${coreReport.text}`);
@@ -353,6 +359,24 @@ async function main() {
   assert.equal(coreCsv.response.status, 200, `과제정보 CSV 생성 실패: ${coreCsv.text}`);
   assert.match(coreCsv.data.raw || '', /^﻿?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
   assert.match(coreCsv.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 25분\]/);
+  const emptyStoredAiFit = await api(`/analysis/project/${created.data.project.id}/ai-fit?task_id=${restorableTask.data.task.id}`, { token: userA.token });
+  assert.equal(emptyStoredAiFit.response.status, 200, `저장 AI FIT 조회 실패: ${emptyStoredAiFit.text}`);
+  assert.deepEqual(emptyStoredAiFit.data.analysis, []);
+  const yearlyReport = await api(`/analysis/project/${created.data.project.id}/report?task_id=${restorableTask.data.task.id}&frequency_unit=year&frequency_count=4`, { token: userA.token });
+  assert.equal(yearlyReport.response.status, 200, `연 단위 수행 빈도 리포트 실패: ${yearlyReport.text}`);
+  assert.equal(yearlyReport.data.statistics.frequency_unit, 'year');
+  assert.equal(yearlyReport.data.statistics.annual_frequency, 4);
+  const savedYearlyReport = await api(`/analysis/project/${created.data.project.id}/report/save`, {
+    token: userA.token,
+    method: 'POST',
+    body: { taskId: restorableTask.data.task.id, frequency_unit: 'year', frequency_count: 4 }
+  });
+  assert.equal(savedYearlyReport.response.status, 200, `연 단위 결과 리포트 저장 실패: ${savedYearlyReport.text}`);
+  const listedCompletedTasks = await api(`/projects/${created.data.project.id}/tasks`, { token: userA.token });
+  const listedCompletedTask = listedCompletedTasks.data.find((item) => Number(item.id) === Number(restorableTask.data.task.id));
+  assert.equal(listedCompletedTask.status, 'completed');
+  assert.equal(listedCompletedTask.current_step, 6);
+  assert.equal(listedCompletedTask.has_report, true);
 
   const listA = await api('/projects', { token: userA.token });
   assert.equal(listA.data.some((item) => item.id === created.data.project.id), true);
@@ -840,7 +864,7 @@ async function main() {
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',
       'project-create-and-cascade-delete', 'panel-draft-save-load-isolation-delete', 'task-period-boundary', 'task-update-and-interview-restore', 'report-participants-and-completion', 'api-company-isolation', 'direct-rls-isolation',
-      'process-add-reorder-delete-l6-fields-and-task-csv'
+      'process-add-reorder-delete-l6-fields-task-csv-year-frequency-and-step-restore'
     ]
   }));
 }

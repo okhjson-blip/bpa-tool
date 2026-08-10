@@ -81,9 +81,9 @@ export async function buildTaskReport({
     return sum + (toBe ? Number(toBe.estimated_execution_time) : Number(process.execution_time) || 0);
   }, 0);
   const timeSavings = Math.max(0, asIsTime - toBeTime);
-  const normalizedUnit = ['day', 'week', 'month'].includes(frequencyUnit) ? frequencyUnit : 'week';
+  const normalizedUnit = ['day', 'week', 'month', 'year'].includes(frequencyUnit) ? frequencyUnit : 'week';
   const normalizedCount = Math.max(1, Number.parseInt(frequencyCount, 10) || 1);
-  const frequencyMultipliers = { day: 365, week: 52, month: 12 };
+  const frequencyMultipliers = { day: 365, week: 52, month: 12, year: 1 };
   const normalizedAnnualFrequency = annualFrequency
     ? Math.max(1, Number.parseInt(annualFrequency, 10))
     : normalizedCount * frequencyMultipliers[normalizedUnit];
