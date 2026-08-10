@@ -61,6 +61,11 @@ router.put('/:projectId/tasks/:taskId', requireCompanyWrite, [
   body('participants').isArray()
 ], validate, projectController.updateTask);
 
+router.delete('/:projectId/tasks/:taskId', requireCompanyWrite, [
+  param('projectId').isInt(),
+  param('taskId').isInt()
+], validate, projectController.deleteTask);
+
 // Member route removed - no longer used
 
 export default router;

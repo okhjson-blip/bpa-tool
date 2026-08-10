@@ -401,6 +401,39 @@ async function main() {
     }
   });
   assert.equal(disposableTask.response.status, 201, `삭제 검증 과제 생성 실패: ${disposableTask.text}`);
+  const disposableProcess = await service.from('processes').insert({
+    project_id: disposableProject.data.project.id,
+    task_id: disposableTask.data.task.id,
+    level: 'L6',
+    name: '과제 삭제를 검증한다',
+    execution_time: 5,
+    method: 'manual',
+    tool: 'web',
+    status: 'confirmed'
+  }).select().single();
+  if (disposableProcess.error) throw disposableProcess.error;
+  const deletedTask = await api(`/projects/${disposableProject.data.project.id}/tasks/${disposableTask.data.task.id}`, {
+    token: userA.token,
+    method: 'DELETE'
+  });
+  assert.equal(deletedTask.response.status, 200, `사용자 과제 삭제 실패: ${deletedTask.text}`);
+  await Promise.all([
+    assertNoRows('tasks', 'id', disposableTask.data.task.id, '삭제한 과제가 남아 있습니다.'),
+    assertNoRows('processes', 'id', disposableProcess.data.id, '삭제한 과제의 프로세스가 남아 있습니다.')
+  ]);
+  const projectAfterTaskDelete = await service.from('projects').select('id').eq('id', disposableProject.data.project.id).maybeSingle();
+  if (projectAfterTaskDelete.error) throw projectAfterTaskDelete.error;
+  assert.equal(projectAfterTaskDelete.data.id, disposableProject.data.project.id);
+
+  const projectDeleteTask = await api(`/projects/${disposableProject.data.project.id}/tasks`, {
+    token: userA.token,
+    method: 'POST',
+    body: {
+      name: '프로젝트 연쇄 삭제 검증 과제', l4: '프로젝트 삭제를 검증한다', goal: '프로젝트 삭제 연동 확인',
+      start_date: '2026-08-02', end_date: '2026-08-20', participants: taskParticipants
+    }
+  });
+  assert.equal(projectDeleteTask.response.status, 201, `프로젝트 연쇄 삭제 검증 과제 생성 실패: ${projectDeleteTask.text}`);
   const deletedProject = await api(`/projects/${disposableProject.data.project.id}`, {
     token: userA.token,
     method: 'DELETE'
@@ -408,7 +441,7 @@ async function main() {
   assert.equal(deletedProject.response.status, 200, `사용자 프로젝트 삭제 실패: ${deletedProject.text}`);
   const [deletedProjectRow, deletedTaskRow] = await Promise.all([
     service.from('projects').select('id').eq('id', disposableProject.data.project.id).maybeSingle(),
-    service.from('tasks').select('id').eq('id', disposableTask.data.task.id).maybeSingle()
+    service.from('tasks').select('id').eq('id', projectDeleteTask.data.task.id).maybeSingle()
   ]);
   if (deletedProjectRow.error) throw deletedProjectRow.error;
   if (deletedTaskRow.error) throw deletedTaskRow.error;
@@ -863,7 +896,7 @@ async function main() {
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',
-      'project-create-and-cascade-delete', 'panel-draft-save-load-isolation-delete', 'task-period-boundary', 'task-update-and-interview-restore', 'report-participants-and-completion', 'api-company-isolation', 'direct-rls-isolation',
+      'project-create-and-cascade-delete', 'partner-task-delete-and-cascade', 'panel-draft-save-load-isolation-delete', 'task-period-boundary', 'task-update-and-interview-restore', 'report-participants-and-completion', 'api-company-isolation', 'direct-rls-isolation',
       'process-add-reorder-delete-l6-fields-task-csv-year-frequency-and-step-restore'
     ]
   }));

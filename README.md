@@ -132,6 +132,7 @@ bpa-tool/
 - `GET|PUT|DELETE /api/projects/:projectId`
 - `GET|POST /api/projects/:projectId/tasks`
 - `PUT /api/projects/:projectId/tasks/:taskId`: 기존 과제 기본정보 수정
+- `DELETE /api/projects/:projectId/tasks/:taskId`: 협력사 과제와 소속 분석·리포트 연관 데이터 삭제
 - `GET|PUT|DELETE /api/drafts/:panelKey`: 로그인 사용자별 패널 임시 저장본 조회·저장·정리(`project_basic`, `task_basic`, `interview_answers`, `process_editor`, `report_frequency`)
 - `GET /api/connections`: 로그인 협력사의 AI 엔진 등록 상태 조회(Key 원문 제외)
 - `PUT /api/connections/:engine`: 실제 연결 검증 후 협력사 Key 암호화 저장
@@ -159,6 +160,7 @@ bpa-tool/
 - 프로젝트 계층은 `department_name=L1 구분`, `description=L2 대분류`, `name=L3 중분류`로 저장하고 API에서는 L2를 `business_name` 별칭으로 제공합니다.
 - 프로젝트 및 과제 등록은 기간과 필수 역할 참여자를 프런트엔드와 API에서 이중 검증합니다.
 - 프로젝트 삭제는 `삭제하시겠습니까?` 확인창의 `네` 선택 후에만 실행되며 소속 과제·분석·리포트가 Supabase 외래키 관계로 함께 삭제됩니다.
+- 과제 목록의 `삭제`는 `과제 상세`과 같은 크기로 표시하며, 확인창에서 `네`를 선택한 경우에만 과제와 프로세스·인터뷰·분석·리포트를 Supabase에서 함께 삭제합니다.
 - 과제 기간은 선택한 상위 프로젝트 기간 안에 있어야 하며 프런트엔드와 API에서 이중 검증합니다.
 - `panel_drafts`는 사용자·협력사·패널·화면 범위별 최신 임시 저장본 한 건을 보관합니다. 자동 저장은 하지 않으며 정식 등록 또는 분석 저장이 완료되면 해당 임시 저장본을 삭제합니다. BDW 태그는 기존 즉시 저장을 유지하고 AI API Key는 임시 저장 대상에서 제외합니다.
 - AI Draft와 프로세스 편집 화면은 작업방식·도구를 L6 Act에만 적용하며, L6의 수행·대기·승인대기 시간 합계를 L5에, L5 합계를 L4에 반영합니다. 프로세스 표시 순서는 `sort_order`로 Supabase에 저장합니다.

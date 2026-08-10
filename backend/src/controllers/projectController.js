@@ -310,3 +310,19 @@ export const updateTask = async (req, res) => {
     res.status(500).json({ error: '과제 수정 중 오류가 발생했습니다.' });
   }
 };
+
+export const deleteTask = async (req, res) => {
+  const projectId = parseInt(req.params.projectId);
+  const taskId = parseInt(req.params.taskId);
+  try {
+    const task = await db.selectOne('tasks', { id: taskId });
+    if (!task || Number(task.project_id) !== projectId) {
+      return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
+    }
+    await db.delete('tasks', taskId);
+    res.json({ message: '과제와 관련 분석 데이터가 삭제되었습니다.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '과제 삭제 중 오류가 발생했습니다.' });
+  }
+};

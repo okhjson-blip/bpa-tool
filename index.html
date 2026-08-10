@@ -321,7 +321,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .task-name{font-size:16px;font-weight:800;margin-bottom:3px}
 .task-path{font-size:11px;color:#999}
 .task-r{display:flex;align-items:center;justify-content:flex-end;gap:8px;text-align:right;flex-wrap:wrap}
-.task-detail{font-size:11px;padding:4px 9px;min-width:72px}
+.task-detail,.task-delete{font-size:11px;padding:4px 9px;width:72px;text-align:center}
 .status-chip{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:700;display:inline-block;margin-bottom:4px}
 .st-done{background:#e8f5e9;color:var(--s)}
 .st-prog{background:#fff3e0;color:var(--w)}
@@ -1647,11 +1647,23 @@ async function loadProjectTasks(){
       const detailButton=completed
         ? '<button class="btn btn-o task-detail" type="button" '+(task.has_report?'':'disabled title="저장된 결과 리포트가 없습니다."')+'>과제 상세</button>'
         : '';
-      card.innerHTML='<div class="task-l"><div class="task-name">🗂 '+escapeHtml(task.l4||task.name)+' <span style="font-size:11px;color:#999;font-weight:400">(L4 모듈)</span></div><div class="task-path">'+[task.l1,task.l2,task.l3].map(escapeHtml).join(' › ')+'</div></div><div class="task-r"><span class="status-chip '+(completed?'st-done':'st-prog')+'">'+escapeHtml(completed?'✓ 완료':'진행중')+'</span><div class="task-date">'+(date?new Date(date).toLocaleDateString('ko-KR'):'-')+'</div>'+detailButton+'</div>';
+      const deleteButton='<button class="btn btn-o task-delete" type="button" style="color:var(--d)">삭제</button>';
+      card.innerHTML='<div class="task-l"><div class="task-name">🗂 '+escapeHtml(task.l4||task.name)+' <span style="font-size:11px;color:#999;font-weight:400">(L4 모듈)</span></div><div class="task-path">'+[task.l1,task.l2,task.l3].map(escapeHtml).join(' › ')+'</div></div><div class="task-r"><span class="status-chip '+(completed?'st-done':'st-prog')+'">'+escapeHtml(completed?'✓ 완료':'진행중')+'</span><div class="task-date">'+(date?new Date(date).toLocaleDateString('ko-KR'):'-')+'</div>'+detailButton+deleteButton+'</div>';
       card.querySelector('.task-detail')?.addEventListener('click',event=>{event.stopPropagation();openPartnerTaskReport(task);});
+      card.querySelector('.task-delete').addEventListener('click',event=>{event.stopPropagation();deletePartnerTask(task);});
       card.addEventListener('click',()=>openTaskFlow(task));container.appendChild(card);
     });
   }catch(error){container.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
+}
+
+async function deletePartnerTask(task){
+  const warning='프로세스·인터뷰·BDW·AI FIT·To-Be·저장 리포트가 Supabase에서 함께 삭제되며 되돌릴 수 없습니다.';
+  if(!await requestDeleteConfirmation((task.l4||task.name||'과제')+' 과제',warning))return;
+  try{
+    const result=await apiRequest('/projects/'+ctx.projectId+'/tasks/'+Number(task.id),{method:'DELETE'});
+    if(Number(ctx.taskId)===Number(task.id)){ctx.taskId=null;ctx.taskData=null;ctx.processes=[];ctx.report=null;}
+    alert(result.message);await loadProjectTasks();
+  }catch(error){alert(error.message);}
 }
 
 async function openPartnerTaskReport(task){

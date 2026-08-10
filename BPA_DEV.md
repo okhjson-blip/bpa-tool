@@ -89,6 +89,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 19. As-Is/To-Be 비교의 As-Is 작업방식 배지는 원본 프로세스 `method`만 사용하며 To-Be 자동화 여부를 역전파하지 않습니다.
 20. 결과 리포트 스냅샷 저장과 과제 `status=completed`, `current_step=6` 갱신은 같은 API 흐름에서 처리합니다. 관리자 활성 과제 통계는 완료 과제를 제외합니다.
 21. 과제의 명시적 저장·분석 API는 `current_step`을 함께 갱신합니다. 진행 중 과제 재접속 시 해당 단계와 공식 데이터·최신 임시 저장본을 복원하고, 완료 과제는 저장된 `task_reports` 스냅샷을 6단계 및 상세 팝업에서 조회합니다.
+22. 협력사 과제 삭제 API는 프로젝트 소속 여부와 `requireCompanyWrite` 권한을 확인한 뒤 `tasks` 행을 삭제합니다. 프로세스·인터뷰·BDW·AI FIT·To-Be·임시 저장·리포트는 Supabase 외래키의 `ON DELETE CASCADE`로 함께 정리합니다.
 
 ## 6. 핵심 계산식
 
