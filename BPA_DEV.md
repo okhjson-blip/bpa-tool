@@ -49,6 +49,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 - `202608070003_password_admin_only.sql`은 기존 `super_admin` 프로필을 일반 사용자로 전환하고 사용자 JWT 기반 관리자 우회를 차단합니다. 관리자 조회는 비밀번호 세션을 확인한 백엔드의 Service Role 경로에서만 수행합니다.
 - 관리자가 협력사를 완료 처리하면 DB 함수가 협력사와 소속 프로젝트·과제를 한 트랜잭션에서 내부 상태 `suspended`로 변경하고, 미들웨어와 RLS가 해당 멤버의 업무 데이터 접근을 차단합니다. 재활성화 시 각 프로젝트·과제의 완료 처리 전 상태를 복원합니다.
 - 협력사 모드의 결과 리포트 조회 API는 저장 없이 PDF 프리뷰 데이터를 생성합니다. 사용자가 저장 API를 실행하면 산출 결과 전체를 `task_reports.report_data` JSONB에 과제별 최신 PDF 스냅샷으로 저장합니다. `report_title`, `report_format`, `report_version`, `saved_at`을 함께 관리하며 관리자 상세 조회 API는 분석을 재실행하지 않고 이 저장본만 Service Role로 읽습니다.
+- 관리자 삭제 API는 Service Role 전용 Supabase RPC를 사용합니다. 협력사·프로젝트·과제 삭제는 PostgreSQL 트랜잭션 안에서 외래키 cascade와 함께 처리하며, 브라우저에서 직접 RPC를 호출할 수 없도록 `anon`, `authenticated` 실행 권한을 회수합니다.
 
 ## 4. 업무 모델
 

@@ -143,6 +143,10 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .admin-company-body{display:none;border-top:1px solid var(--bd);padding:10px 13px;background:#fafbfe}
 .admin-company.open .admin-company-body{display:block}
 .admin-project{padding:8px 9px;background:#fff;border:1px solid #e9edf4;border-radius:7px;margin-bottom:6px}
+.admin-project-head{display:flex;align-items:center;gap:7px}
+.admin-project-name{flex:1;min-width:0}
+.admin-delete-btn{color:var(--d)!important;border-color:#f1b8b8!important;background:#fffafa!important}
+.admin-delete-btn:hover{background:#fff0f0!important}
 .admin-task-list{font-size:12px;color:var(--mt);margin-top:5px;line-height:1.6}
 .ai-setting-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .ai-setting-card{border:1px solid var(--bd);border-radius:10px;padding:15px;background:#fff}
@@ -1129,11 +1133,11 @@ async function openAdminDashboard(){
           const reportControl=task.has_report
             ? '<span style="font-size:10px;color:var(--mt)">'+escapeHtml(task.report_saved_at?new Date(task.report_saved_at).toLocaleDateString('ko-KR')+' 저장':'저장 완료')+'</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();openAdminTaskReport('+Number(task.id)+')">상세 조회</button>'
             : '<button class="btn btn-o btn-sm" type="button" disabled title="협력사 모드에서 결과 리포트를 저장하면 활성화됩니다.">상세 조회</button>';
-          return '<div class="admin-task-item"><span class="admin-task-item-name">과제 · '+escapeHtml(task.name||task.l4)+'</span><span class="admin-status '+(taskActive?'active':'suspended')+'">'+(taskActive?'활성':'완료')+'</span>'+reportControl+'</div>';
+          return '<div class="admin-task-item"><span class="admin-task-item-name">과제 · '+escapeHtml(task.name||task.l4)+'</span><span class="admin-status '+(taskActive?'active':'suspended')+'">'+(taskActive?'활성':'완료')+'</span>'+reportControl+'<button class="btn btn-o btn-sm admin-delete-btn" type="button" onclick="event.stopPropagation();adminDeleteTask('+Number(task.id)+')">과제 삭제</button></div>';
         }).join(''):'등록된 과제 없음';
-        return '<div class="admin-project"><b>'+escapeHtml(project.name)+'</b><span class="admin-status '+(projectActive?'active':'suspended')+'">'+(projectActive?'활성':'완료')+'</span><span style="font-size:11px;color:var(--mt);margin-left:8px">'+escapeHtml(formatPeriod(project))+'</span><div class="admin-task-list">'+tasks+'</div></div>';
+        return '<div class="admin-project"><div class="admin-project-head"><b class="admin-project-name">'+escapeHtml(project.name)+'</b><span class="admin-status '+(projectActive?'active':'suspended')+'">'+(projectActive?'활성':'완료')+'</span><span style="font-size:11px;color:var(--mt)">'+escapeHtml(formatPeriod(project))+'</span><button class="btn btn-o btn-sm admin-delete-btn" type="button" onclick="event.stopPropagation();adminDeleteProject('+Number(project.id)+')">프로젝트 삭제</button></div><div class="admin-task-list">'+tasks+'</div></div>';
       }).join('');
-      return '<div class="admin-company" id="adminCompany'+Number(company.id)+'"><div class="admin-company-hd" onclick="toggleAdminCompany('+Number(company.id)+')"><span class="status-chip '+(company.status==='active'?'st-done':'st-prog')+'">'+(company.status==='active'?'활성':'완료')+'</span><div class="admin-company-name">'+escapeHtml(company.name)+'</div><span class="admin-company-round">'+escapeHtml(consultingRoundLabel(company))+'</span><span style="font-size:12px;color:var(--mt)">프로젝트 '+Number(company.active_project_count||0)+'/'+Number(company.project_count||0)+' 활성 · 과제 '+Number(company.active_task_count||0)+'/'+Number(company.task_count||0)+' 활성</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();adminChangeCompanyStatus('+Number(company.id)+',\''+nextStatus+'\')">'+(nextStatus==='active'?'활성화':'완료 처리')+'</button></div><div class="admin-company-body">'+(projects||'<div class="empty-state">등록된 프로젝트가 없습니다.</div>')+'</div></div>';
+      return '<div class="admin-company" id="adminCompany'+Number(company.id)+'"><div class="admin-company-hd" onclick="toggleAdminCompany('+Number(company.id)+')"><span class="status-chip '+(company.status==='active'?'st-done':'st-prog')+'">'+(company.status==='active'?'활성':'완료')+'</span><div class="admin-company-name">'+escapeHtml(company.name)+'</div><span class="admin-company-round">'+escapeHtml(consultingRoundLabel(company))+'</span><span style="font-size:12px;color:var(--mt)">프로젝트 '+Number(company.active_project_count||0)+'/'+Number(company.project_count||0)+' 활성 · 과제 '+Number(company.active_task_count||0)+'/'+Number(company.task_count||0)+' 활성</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();adminChangeCompanyStatus('+Number(company.id)+',\''+nextStatus+'\')">'+(nextStatus==='active'?'활성화':'완료 처리')+'</button><button class="btn btn-o btn-sm admin-delete-btn" type="button" onclick="event.stopPropagation();adminDeleteCompany('+Number(company.id)+')">협력사 삭제</button></div><div class="admin-company-body">'+(projects||'<div class="empty-state">등록된 프로젝트가 없습니다.</div>')+'</div></div>';
     }).join('')||'<div class="empty-state">등록된 협력사가 없습니다.</div>';
   }catch(error){list.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
 }
@@ -1200,6 +1204,34 @@ async function deleteAdminUser(userId){
 }
 function toggleAdminCompany(companyId){document.getElementById('adminCompany'+companyId)?.classList.toggle('open');}
 function setAllAdminCompaniesOpen(open){document.querySelectorAll('#adminCompanyList .admin-company').forEach(element=>element.classList.toggle('open',open));}
+function findAdminProject(projectId){
+  for(const company of adminCompanies){const project=(company.projects||[]).find(item=>Number(item.id)===Number(projectId));if(project)return {company,project};}
+  return null;
+}
+function findAdminTask(taskId){
+  for(const company of adminCompanies){for(const project of company.projects||[]){const task=(project.tasks||[]).find(item=>Number(item.id)===Number(taskId));if(task)return {company,project,task};}}
+  return null;
+}
+async function adminDeleteCompany(companyId){
+  const company=adminCompanies.find(item=>Number(item.id)===Number(companyId));if(!company)return;
+  const warning='소속 프로젝트 '+Number(company.project_count||0)+'건, 과제 '+Number(company.task_count||0)+'건과 사용자·리포트·AI API 설정이 데이터베이스에서 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다.';
+  if(!confirm(company.name+' 협력사를 삭제하시겠습니까?\n'+warning))return;
+  try{const result=await apiRequest('/admin/companies/'+Number(companyId),{method:'DELETE'});alert(result.message);await openAdminDashboard();await loadActiveCompanies();}
+  catch(error){alert(error.message);}
+}
+async function adminDeleteProject(projectId){
+  const found=findAdminProject(projectId);if(!found)return;
+  const taskCount=(found.project.tasks||[]).length;
+  if(!confirm(found.project.name+' 프로젝트를 삭제하시겠습니까?\n소속 과제 '+taskCount+'건과 모든 분석·리포트 데이터가 함께 삭제되며 되돌릴 수 없습니다.'))return;
+  try{const result=await apiRequest('/admin/projects/'+Number(projectId),{method:'DELETE'});alert(result.message);await openAdminDashboard();}
+  catch(error){alert(error.message);}
+}
+async function adminDeleteTask(taskId){
+  const found=findAdminTask(taskId);if(!found)return;
+  if(!confirm((found.task.name||found.task.l4)+' 과제를 삭제하시겠습니까?\n프로세스·BDW·AI FIT·To-Be·저장 리포트가 함께 삭제되며 되돌릴 수 없습니다.'))return;
+  try{const result=await apiRequest('/admin/tasks/'+Number(taskId),{method:'DELETE'});alert(result.message);await openAdminDashboard();}
+  catch(error){alert(error.message);}
+}
 async function adminCreateCompany(){
   const name=document.getElementById('adminCompanyName').value.trim();const consultingYear=Number(document.getElementById('adminConsultingYear').value);const consultingHalf=document.getElementById('adminConsultingHalf').value;const status=document.getElementById('adminCompanyStatus');
   if(!name||!Number.isInteger(consultingYear)||!consultingHalf){status.style.color='var(--d)';status.textContent='협력사명과 컨설팅 차수를 모두 입력해 주세요.';return;}

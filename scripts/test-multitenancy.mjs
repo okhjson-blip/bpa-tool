@@ -82,6 +82,12 @@ async function cleanup() {
   }
 }
 
+async function assertNoRows(table, column, value, message) {
+  const result = await service.from(table).select('id', { count: 'exact', head: true }).eq(column, value);
+  if (result.error) throw result.error;
+  assert.equal(result.count, 0, message || `${table}.${column}=${value} 데이터가 남아 있습니다.`);
+}
+
 async function main() {
   const health = await api('/health');
   assert.equal(health.response.status, 200, `health 실패: ${health.text}`);
@@ -378,6 +384,156 @@ async function main() {
     restoredRows.forEach((result) => { if (result.error) throw result.error; });
     assert.equal(restoredRows[0].data.status, 'active');
     assert.equal(restoredRows[1].data.status, 'registered');
+
+    const deleteCompanyFixture = await createTestCompany('ADMIN-DELETE');
+    const { data: taskDeleteProject, error: taskDeleteProjectError } = await service.from('projects').insert({
+      company_id: deleteCompanyFixture.id,
+      company_name: deleteCompanyFixture.name,
+      name: `과제 삭제 검증 프로젝트 ${runId}`,
+      status: 'active'
+    }).select().single();
+    if (taskDeleteProjectError) throw taskDeleteProjectError;
+    createdProjectIds.push(taskDeleteProject.id);
+    const { data: taskDeleteTask, error: taskDeleteTaskError } = await service.from('tasks').insert({
+      project_id: taskDeleteProject.id,
+      name: `삭제 검증 과제 ${runId}`,
+      l1: '검증 L1', l2: '검증 L2', l3: '검증 L3', l4: '검증 L4'
+    }).select().single();
+    if (taskDeleteTaskError) throw taskDeleteTaskError;
+    const { data: taskDeleteInterview, error: taskDeleteInterviewError } = await service.from('interviews').insert({
+      project_id: taskDeleteProject.id,
+      interview_type: 'text',
+      text: '관리자 과제 cascade 삭제 검증'
+    }).select().single();
+    if (taskDeleteInterviewError) throw taskDeleteInterviewError;
+    const { data: taskDeleteProcess, error: taskDeleteProcessError } = await service.from('processes').insert({
+      project_id: taskDeleteProject.id,
+      task_id: taskDeleteTask.id,
+      interview_id: taskDeleteInterview.id,
+      level: 'L6',
+      name: '삭제할 단위 업무를 확인한다',
+      execution_time: 10
+    }).select().single();
+    if (taskDeleteProcessError) throw taskDeleteProcessError;
+    const relatedTaskRows = await Promise.all([
+      service.from('bdw_tags').insert({ process_id: taskDeleteProcess.id, bdw_type: 'normal' }),
+      service.from('ai_analysis').insert({
+        process_id: taskDeleteProcess.id, project_id: taskDeleteProject.id,
+        name: taskDeleteProcess.name, ai_possibility: 3, inefficiency: 3,
+        fit_category: 'B', estimated_time_savings: 3
+      }),
+      service.from('to_be_processes').insert({
+        original_process_id: taskDeleteProcess.id, project_id: taskDeleteProject.id,
+        name: '삭제된 To-Be', ai_applied: true
+      }),
+      service.from('task_reports').insert({
+        company_id: deleteCompanyFixture.id, project_id: taskDeleteProject.id,
+        task_id: taskDeleteTask.id, report_data: { task_name: taskDeleteTask.name },
+        report_title: `${taskDeleteTask.name} AX 분석 결과`
+      })
+    ]);
+    relatedTaskRows.forEach((result) => { if (result.error) throw result.error; });
+
+    const deletedTask = await api(`/admin/tasks/${taskDeleteTask.id}`, {
+      cookie: adminCookie,
+      method: 'DELETE'
+    });
+    assert.equal(deletedTask.response.status, 200, `관리자 과제 cascade 삭제 실패: ${deletedTask.text}`);
+    await Promise.all([
+      assertNoRows('tasks', 'id', taskDeleteTask.id),
+      assertNoRows('processes', 'id', taskDeleteProcess.id),
+      assertNoRows('bdw_tags', 'process_id', taskDeleteProcess.id),
+      assertNoRows('ai_analysis', 'process_id', taskDeleteProcess.id),
+      assertNoRows('to_be_processes', 'original_process_id', taskDeleteProcess.id),
+      assertNoRows('task_reports', 'task_id', taskDeleteTask.id),
+      assertNoRows('interviews', 'id', taskDeleteInterview.id)
+    ]);
+    const taskDeleteProjectStillExists = await service.from('projects').select('id').eq('id', taskDeleteProject.id).single();
+    if (taskDeleteProjectStillExists.error) throw taskDeleteProjectStillExists.error;
+
+    const { data: projectDeleteProject, error: projectDeleteProjectError } = await service.from('projects').insert({
+      company_id: deleteCompanyFixture.id,
+      company_name: deleteCompanyFixture.name,
+      name: `프로젝트 삭제 검증 ${runId}`,
+      status: 'active'
+    }).select().single();
+    if (projectDeleteProjectError) throw projectDeleteProjectError;
+    createdProjectIds.push(projectDeleteProject.id);
+    const { data: projectDeleteTask, error: projectDeleteTaskError } = await service.from('tasks').insert({
+      project_id: projectDeleteProject.id,
+      name: `프로젝트 종속 과제 ${runId}`,
+      l1: '검증 L1', l2: '검증 L2', l3: '검증 L3', l4: '검증 L4'
+    }).select().single();
+    if (projectDeleteTaskError) throw projectDeleteTaskError;
+    const { data: projectDeleteProcess, error: projectDeleteProcessError } = await service.from('processes').insert({
+      project_id: projectDeleteProject.id,
+      task_id: projectDeleteTask.id,
+      level: 'L6',
+      name: '프로젝트 삭제 대상을 확인한다'
+    }).select().single();
+    if (projectDeleteProcessError) throw projectDeleteProcessError;
+    const projectReportResult = await service.from('task_reports').insert({
+      company_id: deleteCompanyFixture.id, project_id: projectDeleteProject.id,
+      task_id: projectDeleteTask.id, report_data: { task_name: projectDeleteTask.name },
+      report_title: `${projectDeleteTask.name} AX 분석 결과`
+    });
+    if (projectReportResult.error) throw projectReportResult.error;
+
+    const deletedProject = await api(`/admin/projects/${projectDeleteProject.id}`, {
+      cookie: adminCookie,
+      method: 'DELETE'
+    });
+    assert.equal(deletedProject.response.status, 200, `관리자 프로젝트 cascade 삭제 실패: ${deletedProject.text}`);
+    await Promise.all([
+      assertNoRows('projects', 'id', projectDeleteProject.id),
+      assertNoRows('tasks', 'id', projectDeleteTask.id),
+      assertNoRows('processes', 'id', projectDeleteProcess.id),
+      assertNoRows('task_reports', 'task_id', projectDeleteTask.id)
+    ]);
+
+    const companyDeleteFixture = await createTestCompany('COMPANY-DELETE');
+    const { data: companyDeleteProject, error: companyDeleteProjectError } = await service.from('projects').insert({
+      company_id: companyDeleteFixture.id,
+      company_name: companyDeleteFixture.name,
+      name: `협력사 삭제 검증 프로젝트 ${runId}`,
+      status: 'active'
+    }).select().single();
+    if (companyDeleteProjectError) throw companyDeleteProjectError;
+    createdProjectIds.push(companyDeleteProject.id);
+    const { data: companyDeleteTask, error: companyDeleteTaskError } = await service.from('tasks').insert({
+      project_id: companyDeleteProject.id,
+      name: `협력사 삭제 검증 과제 ${runId}`,
+      l1: '검증 L1', l2: '검증 L2', l3: '검증 L3', l4: '검증 L4'
+    }).select().single();
+    if (companyDeleteTaskError) throw companyDeleteTaskError;
+    const { data: companyDeleteAccount, error: companyDeleteAccountError } = await service.from('company_user_accounts').insert({
+      company_id: companyDeleteFixture.id,
+      name: '삭제 검증 사용자',
+      email: `delete-${runId}@example.com`
+    }).select().single();
+    if (companyDeleteAccountError) throw companyDeleteAccountError;
+    await saveCompanyCredential({
+      companyId: companyDeleteFixture.id,
+      engine: 'gemini',
+      apiKey: `delete-${crypto.randomBytes(24).toString('base64url')}`,
+      model: 'cascade-delete-test',
+      userId: userA.user.id
+    });
+
+    const deletedCompany = await api(`/admin/companies/${companyDeleteFixture.id}`, {
+      cookie: adminCookie,
+      method: 'DELETE'
+    });
+    assert.equal(deletedCompany.response.status, 200, `관리자 협력사 cascade 삭제 실패: ${deletedCompany.text}`);
+    assert.equal(Number(deletedCompany.data.deleted.project_count), 1);
+    assert.equal(Number(deletedCompany.data.deleted.task_count), 1);
+    await Promise.all([
+      assertNoRows('companies', 'id', companyDeleteFixture.id),
+      assertNoRows('projects', 'id', companyDeleteProject.id),
+      assertNoRows('tasks', 'id', companyDeleteTask.id),
+      assertNoRows('company_user_accounts', 'id', companyDeleteAccount.id),
+      assertNoRows('company_ai_credentials', 'company_id', companyDeleteFixture.id)
+    ]);
   }
 
   const rlsA = await userA.client.from('projects').select('id').eq('id', created.data.project.id);
@@ -438,7 +594,7 @@ async function main() {
     ok: true,
     checks: [
       'health', 'anonymous-free-registration', 'idempotent-free-signup-membership', 'email-only-session-rebind',
-      testAdminPassword ? 'admin-user-crud-report-status-cascade-and-bulk-process-sync' : 'admin-login-skipped',
+      testAdminPassword ? 'admin-user-crud-report-status-delete-cascade-and-bulk-process-sync' : 'admin-login-skipped',
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',

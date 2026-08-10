@@ -243,6 +243,113 @@ export async function createCompany(req, res) {
   }
 }
 
+async function runAdminDeleteRpc(functionName, payload) {
+  const { data, error } = await getServiceClient().rpc(functionName, payload);
+  if (error) throw error;
+  return data || {};
+}
+
+export async function deleteCompany(req, res) {
+  const companyId = Number(req.params.companyId);
+  try {
+    const company = await serviceDb.selectOne('companies', { id: companyId });
+    if (!company) return res.status(404).json({ error: '협력사를 찾을 수 없습니다.' });
+
+    const deleted = await runAdminDeleteRpc('admin_delete_bpa_company', {
+      p_company_id: companyId
+    });
+    await serviceDb.insert('audit_logs', {
+      actor_user_id: null,
+      company_id: null,
+      action: 'company_delete',
+      target_type: 'company',
+      target_id: String(companyId),
+      metadata: {
+        actor: 'password_admin',
+        company_name: company.name,
+        consulting_year: company.consulting_year,
+        consulting_half: company.consulting_half,
+        deleted_projects: Number(deleted.project_count || 0),
+        deleted_tasks: Number(deleted.task_count || 0),
+        deleted_users: Number(deleted.user_count || 0)
+      }
+    });
+    res.json({
+      message: `${company.name} 협력사와 프로젝트 ${Number(deleted.project_count || 0)}건, 과제 ${Number(deleted.task_count || 0)}건이 삭제되었습니다.`,
+      deleted
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '협력사와 소속 데이터를 삭제할 수 없습니다.' });
+  }
+}
+
+export async function deleteProject(req, res) {
+  const projectId = Number(req.params.projectId);
+  try {
+    const project = await serviceDb.selectOne('projects', { id: projectId });
+    if (!project) return res.status(404).json({ error: '프로젝트를 찾을 수 없습니다.' });
+
+    const deleted = await runAdminDeleteRpc('admin_delete_bpa_project', {
+      p_project_id: projectId
+    });
+    await serviceDb.insert('audit_logs', {
+      actor_user_id: null,
+      company_id: project.company_id,
+      action: 'project_delete',
+      target_type: 'project',
+      target_id: String(projectId),
+      metadata: {
+        actor: 'password_admin',
+        project_name: project.name,
+        deleted_tasks: Number(deleted.task_count || 0)
+      }
+    });
+    res.json({
+      message: `${project.name} 프로젝트와 과제 ${Number(deleted.task_count || 0)}건이 삭제되었습니다.`,
+      deleted
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '프로젝트와 소속 과제를 삭제할 수 없습니다.' });
+  }
+}
+
+export async function deleteTask(req, res) {
+  const taskId = Number(req.params.taskId);
+  try {
+    const task = await serviceDb.selectOne('tasks', { id: taskId });
+    if (!task) return res.status(404).json({ error: '과제를 찾을 수 없습니다.' });
+    const project = await serviceDb.selectOne('projects', { id: task.project_id });
+    if (!project) return res.status(404).json({ error: '과제의 프로젝트를 찾을 수 없습니다.' });
+
+    const deleted = await runAdminDeleteRpc('admin_delete_bpa_task', {
+      p_task_id: taskId
+    });
+    await serviceDb.insert('audit_logs', {
+      actor_user_id: null,
+      company_id: project.company_id,
+      action: 'task_delete',
+      target_type: 'task',
+      target_id: String(taskId),
+      metadata: {
+        actor: 'password_admin',
+        project_id: project.id,
+        project_name: project.name,
+        task_name: task.name || task.l4,
+        deleted_processes: Number(deleted.process_count || 0)
+      }
+    });
+    res.json({
+      message: `${task.name || task.l4} 과제와 분석 데이터가 삭제되었습니다.`,
+      deleted
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: '과제와 분석 데이터를 삭제할 수 없습니다.' });
+  }
+}
+
 export async function getOverview(_req, res) {
   try {
     const [companies, projects, tasks, taskReports] = await Promise.all([

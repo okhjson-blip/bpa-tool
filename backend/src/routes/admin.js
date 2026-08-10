@@ -36,6 +36,15 @@ router.post('/companies', [
   body('consulting_year').isInt({ min: 2000, max: 2100 }),
   body('consulting_half').isIn(['상반기', '하반기'])
 ], validate, adminController.createCompany);
+router.delete('/companies/:companyId', [
+  param('companyId').isInt()
+], validate, adminController.deleteCompany);
+router.delete('/projects/:projectId', [
+  param('projectId').isInt()
+], validate, adminController.deleteProject);
+router.delete('/tasks/:taskId', [
+  param('taskId').isInt()
+], validate, adminController.deleteTask);
 router.patch('/companies/:companyId/status', [
   param('companyId').isInt(),
   body('status').isIn(['active', 'suspended'])

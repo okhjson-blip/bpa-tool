@@ -79,7 +79,7 @@ npm start
 7. BDW(Bottleneck, Delay, Waste) 진단
 8. AI FIT 매트릭스와 As-Is/To-Be 비교
 9. 과제별 AX 성과지표 전체 PDF 또는 과제당 한 행의 과제정보 CSV 출력
-10. 관리자 `협력사/과제 관리`에서 전체/활성 통계, 협력사 완료 처리, 협력사 모드에서 생성된 과제 결과 리포트 조회
+10. 관리자 `협력사/과제 관리`에서 전체/활성 통계, 협력사 완료 처리, 협력사·프로젝트·과제별 연관 데이터 삭제, 협력사 모드에서 생성된 과제 결과 리포트 조회
 11. 관리자 `협력사/사용자 관리`에서 사용자 이름·이메일·최근 접속 시간을 조회하고 사용자 선등록·수정·삭제
 
 ## 디렉터리
@@ -113,6 +113,9 @@ bpa-tool/
 - `GET /api/auth/admin-session`: 관리자 세션 복원
 - `POST /api/auth/admin-logout`: 관리자 세션 종료
 - `GET /api/admin/overview`: 전체 협력사 프로젝트·과제 조회(관리자)
+- `DELETE /api/admin/companies/:companyId`: 협력사와 소속 프로젝트·과제·사용자·리포트·AI 설정 삭제(관리자)
+- `DELETE /api/admin/projects/:projectId`: 프로젝트와 소속 과제·분석·리포트 삭제(관리자)
+- `DELETE /api/admin/tasks/:taskId`: 과제와 프로세스·진단·분석·To-Be·리포트 삭제(관리자)
 - `GET /api/admin/companies`: 사용자 관리 선택용 경량 협력사 목록(관리자)
 - `GET /api/admin/users`: 협력사 사용자와 최근 접속 시간 조회(관리자)
 - `POST /api/admin/users`: 협력사 사용자 선등록(관리자)
