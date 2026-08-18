@@ -512,7 +512,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="popup-title" id="adminTaskReportTitle">저장된 PDF 과제 결과 리포트</div>
     <div class="admin-report-meta" id="adminTaskReportMeta">협력사 모드에서 생성된 결과 리포트를 불러오는 중입니다.</div>
     <div class="admin-report-content" id="adminTaskReportBody"></div>
-    <div class="admin-report-actions" id="adminReportPdfActions" hidden><button class="btn btn-p btn-sm" id="btnAdminReportPdf" type="button" onclick="exportAdminTaskReportPDF()">PDF 파일로 출력</button></div>
+    <div class="admin-report-actions" id="adminReportPdfActions" style="display:none"><button class="btn btn-p btn-sm" id="btnAdminReportPdf" type="button" onclick="exportAdminTaskReportPDF()">📕 PDF 파일로 출력</button></div>
   </div>
 </div>
 
@@ -890,7 +890,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
           <button class="dl-btn dl-pdf" onclick="exportReportPDF()">📕 전체 리포트 PDF 출력</button>
           <button class="dl-btn dl-word" onclick="exportReportCSV()">📑 DB 이관용 CSV 출력</button>
         </div>
-        <div class="inline-status" id="reportStatus">PDF는 전체 분석 리포트를 출력하고, CSV는 저장된 리포트 전체 데이터를 다른 DB에서 복원할 수 있는 한 행으로 출력합니다.</div>
+        <div class="inline-status" id="reportStatus">PDF는 전체 분석 리포트를 출력하고, CSV는 BDW 진단·AI FIT 분석을 제외한 저장 리포트 데이터를 DB 이관용 한 행으로 출력합니다.</div>
       </div>
     </div>
     <div class="sr">
@@ -1407,17 +1407,17 @@ async function adminChangeCompanyStatus(companyId,status){
 }
 async function openAdminTaskReport(taskId){
   const popup=document.getElementById('adminTaskReportPopup');const meta=document.getElementById('adminTaskReportMeta');const body=document.getElementById('adminTaskReportBody');const pdfActions=document.getElementById('adminReportPdfActions');
-  adminTaskReportData=null;pdfActions.hidden=true;
+  adminTaskReportData=null;pdfActions.style.display='none';
   popup.classList.add('open');document.getElementById('adminTaskReportTitle').textContent='저장된 PDF 과제 결과 리포트';meta.textContent='협력사 모드에서 생성된 결과 리포트를 불러오는 중입니다.';body.innerHTML='<div class="loading-state">저장된 리포트 데이터를 조회하고 있습니다...</div>';
   try{
     const report=await apiRequest('/admin/tasks/'+Number(taskId)+'/report');
-    adminTaskReportData=report;pdfActions.hidden=false;
     document.getElementById('adminTaskReportTitle').textContent=(report.task_name||'과제')+' 결과 리포트';
     meta.innerHTML='협력사: <b>'+escapeHtml(report.company_name||'-')+'</b> · 프로젝트: <b>'+escapeHtml(report.project_name||'-')+'</b> · 과제 기간: '+escapeHtml([report.task_start_date,report.task_end_date].filter(Boolean).join(' ~ ')||'미등록')+' · 리포트 저장: '+escapeHtml(report.report_saved_at?new Date(report.report_saved_at).toLocaleString('ko-KR'):'-');
     body.innerHTML=buildPrintableReport(report);
-  }catch(error){meta.textContent='과제 상세 조회 실패';body.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
+    adminTaskReportData=report;pdfActions.style.display='flex';
+  }catch(error){adminTaskReportData=null;pdfActions.style.display='none';meta.textContent='과제 상세 조회 실패';body.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
 }
-function closeAdminTaskReport(){document.getElementById('adminTaskReportPopup').classList.remove('open');adminTaskReportData=null;document.getElementById('adminReportPdfActions').hidden=true;}
+function closeAdminTaskReport(){document.getElementById('adminTaskReportPopup').classList.remove('open');adminTaskReportData=null;document.getElementById('adminReportPdfActions').style.display='none';}
 
 const participantRoles={
   project:['프로젝트 리더','프로젝트 담당자','컨설턴트'],
@@ -1685,7 +1685,7 @@ async function deletePartnerTask(task){
 
 async function openPartnerTaskReport(task){
   const popup=document.getElementById('adminTaskReportPopup');const meta=document.getElementById('adminTaskReportMeta');const body=document.getElementById('adminTaskReportBody');
-  adminTaskReportData=null;document.getElementById('adminReportPdfActions').hidden=true;
+  adminTaskReportData=null;document.getElementById('adminReportPdfActions').style.display='none';
   popup.classList.add('open');document.getElementById('adminTaskReportTitle').textContent=(task.name||task.l4||'과제')+' 결과 리포트';meta.textContent='저장된 결과 리포트를 불러오는 중입니다.';body.innerHTML='<div class="loading-state">PDF 리포트 내용을 조회하고 있습니다...</div>';
   try{
     const saved=await apiRequest('/analysis/project/'+ctx.projectId+'/report/saved?task_id='+Number(task.id));
@@ -2141,9 +2141,11 @@ function buildPrintableReport(report){
 }
 function printReportPDF(report,title,metaHtml){
   const printHtml='<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>'+escapeHtml(title)+'</title><style>@page{size:A4;margin:16mm}body{font-family:"Segoe UI",Arial,sans-serif;color:#17203a;font-size:11px}h1{color:#060f45;border-bottom:3px solid #060f45;padding-bottom:8px}h2{color:#060f45;margin-top:22px;break-after:avoid}section{break-inside:avoid;margin-bottom:18px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #ccd2df;padding:6px;text-align:left}th{background:#eef1f8}.meta{color:#666;margin-bottom:20px}</style></head><body><h1>'+escapeHtml(title)+'</h1><div class="meta">'+metaHtml+'</div>'+buildPrintableReport(report)+'</body></html>';
-  const frame=document.createElement('iframe');frame.setAttribute('title','PDF 리포트 인쇄');frame.style.cssText='position:fixed;left:-12000px;bottom:0;width:1000px;height:1px;border:0;opacity:0;pointer-events:none';
-  let printStarted=false;frame.onload=()=>{if(printStarted)return;printStarted=true;const printWindow=frame.contentWindow;if(!printWindow){frame.remove();alert('PDF 출력 화면을 열 수 없습니다.');return;}printWindow.onafterprint=()=>frame.remove();setTimeout(()=>{printWindow.focus();printWindow.print();},200);setTimeout(()=>frame.remove(),60000);};
-  frame.srcdoc=printHtml;document.body.appendChild(frame);
+  const printWindow=window.open('','_blank','popup=yes,width=1000,height=800');
+  if(!printWindow){alert('PDF 출력 창이 차단되었습니다. 브라우저의 팝업 허용 후 다시 시도해 주세요.');return;}
+  printWindow.document.open();printWindow.document.write(printHtml);printWindow.document.close();
+  let printStarted=false;const startPrint=()=>{if(printStarted||printWindow.closed)return;printStarted=true;printWindow.focus();printWindow.print();};
+  if(printWindow.document.readyState==='complete')setTimeout(startPrint,150);else printWindow.addEventListener('load',()=>setTimeout(startPrint,150),{once:true});
 }
 function exportReportPDF(){
   if(!ctx.report){alert('리포트 데이터를 먼저 생성해 주세요.');return;}

@@ -146,7 +146,7 @@ bpa-tool/
 - `GET /api/analysis/project/:projectId/report/saved`: 마지막 정식 저장 리포트의 수행 빈도 등 사용자 입력 복원
 - `GET /api/analysis/project/:projectId/ai-fit`: 마지막으로 저장된 AI FIT 및 To-Be 상태 복원
 - `POST /api/analysis/project/:projectId/report/save`: 검증된 최신 PDF 리포트를 과제별 스냅샷으로 명시적 저장
-- `GET /api/analysis/project/:projectId/report.csv?task_id=:taskId`: 저장된 PDF 리포트의 메타데이터, 섹션별 JSON, 원본 `report_data` JSONB를 한 행에 담은 DB 이관용 UTF-8 CSV 출력. 상세 양식은 `RESULT_REPORT_CSV_SCHEMA.md`를 따릅니다.
+- `GET /api/analysis/project/:projectId/report.csv?task_id=:taskId`: 저장된 PDF 리포트에서 BDW 진단·AI FIT 분석을 제외하고 메타데이터, 이관 대상 섹션별 JSON, 필터링된 `report_data` JSONB를 한 행에 담은 DB 이관용 UTF-8 CSV 출력. 상세 양식은 `RESULT_REPORT_CSV_SCHEMA.md`를 따릅니다.
 
 ## 운영 원칙
 
@@ -170,7 +170,7 @@ bpa-tool/
 - AI FIT 제안은 L6 Act별로 사용자가 수락한 항목만 To-Be에 반영하며, 서버에 저장된 분석 결과를 기준으로 생성합니다.
 - 수행 빈도는 일·주·월·년별 횟수를 연간으로 환산하여 AX 절감 시간과 FTE를 계산합니다.
 - AI Draft는 STATIK L1 구분~L6 Act 전체 정의를 따르며 L6 Act를 `목적어 + 단일 동사` 형태의 최소 행위로 생성합니다.
-- 결과 페이지는 PDF 프리뷰를 먼저 표시합니다. PDF에는 과제 참여자만 이름·직급·역할·이메일로 출력하고, BDW 요약·전체 목록과 L6 기준 AS-IS·To-Be 작업방식·도구를 포함합니다. 사용자가 `결과 리포트 저장`을 누른 경우에만 `task_reports` 최신 PDF 리포트 스냅샷을 저장하며, 관리자 과제 목록의 `상세 조회` 버튼이 활성화됩니다. DB 이관용 CSV는 저장된 스냅샷의 식별 메타데이터, PDF 섹션별 JSON, 원본 `report_data_json`을 과제당 한 행으로 출력합니다.
+- 결과 페이지는 PDF 프리뷰를 먼저 표시합니다. PDF에는 과제 참여자만 이름·직급·역할·이메일로 출력하고, BDW 요약·전체 목록과 L6 기준 AS-IS·To-Be 작업방식·도구를 포함합니다. 사용자가 `결과 리포트 저장`을 누른 경우에만 `task_reports` 최신 PDF 리포트 스냅샷을 저장하며, 관리자 과제 목록의 `상세 조회` 버튼이 활성화됩니다. DB 이관용 CSV는 저장된 스냅샷에서 BDW 진단과 AI FIT 분석을 제외하고 식별 메타데이터, 이관 대상 섹션별 JSON, 필터링된 `report_data_json`을 과제당 한 행으로 출력합니다.
 - 결과 리포트 저장 시 과제 상태와 현재 단계가 `completed`·6단계로 함께 갱신되어 사용자 및 관리자 과제 목록에 `완료`로 표시됩니다.
 - 사용자 과제 목록의 `과제 상세`은 저장된 PDF 리포트 내용을 팝업으로 표시합니다. 완료 과제 카드는 6단계 결과 리포트로, 진행 중 과제 카드는 `current_step`에 기록된 마지막 저장 단계로 이동합니다.
 

@@ -397,10 +397,21 @@ function csvCell(value) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-const REPORT_CSV_SCHEMA_VERSION = 'bpa-task-report-csv-v1';
+const REPORT_CSV_SCHEMA_VERSION = 'bpa-task-report-csv-v2';
 
 function jsonCsvValue(value, fallback) {
   return JSON.stringify(value ?? fallback);
+}
+
+function reportDataWithoutBdwAndAiFit(report) {
+  const { bdw_diagnosis, ai_fit_analysis, recommendations, ...filteredReport } = report || {};
+  return {
+    ...filteredReport,
+    as_is_processes: (report?.as_is_processes || []).map((process) => {
+      const { bdw_type, bdw_severity, ...filteredProcess } = process;
+      return filteredProcess;
+    })
+  };
 }
 
 // 저장된 PDF 리포트 스냅샷을 다른 DB에서 복원할 수 있는 과제당 한 행 CSV 다운로드
@@ -423,6 +434,7 @@ export const exportTaskCsv = async (req, res) => {
       return res.status(409).json({ error: 'DB 이관용 CSV를 출력하려면 결과 리포트를 먼저 저장해 주세요.' });
     }
     const report = savedReport.report_data || {};
+    const csvReport = reportDataWithoutBdwAndAiFit(report);
     const rows = [
       [
         'csv_schema_version', 'source_table', 'source_company_id', 'source_project_id',
@@ -430,8 +442,7 @@ export const exportTaskCsv = async (req, res) => {
         'report_title', 'report_format', 'report_version', 'report_generated_at',
         'report_saved_at', 'analysis_period', 'hierarchy_json', 'task_goal',
         'project_participants_json', 'task_participants_json', 'as_is_processes_json',
-        'bdw_diagnosis_json', 'ai_fit_analysis_json', 'to_be_processes_json',
-        'statistics_json', 'recommendations_json', 'report_data_json'
+        'to_be_processes_json', 'statistics_json', 'report_data_json'
       ],
       [
         REPORT_CSV_SCHEMA_VERSION,
@@ -454,13 +465,10 @@ export const exportTaskCsv = async (req, res) => {
         report.task_goal || task.goal || '',
         jsonCsvValue(report.project_participants, []),
         jsonCsvValue(report.task_participants, []),
-        jsonCsvValue(report.as_is_processes, []),
-        jsonCsvValue(report.bdw_diagnosis, {}),
-        jsonCsvValue(report.ai_fit_analysis, []),
-        jsonCsvValue(report.to_be_processes, []),
-        jsonCsvValue(report.statistics, {}),
-        jsonCsvValue(report.recommendations, []),
-        jsonCsvValue(report, {})
+        jsonCsvValue(csvReport.as_is_processes, []),
+        jsonCsvValue(csvReport.to_be_processes, []),
+        jsonCsvValue(csvReport.statistics, {}),
+        jsonCsvValue(csvReport, {})
       ]
     ];
     const content = `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}`;
