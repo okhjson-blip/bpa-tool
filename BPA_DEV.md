@@ -103,7 +103,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 외주 개발비 = 수락·반영 L6 Act 수 × 1.0 M/M × 8,321,500원
 ```
 
-결과 리포트 API는 `project_id`와 `task_id`에 속한 L6 Act, BDW, AI FIT, To-Be 데이터만 집계합니다. PDF 출력은 과제 참여자, BDW 요약·전체 목록, 작업방식·도구를 포함한 L6 AS-IS·To-Be 등 전체 분석 섹션을 숨김 인쇄 프레임으로 구성합니다. `GET /api/analysis/project/:projectId/report.csv?task_id=:taskId`는 UTF-8 과제정보 CSV를 첨부파일로 반환합니다. CSV는 과제당 한 행이며 헤더는 `과제명, 시작일, 완료일, 성과목표, As-Is, To-Be, 난이도`입니다. As-Is와 To-Be는 플로우차트와 같은 L6 순서로 `업무명 [작업방식 | 도구 | 수행시간] > ...` 형식으로 기록하고, 난이도는 수락되어 AI 자동화된 전체 Act의 구현 난이도 평균을 상·중·하로 환산합니다.
+결과 리포트 API는 `project_id`와 `task_id`에 속한 L6 Act, BDW, AI FIT, To-Be 데이터만 집계합니다. PDF 출력은 과제 참여자, BDW 요약·전체 목록, 작업방식·도구를 포함한 L6 AS-IS·To-Be 등 전체 분석 섹션을 숨김 인쇄 프레임으로 구성합니다. `GET /api/analysis/project/:projectId/report.csv?task_id=:taskId`는 저장된 `task_reports` 스냅샷을 UTF-8 DB 이관용 CSV로 반환합니다. CSV는 과제당 한 행이며 PDF 섹션별 JSON 열과 원본 `report_data_json` 전체를 함께 보존합니다. 상세 열 정의와 적재 규칙은 `RESULT_REPORT_CSV_SCHEMA.md`를 따릅니다.
 
 To-Be 생성 API는 클라이언트가 전달한 분석 수치를 신뢰하지 않고 `accepted_process_ids`만 받아, 서버에 저장된 해당 프로젝트·과제의 AI FIT 결과로 처리시간과 적용 방식을 계산합니다.
 

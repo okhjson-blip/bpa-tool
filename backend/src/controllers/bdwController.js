@@ -397,40 +397,13 @@ function csvCell(value) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-function processMethodLabel(method, aiApplied = false) {
-  if (aiApplied) return 'AI 자동화';
-  return method === 'system' ? '시스템' : '수작업';
+const REPORT_CSV_SCHEMA_VERSION = 'bpa-task-report-csv-v1';
+
+function jsonCsvValue(value, fallback) {
+  return JSON.stringify(value ?? fallback);
 }
 
-function processToolLabel(tool) {
-  const labels = {
-    email: '이메일',
-    document: '문서',
-    excel: '엑셀',
-    web: '웹',
-    erp: 'ERP',
-    other: '기타 도구'
-  };
-  return labels[tool] || String(tool || '기타 도구');
-}
-
-function flowNodeText({ name, method, tool, executionTime, aiApplied = false }) {
-  return `${name} [${processMethodLabel(method, aiApplied)} | ${processToolLabel(tool)} | ${Number(executionTime) || 0}분]`;
-}
-
-function averageAutomationDifficulty(toBeProcesses, analysisByProcessId) {
-  const scores = toBeProcesses
-    .filter((process) => process.ai_applied === true)
-    .map((process) => {
-      const difficulty = analysisByProcessId.get(Number(process.original_process_id))?.difficulty || 'medium';
-      return { low: 1, medium: 2, high: 3 }[difficulty] || 2;
-    });
-  if (!scores.length) return '해당 없음';
-  const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-  return average < 1.5 ? '하' : average < 2.5 ? '중' : '상';
-}
-
-// 과제당 한 행으로 구성된 CSV 다운로드
+// 저장된 PDF 리포트 스냅샷을 다른 DB에서 복원할 수 있는 과제당 한 행 CSV 다운로드
 export const exportTaskCsv = async (req, res) => {
   const projectId = parseInt(req.params.projectId);
   const taskId = parseInt(req.query.task_id);
@@ -442,56 +415,65 @@ export const exportTaskCsv = async (req, res) => {
       return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
     }
 
-    const processes = await getTaskL6Processes(projectId, taskId);
-    const processIds = new Set(processes.map((process) => Number(process.id)));
-    const [projectToBeProcesses, projectAiAnalysis] = await Promise.all([
-      db.select('to_be_processes', { project_id: projectId }),
-      db.select('ai_analysis', { project_id: projectId })
+    const [savedReport, company] = await Promise.all([
+      db.selectOne('task_reports', { task_id: taskId }),
+      db.selectOne('companies', { id: Number(project.company_id) })
     ]);
-    const toBeProcesses = projectToBeProcesses
-      .filter((process) => processIds.has(Number(process.original_process_id)));
-    const aiAnalysis = projectAiAnalysis
-      .filter((analysis) => processIds.has(Number(analysis.process_id)));
-    const toBeByProcessId = new Map(
-      toBeProcesses.map((process) => [Number(process.original_process_id), process])
-    );
-    const analysisByProcessId = new Map(
-      aiAnalysis.map((analysis) => [Number(analysis.process_id), analysis])
-    );
-    const asIsFlow = processes.map((process) => flowNodeText({
-      name: process.name,
-      method: process.method,
-      tool: process.tool,
-      executionTime: process.execution_time
-    })).join(' > ');
-    const toBeFlow = processes
-      .map((process) => {
-        const toBe = toBeByProcessId.get(Number(process.id));
-        return flowNodeText({
-          name: toBe?.name || process.name,
-          method: process.method,
-          tool: toBe?.ai_applied ? toBe.automation_method : process.tool,
-          executionTime: toBe?.estimated_execution_time ?? process.execution_time,
-          aiApplied: toBe?.ai_applied === true
-        });
-      })
-      .join(' > ');
-    const averageDifficulty = averageAutomationDifficulty(toBeProcesses, analysisByProcessId);
+    if (!savedReport) {
+      return res.status(409).json({ error: 'DB 이관용 CSV를 출력하려면 결과 리포트를 먼저 저장해 주세요.' });
+    }
+    const report = savedReport.report_data || {};
     const rows = [
-      ['과제명', '시작일', '완료일', '성과목표', 'As-Is', 'To-Be', '난이도'],
-      [task.name, task.start_date || '', task.end_date || '', task.goal || '', asIsFlow, toBeFlow, averageDifficulty]
+      [
+        'csv_schema_version', 'source_table', 'source_company_id', 'source_project_id',
+        'source_task_id', 'company_name', 'project_name', 'task_name', 'task_start_date', 'task_end_date',
+        'report_title', 'report_format', 'report_version', 'report_generated_at',
+        'report_saved_at', 'analysis_period', 'hierarchy_json', 'task_goal',
+        'project_participants_json', 'task_participants_json', 'as_is_processes_json',
+        'bdw_diagnosis_json', 'ai_fit_analysis_json', 'to_be_processes_json',
+        'statistics_json', 'recommendations_json', 'report_data_json'
+      ],
+      [
+        REPORT_CSV_SCHEMA_VERSION,
+        'task_reports',
+        savedReport.company_id ?? report.company_id ?? '',
+        savedReport.project_id ?? report.project_id ?? projectId,
+        savedReport.task_id ?? report.task_id ?? taskId,
+        company?.name || '',
+        report.project_name || project.name || '',
+        report.task_name || task.name || '',
+        report.task_start_date || task.start_date || '',
+        report.task_end_date || task.end_date || '',
+        savedReport.report_title || `${report.task_name || task.name || '과제'} AX 분석 결과`,
+        savedReport.report_format || 'pdf',
+        savedReport.report_version || 1,
+        savedReport.generated_at || report.created_at || '',
+        savedReport.saved_at || '',
+        report.analysis_period || '',
+        jsonCsvValue(report.hierarchy, {}),
+        report.task_goal || task.goal || '',
+        jsonCsvValue(report.project_participants, []),
+        jsonCsvValue(report.task_participants, []),
+        jsonCsvValue(report.as_is_processes, []),
+        jsonCsvValue(report.bdw_diagnosis, {}),
+        jsonCsvValue(report.ai_fit_analysis, []),
+        jsonCsvValue(report.to_be_processes, []),
+        jsonCsvValue(report.statistics, {}),
+        jsonCsvValue(report.recommendations, []),
+        jsonCsvValue(report, {})
+      ]
     ];
     const content = `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}`;
-    const safeBaseName = `${project.name}_${task.name}_task`.replace(/[\\/:*?"<>|]/g, '_');
+    const safeBaseName = `${project.name}_${task.name}_result-report-db`.replace(/[\\/:*?"<>|]/g, '_');
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="task-info.csv"; filename*=UTF-8''${encodeURIComponent(safeBaseName)}.csv`
+      `attachment; filename="result-report-db.csv"; filename*=UTF-8''${encodeURIComponent(safeBaseName)}.csv`
     );
     res.send(content);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: '과제정보 CSV 생성 중 오류' });
+    res.status(500).json({ error: '결과 리포트 DB 이관용 CSV 생성 중 오류' });
   }
 };

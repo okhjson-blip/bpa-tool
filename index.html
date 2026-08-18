@@ -888,9 +888,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
         <div class="card-title">출력 형식 선택</div>
         <div class="dl-row">
           <button class="dl-btn dl-pdf" onclick="exportReportPDF()">📕 전체 리포트 PDF 출력</button>
-          <button class="dl-btn dl-word" onclick="exportReportCSV()">📑 과제정보 CSV 출력</button>
+          <button class="dl-btn dl-word" onclick="exportReportCSV()">📑 DB 이관용 CSV 출력</button>
         </div>
-        <div class="inline-status" id="reportStatus">PDF는 전체 분석 리포트를 출력하고, CSV는 현재 과제를 한 행으로 출력합니다.</div>
+        <div class="inline-status" id="reportStatus">PDF는 전체 분석 리포트를 출력하고, CSV는 저장된 리포트 전체 데이터를 다른 DB에서 복원할 수 있는 한 행으로 출력합니다.</div>
       </div>
     </div>
     <div class="sr">
@@ -2165,8 +2165,8 @@ async function exportReportCSV(){
     const response=await fetch(apiBase+'/analysis/project/'+ctx.projectId+'/report.csv?task_id='+encodeURIComponent(ctx.taskId),{credentials:'same-origin',headers});
     if(!response.ok){const text=await response.text();let message=text;try{message=JSON.parse(text).error||text;}catch{}throw new Error(message||('CSV 생성 실패 (HTTP '+response.status+')'));}
     const blob=await response.blob();const objectUrl=URL.createObjectURL(blob);const link=document.createElement('a');
-    link.href=objectUrl;link.download=((ctx.taskData?.name||ctx.l4||'과제정보').replace(/[\\/:*?"<>|]/g,'_'))+'.csv';document.body.appendChild(link);link.click();link.remove();
-    const status=document.getElementById('reportStatus');if(status){status.style.color='var(--s)';status.textContent='✓ 과제정보 CSV 다운로드를 시작했습니다.';}
+    link.href=objectUrl;link.download=((ctx.taskData?.name||ctx.l4||'결과리포트').replace(/[\\/:*?"<>|]/g,'_'))+'_DB이관.csv';document.body.appendChild(link);link.click();link.remove();
+    const status=document.getElementById('reportStatus');if(status){status.style.color='var(--s)';status.textContent='✓ 결과 리포트 DB 이관용 CSV 다운로드를 시작했습니다.';}
     setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
   }catch(error){alert(error.message);}
 }
