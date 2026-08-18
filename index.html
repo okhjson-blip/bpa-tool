@@ -225,6 +225,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .automation-badge.system{background:#dfeeff;color:#155fa0}
 .automation-badge.manual{background:#eceff4;color:#4d5567}
 .panel-save-status{font-size:11px;color:var(--mt);align-self:center;min-height:16px}
+.save-timeout-notice{font-size:11px;color:var(--mt);margin:0 0 8px;padding:5px 8px;background:#f8f9fc;border:1px solid var(--bd);border-radius:6px}
 .comparison-arrow{color:#aeb6c5;font-size:18px;line-height:1;margin:3px 0}
 .comparison-center-arrow{align-self:center;text-align:center;color:var(--p);font-size:24px;font-weight:900;padding-top:48px}
 @media(max-width:760px){.comparison-flow-grid{grid-template-columns:1fr}.comparison-center-arrow{padding:0;transform:rotate(90deg)}}
@@ -315,6 +316,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .difficulty-badge{display:inline-flex;min-width:28px;justify-content:center;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:800}.difficulty-low{background:#e8f5e9;color:#2e7d32}.difficulty-medium{background:#fff3e0;color:#e65100}.difficulty-high{background:#ffebee;color:#c62828}
 .proj-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
 .proj-chip{font-size:11px;padding:2px 8px;border-radius:8px;background:#f0f3fb;color:#555;font-weight:600}
+.project-info-card .card-title{font-size:11px;color:var(--mt);font-weight:700;margin-bottom:7px}
+.project-info-card .proj-meta{margin-bottom:0}
+.project-info-card .proj-chip{font-size:15px;padding:5px 10px;color:var(--t);font-weight:700}
 .proj-stats{font-size:12px;color:var(--mt)}
 .proj-participants{font-size:11px;color:#666;line-height:1.55;margin:6px 0;padding:7px 9px;background:#fafbfe;border-radius:7px}
 .task-card{display:flex;justify-content:space-between;align-items:center}
@@ -536,12 +540,13 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <!-- PAGE: 새 프로젝트 생성 -->
 <div class="sv" id="pageNewProject">
   <div class="pg-brd"><span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="color:var(--t);font-weight:700;cursor:default" id="projectFormBreadcrumb">새 프로젝트 생성</span></div>
+  <div class="save-timeout-notice">타임아웃 시간 제한 30초로 잠시 입력을 쉴 때는 반드시 저장하여 주시기 바랍니다</div>
   <div class="card">
     <div class="card-title"><span id="projectFormTitle">기본 정보</span> <span class="ct-b">필수</span><span class="form-title-actions"><button class="btn btn-o btn-sm" type="button" onclick="openLvPopup()">STATIK L1 구분~L3 중분류</button><button class="lv-popup-btn" type="button" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></span></div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:10px">프로젝트는 <b>L1 구분 › L2 대분류 › L3 중분류</b> 계층으로 등록되며 과제의 동일 계층에 자동 연결됩니다.</div>
     <div class="frow"><div class="fg"><span class="fl">회사명 <span class="req">*</span></span><input class="fi" id="newCompanyName" readonly></div><div class="fg"><span class="fl">조직 기능 (L1 구분) <span class="req">*</span></span><input class="fi" id="newDeptName" placeholder="예: 연구개발, 제조, 영업마케팅"></div></div>
     <div class="frow"><div class="fg"><span class="fl">업무 도메인 (L2 대분류) <span class="req">*</span></span><input class="fi" id="newBusinessName" placeholder="예: S/W개발, 공정관리, 마케팅기획"></div><div class="fg"><span class="fl">프로젝트명 (L3 중분류) <span class="req">*</span></span><input class="fi" id="newProjName" placeholder="예: 프런트엔드 개발, 품질검사, 콘텐츠 제작"></div></div>
-    <div class="frow"><div class="fg"><span class="fl">프로젝트 기간 <span class="req">*</span></span><div class="date-range"><input class="fi" id="newStartDate" type="date" aria-label="프로젝트 시작일"><span class="date-sep">~</span><input class="fi" id="newEndDate" type="date" aria-label="프로젝트 종료일"></div></div><div class="fg"><span class="fl">프로젝트 목적 <span class="req">*</span></span><input class="fi" id="newAnalysisGoal" placeholder="프로젝트 목적을 입력하세요"></div></div>
+    <div class="frow"><div class="fg"><span class="fl">프로젝트 기간 <span class="req">*</span></span><div class="date-range"><input class="fi" id="newStartDate" type="date" aria-label="프로젝트 시작일"><span class="date-sep">~</span><input class="fi" id="newEndDate" type="date" aria-label="프로젝트 종료일"></div></div><div class="fg"><span class="fl">프로젝트 목표 <span class="req">*</span></span><input class="fi" id="newAnalysisGoal" placeholder="자동화, 데이터화, 협업, 공유 등 프로젝트가 추구하는 방향 설정"></div></div>
   </div>
   <div class="card">
     <div class="card-title">참여자 등록 <span class="ct-b">리더·담당자·컨설턴트 필수</span></div>
@@ -554,7 +559,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 <!-- PAGE: 과제 목록 -->
 <div class="sv" id="pageTaskList">
   <div class="pg-brd"><span onclick="openProjectList()">프로젝트 목록</span><span class="crumb-sep">›</span><span style="color:var(--t);font-weight:700;cursor:default" id="tlProjName">디지털마케팅 콘텐츠 제작 프로세스 분석</span></div>
-  <div class="card">
+  <div class="card project-info-card">
     <div class="card-title">프로젝트 정보</div>
     <div class="proj-meta"><span class="proj-chip" id="taskProjectCompany">회사명</span><span class="proj-chip" id="taskProjectGoal">목적</span><span class="proj-chip" id="taskProjectPeriod">기간</span><span class="proj-chip" id="taskProjectEngine">AI엔진</span></div>
   </div>
@@ -568,6 +573,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 
 <!-- STEP 1: 과제 등록 (L4 모듈) -->
 <div class="sv" id="sv1">
+  <div class="save-timeout-notice">타임아웃 시간 제한 30초로 잠시 입력을 쉴 때는 반드시 저장하여 주시기 바랍니다</div>
   <div class="card">
     <div class="card-title">과제 등록 <span class="ct-b">STATIK L4 모듈</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:10px">과제는 STATIK <b>L1 구분 › L2 대분류 › L3 중분류 › L4 모듈</b> 전체 계층으로 등록·관리됩니다.</div>
@@ -584,7 +590,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
       <div class="fg"><span class="fl">과제 기간 <span class="req">*</span></span><div class="date-range"><input class="fi" id="inpTaskStartDate" type="date" aria-label="과제 시작일"><span class="date-sep">~</span><input class="fi" id="inpTaskEndDate" type="date" aria-label="과제 종료일"></div></div>
     </div>
     <div class="frow">
-      <div class="fg"><span class="fl">과제 목표 <span class="req">*</span></span><input class="fi" id="inpTaskGoal" placeholder="과제 목표를 입력하세요"></div>
+      <div class="fg"><span class="fl">과제 목표 <span class="req">*</span></span><input class="fi" id="inpTaskGoal" placeholder="자동화율, 처리 시간, 오류/예외 발생률, 이상 감지 정확도 등의 정량적 목표 설정"></div>
     </div>
   </div>
   <div class="card">
@@ -598,6 +604,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 
 <!-- STEP 2 -->
 <div class="sv" id="sv2">
+  <div class="save-timeout-notice">타임아웃 시간 제한 30초로 잠시 입력을 쉴 때는 반드시 저장하여 주시기 바랍니다</div>
   <div class="card">
     <div class="card-title">인터뷰 진행 <span class="ct-g" id="taskChip">SNS 채널 관리 (L4 모듈)</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
     <div style="font-size:12px;color:var(--mt);margin-bottom:8px">아래 기본 질문에 대한 담당자의 답변을 입력창에 직접 입력(타이핑)하세요.</div>
@@ -644,6 +651,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 
 <!-- STEP 3 -->
 <div class="sv" id="sv3">
+  <div class="save-timeout-notice">타임아웃 시간 제한 30초로 잠시 입력을 쉴 때는 반드시 저장하여 주시기 바랍니다</div>
   <div class="toolbar">
     <span class="tb-label">편집 도구</span><span class="tb-sep"></span>
     <button class="tb-btn" type="button" onclick="addProcessRow()">＋ 행 추가</button>
@@ -686,7 +694,6 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="sr">
       <div class="card" style="padding:10px">
         <div class="card-title" style="margin-bottom:6px">플로우차트 <span class="ct-b">양방향 동기화</span></div>
-        <div style="font-size:11px;color:var(--mt);margin-bottom:6px">노드 더블클릭: 편집 | 우클릭: 메뉴 | 드래그: 이동/삽입</div>
         <div class="fc" id="flowchartCanvas">
           <svg viewBox="0 0 264 456" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,sans-serif" font-size="12">
             <defs><marker id="ar" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#bbb"/></marker></defs>
@@ -796,7 +803,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="card">
       <div class="card-title" style="margin-bottom:10px">AI FIT 매트릭스 <span class="ct-b">AI 가능성 × 비효율성</span> <button class="lv-popup-btn" onclick="openAiFitPopup()" title="점수 척도 설명 보기">?</button></div>
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:12px;color:var(--mt);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;flex-shrink:0">← 비효율성 낮음 &nbsp;&nbsp;&nbsp;&nbsp; 높음 →</div>
+        <div style="font-size:11px;color:var(--mt);display:flex;flex-direction:column;align-self:stretch;justify-content:space-between;align-items:center;white-space:nowrap;flex-shrink:0"><span>높음 ↑</span><b style="font-size:12px;color:var(--t)">비효율성</b><span>낮음 ↓</span></div>
         <div style="flex:1">
           <div class="mgrid" id="aiFitMatrix">
             <div class="mq mqB"><div class="mq-lbl" style="color:var(--w)">B 수동 개선 先</div><div style="font-size:11px;color:#888;margin-bottom:4px">AI 가능성↓ + 비효율↑</div></div>
@@ -855,6 +862,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 
 <!-- STEP 6 -->
 <div class="sv" id="sv6">
+  <div class="save-timeout-notice">타임아웃 시간 제한 30초로 잠시 입력을 쉴 때는 반드시 저장하여 주시기 바랍니다</div>
   <div class="split">
     <div class="sl">
       <div class="card">
@@ -1958,7 +1966,8 @@ function renderAIFit(result){
   const acceptedIds=new Set((ctx.acceptedAiProcessIds||[]).map(Number));
   document.getElementById('aiFitBody').innerHTML=analysis.map(item=>{const processId=Number(item.process_id);const accepted=acceptedIds.has(processId);const score=Math.max(1,Math.min(5,Math.round(Number(item.inefficiency)||1)));const category=String(item.fit_category||'D').toLowerCase();const difficulty=['low','medium','high'].includes(item.difficulty)?item.difficulty:'medium';const difficultyLabel={low:'하',medium:'중',high:'상'}[difficulty];return '<tr class="'+(accepted?'ai-accepted':'')+'"><td style="text-align:center"><input class="ai-accept" type="checkbox" value="'+processId+'" '+(accepted?'checked':'')+' onchange="onAISuggestionCheckChange()" aria-label="'+escapeHtml(item.name)+' AI 제안 수락"></td><td>'+escapeHtml(item.name)+'</td><td><span class="aisc sc'+Math.max(1,Math.min(5,Math.round(Number(item.ai_possibility)||1)))+'">'+Number(item.ai_possibility||0)+'</span></td><td><span class="aisc ineff-'+score+'">'+Number(item.inefficiency||0)+'</span></td><td><span class="fit-'+category+'">'+escapeHtml(item.fit_category||'D')+'</span></td><td>'+escapeHtml(item.recommended_tech||'—')+'</td><td><span class="difficulty-badge difficulty-'+difficulty+'">'+difficultyLabel+'</span></td><td><b>'+Number(item.estimated_time_savings||0)+'</b></td></tr>';}).join('');
   const grouped={A:[],B:[],C:[],D:[]};analysis.forEach(item=>grouped[item.fit_category]?.push(item));
-  document.getElementById('aiFitMatrix').innerHTML=['B','A','D','C'].map(category=>'<div class="mq mq'+category+'"><div class="mq-lbl">'+category+'</div>'+grouped[category].map(item=>'<span class="mq-item">'+escapeHtml(item.name)+'</span>').join('')+'</div>').join('');
+  const categoryMeaning={A:{title:'즉시 적용',detail:'AI 가능성↑ + 비효율성↑'},B:{title:'수동 개선 우선',detail:'AI 가능성↓ + 비효율성↑'},C:{title:'장기 검토',detail:'AI 가능성↑ + 비효율성↓'},D:{title:'현상 유지',detail:'AI 가능성↓ + 비효율성↓'}};
+  document.getElementById('aiFitMatrix').innerHTML=['B','A','D','C'].map(category=>'<div class="mq mq'+category+'"><div class="mq-lbl">'+category+' '+categoryMeaning[category].title+'</div><div style="font-size:11px;color:var(--mt);margin-bottom:4px">'+categoryMeaning[category].detail+'</div>'+grouped[category].map(item=>'<span class="mq-item">'+escapeHtml(item.name)+'</span>').join('')+'</div>').join('');
   updateAIAcceptanceStatus();
 }
 function selectedAISuggestionIds(){return [...document.querySelectorAll('.ai-accept:checked')].map(input=>Number(input.value)).filter(Number.isInteger);}
