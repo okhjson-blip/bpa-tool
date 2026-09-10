@@ -5,7 +5,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--p:#060f45;--pl:#e8effd;--s:#2e7d32;--w:#e65100;--d:#c62828;--pu:#6a1b9a;--bd:#e0e6f0;--bg:#f0f3f8;--t:#1a1a2e;--mt:#6b7280}
 body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:var(--t);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-.hdr{background:var(--p);color:#fff;height:46px;display:flex;align-items:center;padding:0 16px;gap:11px;flex-shrink:0}
+.hdr{background:var(--p);color:#fff;height:46px;display:none;align-items:center;padding:0 16px;gap:11px;flex-shrink:0}
 .hdr-logo{font-size:17px;font-weight:800;letter-spacing:-.3px;cursor:pointer}
 .hdr-sep{width:1px;height:19px;background:rgba(255,255,255,.3)}
 .hdr-brd{font-size:14px;display:flex;align-items:center;gap:4px;opacity:.9}
@@ -1153,7 +1153,9 @@ async function restoreAuthenticatedSession(){
     }
     applyPartnerSession(me);
     try{await refreshAIConnectionState();}catch(error){console.warn('AI API 설정을 불러오지 못했습니다.',error);appState.aiConnections={};}
-    showWelcome();await loadActiveCompanies();document.getElementById('authStatus').textContent='';return true;
+    setHeaderVisible(true);
+    await openProjectList();
+    return true;
   }catch(error){
     Object.assign(appState,{authenticated:false,user:null,profile:null,membership:null,isAdmin:false,companyId:null,companyName:'',companyRegistered:false,aiConnections:{}});
     showWelcome();await loadActiveCompanies();document.getElementById('authStatus').style.color='var(--d)';document.getElementById('authStatus').textContent='✕ '+error.message;return false;
@@ -2126,14 +2128,13 @@ function buildPrintableReport(report){
   const toolLabels={email:'이메일',document:'문서',excel:'엑셀',web:'웹',erp:'ERP',other:'기타 도구'};
   const difficultyLabels={low:'하',medium:'중',high:'상'};
   const bdwLabels={normal:'정상',bottleneck:'Bottleneck',delay:'Delay',waste:'Waste'};
-  const severityLabels={low:'하',medium:'중',high:'상'};
   const hierarchyLabels=['L1 구분','L2 대분류','L3 중분류','L4 모듈'];
   const hierarchyValues=[report.hierarchy.l1,report.hierarchy.l2,report.hierarchy.l3,report.hierarchy.l4];
   parts.push('<section><h2>STATIK 업무 구조</h2><p>'+hierarchyValues.map((value,index)=>'<b>'+hierarchyLabels[index]+':</b> '+escapeHtml(value||'미등록')).join(' › ')+'</p><p>과제 목표: '+escapeHtml(report.task_goal||'미등록')+'</p></section>');
   const participantRows=(report.task_participants||[]).map(person=>[person.name||'',person.position||'',person.role||'',person.email||'']);
   parts.push('<section><h2>과제 참여자</h2>'+(participantRows.length?reportTable(['이름','직급','역할','이메일'],participantRows):'<p>등록된 과제 참여자가 없습니다.</p>')+'</section>');
   parts.push('<section><h2>AS-IS 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','프로세스','작업방식','도구','수행(분)','대기(h)','승인대기(h)'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',toolLabels[item.tool]||item.tool||'기타 도구',item.execution_time||0,item.waiting_time||0,item.approval_waiting_time||0]))+'</section>');
-  parts.push('<section><h2>BDW 진단</h2><p>요약: 병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p>'+reportTable(['순번','레벨','단위 업무','수행(분)','대기(h)','승인대기(h)','BDW 태그','심각도'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,item.execution_time||0,item.waiting_time||0,item.approval_waiting_time||0,bdwLabels[item.bdw_type]||item.bdw_type||'정상',severityLabels[item.bdw_severity]||item.bdw_severity||'중']))+'</section>');
+  parts.push('<section><h2>BDW 진단</h2><p>요약: 병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p>'+reportTable(['순번','레벨','단위 업무','수행(분)','대기(h)','승인대기(h)','BDW 태그'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,item.execution_time||0,item.waiting_time||0,item.approval_waiting_time||0,bdwLabels[item.bdw_type]||item.bdw_type||'정상']))+'</section>');
   parts.push('<section><h2>AI FIT 분석</h2>'+reportTable(['순번','단위 업무','추천 AI 기술','구현 난이도','AI 가능성','비효율성','분류'],(report.ai_fit_analysis||[]).map((item,index)=>[index+1,item.name||'',item.recommended_tech||'',difficultyLabels[item.difficulty]||'중',item.ai_possibility||0,item.inefficiency||0,item.fit_category||'']))+'</section>');
   parts.push('<section><h2>To-Be 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','To-Be 프로세스','작업방식','도구','예상 수행(분)','구현 난이도'],report.to_be_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',toolLabels[item.tool]||item.tool||'기타 도구',item.estimated_execution_time||0,item.ai_applied?(difficultyLabels[item.difficulty]||'중'):'-']))+'</section>');
   parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',stats.as_is_total_time+'분'],['To-Be 수행시간',stats.to_be_total_time+'분'],['건당 절감시간',stats.time_savings+'분'],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['AI 자동화 구현 난이도',stats.automation_difficulty||'해당 없음'],['수행 빈도',({day:'일',week:'주',month:'월',year:'년'}[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회 (연간 '+Number(stats.annual_frequency||52)+'회)'],['연간 절감시간',stats.annual_savings_hours+'시간'],['절감 FTE',stats.fte_equivalent],['예상 개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
@@ -2226,9 +2227,17 @@ async function bootstrapApplication(){
     await new Promise(resolve=>window.addEventListener('bpa-auth-ready',resolve,{once:true}));
   }
   await restoreAuthenticatedSession();
-  window.bpaAuth?.onAuthStateChange?.((event)=>{
-    if(event==='SIGNED_IN'&&!partnerRegistrationInProgress)restoreAuthenticatedSession();
-    if(event==='SIGNED_OUT')showWelcome();
+  window.bpaAuth?.onAuthStateChange?.((event,session)=>{
+    if(event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'||event==='USER_UPDATED')return;
+    if(event==='SIGNED_IN'&&session&&!partnerRegistrationInProgress&&!appState.authenticated){
+      restoreAuthenticatedSession();
+      return;
+    }
+    if(event==='SIGNED_OUT'&&!partnerRegistrationInProgress&&!appState.isAdmin){
+      Object.assign(appState,{authenticated:false,user:null,profile:null,membership:null,isAdmin:false,companyId:null,companyName:'',companyRegistered:false,aiConnections:{}});
+      showWelcome();
+      loadActiveCompanies();
+    }
   });
 }
 bootstrapApplication();
