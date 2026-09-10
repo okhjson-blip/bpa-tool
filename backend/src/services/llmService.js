@@ -1,4 +1,4 @@
-const REQUEST_TIMEOUT_MS = 60000;
+const REQUEST_TIMEOUT_MS = 290000;
 
 const MODEL_BY_ENGINE = Object.freeze({
   chatgpt: process.env.OPENAI_MODEL?.trim() || 'gpt-5-nano',
