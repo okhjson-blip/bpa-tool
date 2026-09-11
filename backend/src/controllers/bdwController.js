@@ -163,12 +163,14 @@ export const analyzeAIFit = async (req, res) => {
     const fitAnalysis = processes.map((proc) => {
       const generated = analysisById.get(Number(proc.id));
       const executionTime = Number(proc.execution_time) || 0;
-      const aiPossibility = Math.round(clamp(generated.ai_possibility, 1, 5) * 10) / 10;
-      const inefficiency = Math.round(clamp(generated.inefficiency, 1, 5) * 10) / 10;
+      const aiPossibility = Math.round(clamp(generated.ai_possibility, 1, 5));
+      const inefficiency = Math.round(clamp(generated.inefficiency, 1, 5));
+      const highPossibility = aiPossibility >= 3;
+      const highInefficiency = inefficiency >= 3;
       let category = 'D';
-      if (aiPossibility >= 3 && inefficiency >= 3) category = 'A';
-      else if (aiPossibility < 3 && inefficiency >= 3) category = 'B';
-      else if (aiPossibility >= 3 && inefficiency < 3) category = 'C';
+      if (highPossibility && highInefficiency) category = 'A';
+      else if (!highPossibility && highInefficiency) category = 'B';
+      else if (highPossibility && !highInefficiency) category = 'C';
 
       return {
         process_id: proc.id,

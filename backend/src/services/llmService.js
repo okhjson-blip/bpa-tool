@@ -68,8 +68,8 @@ const AI_FIT_SCHEMA = {
         type: 'object',
         properties: {
           process_id: { type: 'integer' },
-          ai_possibility: { type: 'number' },
-          inefficiency: { type: 'number' },
+          ai_possibility: { type: 'integer', enum: [1, 2, 3, 4, 5] },
+          inefficiency: { type: 'integer', enum: [1, 2, 3, 4, 5] },
           recommended_tech: { type: 'string' },
           difficulty: { type: 'string', enum: ['low', 'medium', 'high'] },
           estimated_time_savings: { type: 'integer' },
@@ -189,7 +189,30 @@ ${JSON.stringify(compactProcesses(processes))}`;
   }
 
   analyzeAIFit(processes) {
-    const prompt = `다음 L6 Act별 AI 적용 가능성과 현재 비효율성을 각각 1.0~5.0으로 평가하세요.
+    const prompt = `다음 L6 Act별 AI 적용 가능성과 현재 비효율성을 각각 1점 단위 정수(1, 2, 3, 4, 5)로만 평가하세요. 2.5, 3.7 같은 소수점·중간값은 사용하지 마세요.
+
+[AI 적용 가능성]
+1 적용 어려움: 고도의 인적 판단·창의성·대면 커뮤니케이션이 필요해 AI로 대체하기 어려움
+2 부분 보조 가능: 정보 탐색 등 일부만 보조 가능, 핵심 판단은 사람이 수행
+3 조건부 가능: 정형화 여지는 있으나 예외 처리·검수가 필요
+4 대부분 자동화 가능: 규칙·패턴이 명확해 AI가 초안·결과물 대부분을 생성
+5 완전 자동화 가능: 규칙 기반의 반복적 정형 작업으로 AI가 전체를 수행
+
+[비효율성]
+1 효율적: 소요시간이 짧고 대기·재작업이 없음
+2 경미한 비효율: 약간의 대기 또는 반복이 존재
+3 보통: 일부 대기·재작업으로 시간 손실 발생
+4 비효율적: 반복적 재작업 또는 상당한 대기시간 발생(Bottleneck·Delay 해당)
+5 매우 비효율적: 병목·장시간 대기·낭비가 겹쳐 전체 프로세스 지연의 핵심 원인
+
+[AI FIT 매트릭스]
+- 각 점수는 3점 이상을 높음, 2점 이하를 낮음으로 산정합니다.
+- A 즉시 적용: AI 가능성 높음 + 비효율성 높음
+- B 수동 개선 先: AI 가능성 낮음 + 비효율성 높음
+- C 장기 검토: AI 가능성 높음 + 비효율성 낮음
+- D 현상 유지: AI 가능성 낮음 + 비효율성 낮음
+점수를 부여할 때 위 높음/낮음 기준과 척도 정의에 맞는 정수 하나를 선택하세요.
+
 추천 기술, 비개발자 관점 구현 난이도(low=하, medium=중, high=상), 현재 수행시간을 넘지 않는 예상 절감시간(분), 짧은 근거를 제공하고 모든 process_id를 정확히 한 번씩 포함하세요.
 
 [프로세스]
