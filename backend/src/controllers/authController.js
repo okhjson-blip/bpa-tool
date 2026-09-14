@@ -135,7 +135,7 @@ export async function completeProfile(req, res) {
       name,
       email,
       accessedAt,
-      // 같은 협력사·이메일이면 Auth 사용자가 바뀌어도(익명→이메일 OTP 이전 포함)
+      // 같은 협력사·이메일이면 Auth 사용자가 바뀌어도(기기·브라우저 변경 포함)
       // 기존 디렉터리 계정에 다시 연결해 임시 저장본을 이어받는다.
       allowRebind: true
     });
@@ -210,7 +210,8 @@ export async function getMe(req, res) {
         userId: req.auth.user.id,
         name,
         email,
-        accessedAt: now
+        accessedAt: now,
+        allowRebind: true
       });
       profile = await serviceDb.upsert('profiles', {
         user_id: req.auth.user.id,

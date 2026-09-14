@@ -7,7 +7,7 @@ const client = configured ? createClient(supabaseUrl, publishableKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: false
   }
 }) : null;
 
@@ -15,18 +15,12 @@ function authErrorMessage(error) {
   const status = Number(error?.status || 0);
   const message = String(error?.message || '');
   if (status === 429 || /rate limit|too many/i.test(message)) {
-    return '인증 메일 요청이 너무 잦습니다. 1분 후 다시 시도해 주세요.';
+    return '로그인 요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요.';
   }
-  if (/expired/i.test(message)) {
-    return '인증코드가 만료되었습니다. 코드를 다시 받아 주세요.';
+  if (/anonymous/i.test(message) && /disabled|not enabled|sign-?ins?/i.test(message)) {
+    return '익명 로그인이 비활성화되어 있습니다. 관리자에게 문의해 주세요.';
   }
-  if (/invalid/i.test(message) && /token|otp|code/i.test(message)) {
-    return '인증코드가 올바르지 않습니다. 메일의 코드를 다시 확인해 주세요.';
-  }
-  if (/signups? not allowed|disabled/i.test(message)) {
-    return '이 Supabase 프로젝트에서 이메일 로그인이 비활성화되어 있습니다. 관리자에게 문의해 주세요.';
-  }
-  return message || '이메일 인증 처리 중 오류가 발생했습니다.';
+  return message || '로그인 처리 중 오류가 발생했습니다.';
 }
 
 function requireClient() {
@@ -45,24 +39,12 @@ window.bpaAuth = {
   async getAccessToken() {
     return (await this.getSession())?.access_token || '';
   },
-  // 이메일 1개당 Auth 사용자 1개가 고정되므로 기기나 브라우저가 바뀌어도
-  // 같은 사용자로 접속하고 직전 임시 저장본을 그대로 이어받는다.
-  async sendEmailOtp(email, metadata = {}) {
-    const { error } = await requireClient().auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        data: metadata,
-        emailRedirectTo: window.location.origin
-      }
-    });
-    if (error) throw new Error(authErrorMessage(error));
-  },
-  async verifyEmailOtp(email, token) {
-    const { data, error } = await requireClient().auth.verifyOtp({
-      email,
-      token: String(token || '').trim(),
-      type: 'email'
+  // 브라우저 세션만 만들고, 실제 사용자 식별은 백엔드가 이메일 기준
+  // company_user_accounts 에 연결한다. 기기나 Auth 사용자가 바뀌어도
+  // 같은 이메일이면 직전 임시 저장본을 이어받는다.
+  async signInAnonymously(metadata = {}) {
+    const { data, error } = await requireClient().auth.signInAnonymously({
+      options: { data: metadata }
     });
     if (error) throw new Error(authErrorMessage(error));
     return data.session;

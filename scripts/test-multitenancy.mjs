@@ -44,7 +44,7 @@ async function api(path, { token, cookie, method = 'GET', body } = {}) {
   return { response, data, text };
 }
 
-// 익명 로그인을 제거했으므로 검증용 사용자도 실제 이메일 계정으로 만든다.
+// 화면 로그인은 익명 세션이지만, API 검증은 안정적인 이메일+비밀번호 계정으로 수행한다.
 async function createTestUser(label) {
   const email = `bpa-${label}-${runId}@example.com`;
   const password = `Bpa1!${crypto.randomBytes(16).toString('base64url')}`;
@@ -142,8 +142,7 @@ async function main() {
     assert.equal(registeredCheck.data.registered, true, '등록 완료 사용자를 미등록자로 판별함');
   }
 
-  // 다른 기기·브라우저에서 같은 이메일로 다시 접속하는 상황. 이메일 로그인으로
-  // 바뀌었으므로 동일한 Auth 사용자로 연결되어야 한다.
+  // 같은 이메일 비밀번호 세션은 동일한 Auth 사용자로 다시 붙는다.
   const returningClient = userClient();
   const { data: returningAuth, error: returningAuthError } = await returningClient.auth.signInWithPassword({
     email: userA.email,
@@ -251,6 +250,20 @@ async function main() {
   const rejoinedPanelDraft = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: returningToken });
   assert.equal(rejoinedPanelDraft.response.status, 200, `재접속 세션 임시 저장 조회 실패: ${rejoinedPanelDraft.text}`);
   assert.equal(rejoinedPanelDraft.data?.payload?.name, '임시 프로젝트명', '재접속 세션이 직전 임시 저장 내용을 불러오지 못했습니다.');
+  // 화면 로그인처럼 Auth 사용자가 바뀌어도 같은 이메일이면 임시 저장을 이어받는다.
+  const reboundDevice = await createTestUser('a-rebind');
+  const reboundLogin = await api('/auth/complete-profile', {
+    token: reboundDevice.token,
+    method: 'POST',
+    body: { name: '검증 사용자 A', email: userA.email, company_id: companyA.id }
+  });
+  assert.equal(reboundLogin.response.status, 200, `다른 Auth 사용자 이메일 재연결 실패: ${reboundLogin.text}`);
+  const reboundDraft = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: reboundDevice.token });
+  assert.equal(reboundDraft.response.status, 200, `재연결 세션 임시 저장 조회 실패: ${reboundDraft.text}`);
+  assert.equal(reboundDraft.data?.payload?.name, '임시 프로젝트명', 'Auth 사용자가 바뀐 뒤에도 이메일 계정의 임시 저장을 불러오지 못했습니다.');
+  const originalAfterRebind = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: userA.token });
+  assert.equal(originalAfterRebind.response.status, 200, `원래 세션 임시 저장 조회 실패: ${originalAfterRebind.text}`);
+  assert.equal(originalAfterRebind.data?.payload?.name, '임시 프로젝트명', '다른 기기 재연결 후 원래 세션이 임시 저장을 잃었습니다.');
   const isolatedPanelDraft = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: userB.token });
   assert.equal(isolatedPanelDraft.response.status, 200);
   assert.equal(isolatedPanelDraft.data, null, '다른 협력사 사용자가 임시 저장 내용을 조회함');
@@ -989,7 +1002,7 @@ async function main() {
   console.log(JSON.stringify({
     ok: true,
     checks: [
-      'health', 'registration-status-check', 'explicit-profile-membership-registration', 'idempotent-signup-membership', 'email-only-session-rebind',
+      'health', 'registration-status-check', 'explicit-profile-membership-registration', 'idempotent-signup-membership', 'email-only-session-rebind', 'anonymous-style-auth-rebind-keeps-drafts',
       testAdminPassword ? 'admin-user-crud-report-status-delete-cascade-and-bulk-process-sync' : 'admin-login-skipped',
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',

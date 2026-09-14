@@ -70,7 +70,7 @@ npm start
 
 ## 주요 화면
 
-1. 관리자가 등록한 협력사를 선택하고 이름·이메일 입력 후 `인증코드 받기`로 이메일 OTP 발송, 메일로 받은 코드를 입력해 로그인하면 기존 사용자 접속 여부를 확인하고 미등록 사용자는 안내 후 `등록` 버튼으로 가입
+1. 관리자가 등록한 협력사를 선택하고 이름·이메일을 입력한 뒤 `시작하기`로 로그인하면 기존 사용자 접속 여부를 확인하고, 미등록 사용자는 안내 후 `등록` 버튼으로 가입
 2. Supabase 로그인 세션 자동 복원 및 로그인 사용자의 활성 협력사 멤버십 확인. 서버 장애나 네트워크 단절은 로그아웃으로 처리하지 않고 재시도 화면으로 안내하며, 세션이 실제로 만료되면 작성 중이던 내용을 브라우저에 임시 보관한 뒤 재로그인 시 복원 여부를 묻습니다
 3. 협력사별로 격리된 프로젝트 목록, L1 구분·L2 대분류·L3 중분류 프로젝트 생성·수정·확인 후 삭제, 참여자 확인
 4. 프로젝트 계층과 연동된 L4 모듈 과제 등록
@@ -152,7 +152,7 @@ bpa-tool/
 
 - 비밀키와 `.env` 파일은 Git에 커밋하지 않습니다.
 - 모든 업무 데이터는 Supabase Auth 사용자, `company_memberships.company_id`, RLS를 기준으로 격리합니다.
-- 협력사 로그인은 Supabase 이메일 OTP를 사용합니다. 이메일 한 개에 Auth 사용자 한 명이 고정되므로 기기나 브라우저를 바꿔도 같은 사용자로 접속하고 직전 임시 저장본을 그대로 이어받습니다.
+- 협력사 로그인은 이메일 인증코드 없이 익명 Auth 세션을 만들고, 백엔드가 같은 협력사·이메일의 `company_user_accounts`에 연결합니다. Auth 사용자나 기기가 바뀌어도 직전 임시 저장본을 이어받습니다. 서버 장애는 로그아웃으로 처리하지 않으며, 세션이 실제로 만료되면 작성 중이던 내용을 브라우저에 보관한 뒤 재로그인 시 복원합니다.
 - `company_user_accounts`는 관리자 선등록과 자유 가입을 연결하는 사용자 디렉터리입니다. 선등록 사용자가 같은 협력사·이메일로 처음 접속하면 Auth 사용자와 자동 연결되고 `/api/auth/me` 세션 복원 시 최근 접속 시간이 갱신됩니다.
 - 관리자 사용자 등록은 브라우저와 API에서 이메일 형식을 이중 검증하며, 등록 성공 응답 후 `/api/admin/users`를 다시 조회하여 Supabase 저장 결과를 목록에 표시합니다.
 - Supabase Secret Key(또는 레거시 Service Role Key)는 사용자 인증 확인·최초 멤버십 생성·감사 로그에만 사용하고, 업무 데이터 API는 사용자 JWT가 적용된 Supabase 클라이언트로 RLS를 통과해야 합니다.
@@ -181,7 +181,7 @@ bpa-tool/
 
 1. Supabase 프로젝트를 생성하고 CLI를 같은 소유 계정으로 로그인한 뒤 프로젝트를 연결합니다.
 2. `npx supabase db push --linked`로 `supabase/migrations/`의 마이그레이션을 순서대로 적용합니다.
-3. `npx supabase config push --project-ref <PROJECT_REF>`로 Auth 설정을 적용합니다. Anonymous Sign-Ins는 비활성화하고 Email 공급자를 사용합니다. Authentication → Email Templates의 `Magic Link` 템플릿에 `{{ .Token }}`을 포함해야 로그인 화면에서 입력할 인증코드가 발송되며, 운영에서는 사용자 수에 맞는 커스텀 SMTP를 등록해야 합니다.
+3. `npx supabase config push --project-ref <PROJECT_REF>`로 Auth 설정을 적용합니다. Authentication → Providers에서 Anonymous Sign-Ins를 활성화해야 협력사 `시작하기`가 동작합니다.
 4. `.env.example`을 참고해 로컬 `.env`에 서버용·브라우저용 Supabase 변수를 설정합니다.
 5. Supabase Dashboard의 Edge Functions → Secrets에 `BPA_ADMIN_PASSWORD`를 등록하고 `admin-password-verify` 함수를 배포합니다. 비밀번호는 로컬 `.env`, Vercel, 프런트엔드 코드 또는 Git에 저장하지 않습니다.
 6. `admin-password-verify`는 Supabase Secret Key로 호출한 Vercel 백엔드 요청만 허용하며 비밀번호 일치 여부만 반환합니다.

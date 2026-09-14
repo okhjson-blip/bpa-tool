@@ -82,10 +82,24 @@ export function requireCompanyUser(req, res, next) {
 // 이메일 기준 협력사 사용자 계정으로 판정한다.
 export async function resolveCompanyAccountId(req) {
   if (req.auth.accountId !== undefined) return req.auth.accountId;
-  const account = await serviceDb.selectOne('company_user_accounts', {
-    company_id: Number(req.auth.companyId),
+  const companyId = Number(req.auth.companyId);
+  let account = await serviceDb.selectOne('company_user_accounts', {
+    company_id: companyId,
     auth_user_id: req.auth.user.id
   });
+  // Auth 사용자는 브라우저마다 바뀔 수 있으므로, 재연결 전이거나
+  // 다른 기기에서 이미 재연결된 경우에도 이메일로 같은 계정을 찾는다.
+  if (!account) {
+    const email = String(
+      req.auth.profile?.email || req.auth.user.email || req.auth.user.user_metadata?.email || ''
+    ).trim().toLowerCase();
+    if (email) {
+      account = await serviceDb.selectOne('company_user_accounts', {
+        company_id: companyId,
+        email
+      });
+    }
+  }
   req.auth.accountId = account ? Number(account.id) : null;
   return req.auth.accountId;
 }
