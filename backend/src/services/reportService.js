@@ -1,3 +1,122 @@
+import { hoursToClock, minutesToClock } from '../utils/timeFormat.js';
+import { processToolLabel } from '../utils/processTool.js';
+
+const METHOD_LABELS = { manual: '수작업', system: '시스템', ai: 'AI 자동화' };
+const DIFFICULTY_LABELS = { low: '하', medium: '중', high: '상' };
+const BDW_LABELS = { normal: '정상', bottleneck: 'Bottleneck', delay: 'Delay', waste: 'Waste' };
+const FREQUENCY_LABELS = { day: '일', week: '주', month: '월', year: '년' };
+
+export const TASK_CSV_HEADERS = [
+  '과제명', '시작일', '완료일', '성과목표', '프로젝트명',
+  'L1 구분', 'L2 대분류', 'L3 중분류', 'L4 모듈', '과제 참여자',
+  'As-Is', 'AS-IS 상세',
+  'BDW 요약', 'BDW 상세',
+  'AI FIT',
+  'To-Be', 'To-Be 상세',
+  '난이도',
+  'AS-IS 수행시간', 'To-Be 수행시간', '건당 절감시간', '시간 절감률', '자동화율',
+  'AI 자동화 구현 난이도', '수행 빈도', '연간 절감시간', '절감 FTE', '추정 외주개발비'
+];
+
+function csvCell(value) {
+  let text = String(value ?? '');
+  if (/^[=+\-@]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function processMethodLabel(method, aiApplied = false) {
+  if (aiApplied || method === 'ai') return 'AI 자동화';
+  return METHOD_LABELS[method] || '수작업';
+}
+
+function flowNodeText({ name, method, tool, toolOther, executionTime, aiApplied = false }) {
+  const toolText = aiApplied ? processToolLabel(tool) : processToolLabel(tool, toolOther);
+  return `${name} [${processMethodLabel(method, aiApplied)} | ${toolText} | ${minutesToClock(executionTime)}]`;
+}
+
+function joinFlow(items) {
+  return items.filter(Boolean).join(' > ');
+}
+
+function formatWon(value) {
+  return `₩${Number(value || 0).toLocaleString('ko-KR')}`;
+}
+
+function formatParticipant(person) {
+  return [person?.name, person?.position, person?.role, person?.email]
+    .map((part) => String(part || '').trim())
+    .filter(Boolean)
+    .join(' / ');
+}
+
+export function buildTaskCsvContent(report) {
+  const stats = report.statistics || {};
+  const hierarchy = report.hierarchy || {};
+  const bdw = report.bdw_diagnosis || {};
+  const asIs = report.as_is_processes || [];
+  const toBe = report.to_be_processes || [];
+  const aiFit = report.ai_fit_analysis || [];
+  const frequencyLabel = FREQUENCY_LABELS[stats.frequency_unit] || '주';
+  const asIsFlow = joinFlow(asIs.map((process) => flowNodeText({
+    name: process.name,
+    method: process.method,
+    tool: process.tool,
+    toolOther: process.tool_other,
+    executionTime: process.execution_time
+  })));
+  const asIsDetail = joinFlow(asIs.map((process) => (
+    `${process.name} [${processMethodLabel(process.method)} | ${processToolLabel(process.tool, process.tool_other)} | ${minutesToClock(process.execution_time)} | 대기 ${Number(process.waiting_time) || 0}h | 승인대기 ${Number(process.approval_waiting_time) || 0}h]`
+  )));
+  const bdwDetail = joinFlow(asIs.map((process) => (
+    `${process.name} [${BDW_LABELS[process.bdw_type] || process.bdw_type || '정상'}]`
+  )));
+  const aiFitFlow = joinFlow(aiFit.map((item) => (
+    `${item.name || ''} [${item.recommended_tech || ''} | ${DIFFICULTY_LABELS[item.difficulty] || '중'} | 가능성 ${Number(item.ai_possibility) || 0} | 비효율 ${Number(item.inefficiency) || 0} | ${item.fit_category || ''} | ${minutesToClock(item.estimated_time_savings)}]`
+  )));
+  const toBeFlow = joinFlow(toBe.map((process) => flowNodeText({
+    name: process.name,
+    method: process.method,
+    tool: process.tool,
+    toolOther: process.tool_other,
+    executionTime: process.estimated_execution_time,
+    aiApplied: process.ai_applied === true
+  })));
+  const toBeDetail = joinFlow(toBe.map((process) => (
+    `${process.name} [${processMethodLabel(process.method, process.ai_applied)} | ${process.ai_applied ? processToolLabel(process.tool) : processToolLabel(process.tool, process.tool_other)} | ${minutesToClock(process.estimated_execution_time)} | ${process.ai_applied ? (DIFFICULTY_LABELS[process.difficulty] || '중') : '-'}]`
+  )));
+  const row = [
+    report.task_name || '',
+    report.task_start_date || '',
+    report.task_end_date || '',
+    report.task_goal || '',
+    report.project_name || '',
+    hierarchy.l1 || '',
+    hierarchy.l2 || '',
+    hierarchy.l3 || '',
+    hierarchy.l4 || '',
+    joinFlow((report.task_participants || []).map(formatParticipant)),
+    asIsFlow,
+    asIsDetail,
+    `병목 ${Number(bdw.bottlenecks) || 0}개 · Delay ${Number(bdw.delays) || 0}개 · Waste ${Number(bdw.wastes) || 0}개`,
+    bdwDetail,
+    aiFitFlow,
+    toBeFlow,
+    toBeDetail,
+    stats.automation_difficulty || '해당 없음',
+    minutesToClock(stats.as_is_total_time),
+    minutesToClock(stats.to_be_total_time),
+    minutesToClock(stats.time_savings),
+    `${Number(stats.time_savings_rate) || 0}%`,
+    `${Number(stats.automation_rate) || 0}%`,
+    stats.automation_difficulty || '해당 없음',
+    `${frequencyLabel} ${Number(stats.frequency_count) || 1}회 (연간 ${Number(stats.annual_frequency) || 52}회)`,
+    hoursToClock(stats.annual_savings_hours),
+    stats.fte_equivalent ?? 0,
+    formatWon(stats.estimated_development_cost)
+  ];
+  return `\uFEFF${[TASK_CSV_HEADERS, row].map((cells) => cells.map(csvCell).join(',')).join('\r\n')}`;
+}
+
 function reportError(message, status = 500) {
   const error = new Error(message);
   error.status = status;

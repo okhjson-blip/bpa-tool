@@ -16,6 +16,7 @@ import {
   resolveAiFitSavings,
   toBeExecutionMinutes
 } from '../backend/src/utils/aiFitTime.js';
+import { TASK_CSV_HEADERS, buildTaskCsvContent } from '../backend/src/services/reportService.js';
 
 const apiBase = process.env.TEST_API_BASE || 'http://localhost:5000/api';
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -126,6 +127,39 @@ async function main() {
   assert.equal(resolveAiFitSavings(25, 2, 2, 5), 23);
   assert.equal(resolveAiFitSavings(25, 23, 2, 5), 23);
   assert.equal(resolveAiFitSavings(25, 3, 22, 2), 3);
+  const sampleCsv = buildTaskCsvContent({
+    task_name: 'CSV 검증 과제',
+    task_start_date: '2026-01-01',
+    task_end_date: '2026-12-31',
+    task_goal: '성과목표',
+    project_name: 'CSV 검증 프로젝트',
+    hierarchy: { l1: '경영지원', l2: '재무', l3: '정산', l4: '전표' },
+    task_participants: [{ name: '홍길동', position: '과장', role: '담당', email: 'a@example.com' }],
+    as_is_processes: [{
+      name: '판매 데이터를 검토한다', method: 'manual', tool: 'excel', tool_other: null,
+      execution_time: 25, waiting_time: 1, approval_waiting_time: 0, bdw_type: 'normal'
+    }],
+    to_be_processes: [{
+      name: '판매 데이터를 검토한다', method: 'ai', tool: 'AI 초안', tool_other: null,
+      estimated_execution_time: 5, ai_applied: true, difficulty: 'low'
+    }],
+    ai_fit_analysis: [{
+      name: '판매 데이터를 검토한다', recommended_tech: 'AI 초안', difficulty: 'low',
+      ai_possibility: 5, inefficiency: 4, fit_category: 'A', estimated_time_savings: 20
+    }],
+    bdw_diagnosis: { bottlenecks: 0, delays: 0, wastes: 0 },
+    statistics: {
+      as_is_total_time: 25, to_be_total_time: 5, time_savings: 20, time_savings_rate: 80,
+      automation_rate: 100, automation_difficulty: '하', frequency_unit: 'year',
+      frequency_count: 4, annual_frequency: 4, annual_savings_hours: 1.3,
+      fte_equivalent: 0.001, estimated_development_cost: 8321500
+    }
+  });
+  assert.equal(sampleCsv.split('\r\n')[0].replace(/^\ufeff/, ''), TASK_CSV_HEADERS.map((header) => `"${header}"`).join(','));
+  assert.match(sampleCsv, /"추정 외주개발비"/);
+  assert.match(sampleCsv, /경영지원/);
+  assert.match(sampleCsv, /병목 0개 · Delay 0개 · Waste 0개/);
+  assert.match(sampleCsv.replace(/,/g, ''), /₩8321500/);
 
   const health = await api('/health');
   assert.equal(health.response.status, 200, `health 실패: ${health.text}`);
@@ -477,7 +511,8 @@ async function main() {
   assert.equal(coreReport.data.as_is_processes[0].tool, 'excel');
   const csvBeforeSave = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
   assert.equal(csvBeforeSave.response.status, 200, `과제정보 CSV 생성 실패: ${csvBeforeSave.text}`);
-  assert.match(csvBeforeSave.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
+  assert.match(csvBeforeSave.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","프로젝트명"/);
+  assert.match(csvBeforeSave.data.raw || '', /"추정 외주개발비"/);
   assert.match(csvBeforeSave.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 0h:25s\]/);
   const emptyStoredAiFit = await api(`/analysis/project/${created.data.project.id}/ai-fit?task_id=${restorableTask.data.task.id}`, { token: userA.token });
   assert.equal(emptyStoredAiFit.response.status, 200, `저장 AI FIT 조회 실패: ${emptyStoredAiFit.text}`);
@@ -492,9 +527,10 @@ async function main() {
     body: { taskId: restorableTask.data.task.id, frequency_unit: 'year', frequency_count: 4 }
   });
   assert.equal(savedYearlyReport.response.status, 200, `연 단위 결과 리포트 저장 실패: ${savedYearlyReport.text}`);
-  const coreCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
+  const coreCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}&frequency_unit=year&frequency_count=4`, { token: userA.token });
   assert.equal(coreCsv.response.status, 200, `과제정보 CSV 생성 실패: ${coreCsv.text}`);
-  assert.match(coreCsv.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
+  assert.match(coreCsv.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","프로젝트명"/);
+  assert.match(coreCsv.data.raw || '', /연간 4회/);
   assert.match(coreCsv.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 0h:25s\]/);
 
   // 앞 단계 임시 저장이 이미 지나온 진행 단계를 되돌리면 안 된다.
@@ -845,7 +881,9 @@ async function main() {
       token: userA.token
     });
     assert.equal(taskCsv.response.status, 200, `과제정보 CSV 생성 실패: ${taskCsv.text}`);
-    assert.match(taskCsv.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
+    assert.match(taskCsv.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","프로젝트명"/);
+    assert.match(taskCsv.data.raw || '', /"BDW 요약"/);
+    assert.match(taskCsv.data.raw || '', /"AI FIT"/);
     assert.match(taskCsv.data.raw || '', /SNS 채널을 관리한다 \[수작업 \| 웹 \| 1h:00s\]/);
 
     const adminTaskReport = await api(`/admin/tasks/${cascadeTask.id}/report`, { cookie: adminCookie });

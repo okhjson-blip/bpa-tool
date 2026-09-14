@@ -67,7 +67,10 @@ router.post('/project/:projectId/report/save', requireCompanyWrite, [
 
 router.get('/project/:projectId/report.csv', [
   param('projectId').isInt(),
-  query('task_id').isInt()
+  query('task_id').isInt(),
+  query('frequency_unit').isIn(['day', 'week', 'month', 'year']).optional(),
+  query('frequency_count').isInt({ min: 1, max: 10000 }).optional(),
+  query('annual_frequency').isInt({ min: 1, max: 1000000 }).optional()
 ], validate, bdwController.exportTaskCsv);
 
 export default router;

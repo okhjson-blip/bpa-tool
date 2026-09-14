@@ -1,9 +1,7 @@
 import { db } from '../config/database.js';
 import LLMService from '../services/llmService.js';
 import { getCompanyApiKey } from '../services/companyCredentialService.js';
-import { buildTaskReport } from '../services/reportService.js';
-import { minutesToClock } from '../utils/timeFormat.js';
-import { processToolLabel } from '../utils/processTool.js';
+import { buildTaskCsvContent, buildTaskReport } from '../services/reportService.js';
 import { resolveAiFitSavings, toBeExecutionMinutes } from '../utils/aiFitTime.js';
 
 async function getTaskL6Processes(projectId, taskId) {
@@ -404,85 +402,19 @@ export const saveReport = async (req, res) => {
   }
 };
 
-function csvCell(value) {
-  let text = String(value ?? '');
-  if (/^[=+\-@]/.test(text)) text = `'${text}`;
-  return `"${text.replace(/"/g, '""')}"`;
-}
-
-function processMethodLabel(method, aiApplied = false) {
-  if (aiApplied) return 'AI 자동화';
-  return method === 'system' ? '시스템' : '수작업';
-}
-
-function flowNodeText({ name, method, tool, toolOther, executionTime, aiApplied = false }) {
-  const toolText = aiApplied ? processToolLabel(tool) : processToolLabel(tool, toolOther);
-  return `${name} [${processMethodLabel(method, aiApplied)} | ${toolText} | ${minutesToClock(executionTime)}]`;
-}
-
-function averageAutomationDifficulty(toBeProcesses, analysisByProcessId) {
-  const scores = toBeProcesses
-    .filter((process) => process.ai_applied === true)
-    .map((process) => {
-      const difficulty = analysisByProcessId.get(Number(process.original_process_id))?.difficulty || 'medium';
-      return { low: 1, medium: 2, high: 3 }[difficulty] || 2;
-    });
-  if (!scores.length) return '해당 없음';
-  const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-  return average < 1.5 ? '하' : average < 2.5 ? '중' : '상';
-}
-
-// 과제당 한 행. As-Is/To-Be는 플로우차트와 같은 순서로 작업방식·도구·수행시간을 포함한다.
+// 과제당 한 행. 결과 리포트의 STATIK·참여자·AS-IS·BDW·AI FIT·To-Be·AX 성과를 모두 포함한다.
 export const exportTaskCsv = async (req, res) => {
-  const projectId = parseInt(req.params.projectId);
-  const taskId = parseInt(req.query.task_id);
-
   try {
-    const project = await db.selectOne('projects', { id: projectId });
-    const task = await db.selectOne('tasks', { id: taskId });
-    if (!project || !task || Number(task.project_id) !== projectId) {
-      return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
-    }
-
-    const processes = await getTaskL6Processes(projectId, taskId);
-    const processIds = processes.map((process) => Number(process.id));
-    const [projectToBeProcesses, projectAiAnalysis] = await Promise.all([
-      db.selectIn('to_be_processes', 'original_process_id', processIds),
-      db.selectIn('ai_analysis', 'process_id', processIds)
-    ]);
-    const toBeByProcessId = new Map(
-      projectToBeProcesses.map((process) => [Number(process.original_process_id), process])
-    );
-    const analysisByProcessId = new Map(
-      projectAiAnalysis.map((analysis) => [Number(analysis.process_id), analysis])
-    );
-    const asIsFlow = processes.map((process) => flowNodeText({
-      name: process.name,
-      method: process.method,
-      tool: process.tool,
-      toolOther: process.tool_other,
-      executionTime: process.execution_time
-    })).join(' > ');
-    const toBeFlow = processes
-      .map((process) => {
-        const toBe = toBeByProcessId.get(Number(process.id));
-        return flowNodeText({
-          name: toBe?.name || process.name,
-          method: process.method,
-          tool: toBe?.ai_applied ? toBe.automation_method : process.tool,
-          toolOther: toBe?.ai_applied ? null : process.tool_other,
-          executionTime: toBe?.estimated_execution_time ?? process.execution_time,
-          aiApplied: toBe?.ai_applied === true
-        });
-      })
-      .join(' > ');
-    const averageDifficulty = averageAutomationDifficulty(projectToBeProcesses, analysisByProcessId);
-    const rows = [
-      ['과제명', '시작일', '완료일', '성과목표', 'As-Is', 'To-Be', '난이도'],
-      [task.name, task.start_date || '', task.end_date || '', task.goal || '', asIsFlow, toBeFlow, averageDifficulty]
-    ];
-    const content = `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}`;
-    const safeBaseName = `${project.name}_${task.name}_task`.replace(/[\\/:*?"<>|]/g, '_');
+    const report = await buildTaskReport({
+      database: db,
+      projectId: req.params.projectId,
+      taskId: req.query.task_id,
+      frequencyUnit: req.query.frequency_unit,
+      frequencyCount: req.query.frequency_count,
+      annualFrequency: req.query.annual_frequency
+    });
+    const content = buildTaskCsvContent(report);
+    const safeBaseName = `${report.project_name}_${report.task_name}_task`.replace(/[\\/:*?"<>|]/g, '_');
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader(
@@ -492,6 +424,6 @@ export const exportTaskCsv = async (req, res) => {
     res.send(content);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: '과제정보 CSV 생성 중 오류' });
+    res.status(error.status || 500).json({ error: error.message || '과제정보 CSV 생성 중 오류' });
   }
 };

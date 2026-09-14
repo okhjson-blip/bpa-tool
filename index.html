@@ -907,7 +907,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
           <button class="dl-btn dl-pdf" onclick="exportReportPDF()">📕 전체 리포트 PDF 출력</button>
           <button class="dl-btn dl-word" onclick="exportReportCSV()">📑 과제정보 CSV 출력</button>
         </div>
-        <div class="inline-status" id="reportStatus">PDF는 전체 분석 리포트를 출력하고, CSV는 과제당 한 행으로 과제명·기간·성과목표·As-Is·To-Be·난이도를 출력합니다.</div>
+        <div class="inline-status" id="reportStatus">PDF는 전체 분석 리포트를 출력하고, CSV는 과제당 한 행으로 결과 리포트 전체 항목을 출력합니다.</div>
       </div>
     </div>
     <div class="sr">
@@ -927,7 +927,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
         <div style="font-size:12px;color:#555;line-height:1.8;background:#f8f9fc;border-radius:7px;padding:8px 10px;border:1px solid var(--bd);margin-bottom:7px" id="reportMetricBasis">
           과제의 L6 Act와 사용자가 수락한 AI 제안을 기준으로 산출합니다. 수행 빈도는 연간 횟수로 환산합니다.
         </div>
-        <div style="font-size:12px;font-weight:700;margin-bottom:5px;color:var(--mt)">🏗️ 외주 개발비 추정 <span style="font-size:11px;font-weight:400;color:#aaa">수락·반영한 AI 제안 기반 자동 산출</span></div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:5px;color:var(--mt)">🏗️ 추정 외주개발비 <span style="font-size:11px;font-weight:400;color:#aaa">수락·반영한 AI 제안 기반 자동 산출</span></div>
         <div class="cost-box">
           <div style="display:flex;align-items:baseline;gap:6px">
             <div class="cost-main" id="reportDevCost">₩0</div>
@@ -2476,7 +2476,7 @@ function buildPrintableReport(report){
   parts.push('<section><h2>BDW 진단</h2><p>요약: 병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p>'+reportTable(['순번','레벨','단위 업무','수행(h:s)','대기(h)','승인대기(h)','BDW 태그'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,minutesToClock(item.execution_time),item.waiting_time||0,item.approval_waiting_time||0,bdwLabels[item.bdw_type]||item.bdw_type||'정상']))+'</section>');
   parts.push('<section><h2>AI FIT 분석</h2>'+reportTable(['순번','단위 업무','추천 AI 기술','구현 난이도','AI 가능성','비효율성','분류','절감(h:s)'],(report.ai_fit_analysis||[]).map((item,index)=>[index+1,item.name||'',item.recommended_tech||'',difficultyLabels[item.difficulty]||'중',item.ai_possibility||0,item.inefficiency||0,item.fit_category||'',minutesToClock(item.estimated_time_savings)]))+'</section>');
   parts.push('<section><h2>To-Be 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','To-Be 프로세스','작업방식','도구','예상 수행(h:s)','구현 난이도'],report.to_be_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',displayProcessTool(item.tool,item.tool_other),minutesToClock(item.estimated_execution_time),item.ai_applied?(difficultyLabels[item.difficulty]||'중'):'-']))+'</section>');
-  parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',minutesToClock(stats.as_is_total_time)],['To-Be 수행시간',minutesToClock(stats.to_be_total_time)],['건당 절감시간',minutesToClock(stats.time_savings)],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['AI 자동화 구현 난이도',stats.automation_difficulty||'해당 없음'],['수행 빈도',({day:'일',week:'주',month:'월',year:'년'}[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회 (연간 '+Number(stats.annual_frequency||52)+'회)'],['연간 절감시간',hoursToClock(stats.annual_savings_hours)],['절감 FTE',stats.fte_equivalent],['예상 개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
+  parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',minutesToClock(stats.as_is_total_time)],['To-Be 수행시간',minutesToClock(stats.to_be_total_time)],['건당 절감시간',minutesToClock(stats.time_savings)],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['AI 자동화 구현 난이도',stats.automation_difficulty||'해당 없음'],['수행 빈도',({day:'일',week:'주',month:'월',year:'년'}[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회 (연간 '+Number(stats.annual_frequency||52)+'회)'],['연간 절감시간',hoursToClock(stats.annual_savings_hours)],['절감 FTE',stats.fte_equivalent],['추정 외주개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
   return parts.join('');
 }
 function printReportPDF(report,title,metaHtml){
@@ -2504,7 +2504,9 @@ async function exportReportCSV(){
   try{
     const accessToken=await window.bpaAuth?.getAccessToken?.();
     const headers=new Headers();if(accessToken)headers.set('Authorization','Bearer '+accessToken);
-    const response=await fetch(apiBase+'/analysis/project/'+ctx.projectId+'/report.csv?task_id='+encodeURIComponent(ctx.taskId),{credentials:'same-origin',headers});
+    const frequency=getReportFrequency();
+    const params=new URLSearchParams({task_id:String(ctx.taskId),frequency_unit:frequency.unit,frequency_count:String(frequency.count)});
+    const response=await fetch(apiBase+'/analysis/project/'+ctx.projectId+'/report.csv?'+params.toString(),{credentials:'same-origin',headers});
     if(!response.ok){const text=await response.text();let message=text;try{message=JSON.parse(text).error||text;}catch{}throw new Error(message||('CSV 생성 실패 (HTTP '+response.status+')'));}
     const blob=await response.blob();const objectUrl=URL.createObjectURL(blob);const link=document.createElement('a');
     link.href=objectUrl;link.download=((ctx.taskData?.name||ctx.l4||'결과리포트').replace(/[\\/:*?"<>|]/g,'_'))+'_과제정보.csv';document.body.appendChild(link);link.click();link.remove();
