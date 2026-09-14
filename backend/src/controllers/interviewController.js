@@ -3,6 +3,12 @@ import maskSensitiveData from '../middleware/dataMasking.js';
 import LLMService from '../services/llmService.js';
 import { getCompanyApiKey } from '../services/companyCredentialService.js';
 
+function normalizeProcessTool(level, tool) {
+  if (level !== 'L6') return null;
+  const text = String(tool ?? '').trim().slice(0, 80);
+  return text || 'other';
+}
+
 export const createInterview = async (req, res) => {
   const { projectId } = req.params;
   const { domain_l3_id, text, transcription, interview_type, taskId, answers } = req.body;
@@ -227,7 +233,7 @@ export const updateProcess = async (req, res) => {
     };
     if (current.level === 'L6') {
       values.method = method;
-      values.tool = tool;
+      if (tool !== undefined) values.tool = normalizeProcessTool('L6', tool);
     } else {
       values.method = null;
       values.tool = null;
@@ -307,7 +313,7 @@ export const syncProcesses = async (req, res) => {
         waiting_time: Number(process.waiting_time) || 0,
         approval_waiting_time: Number(process.approval_waiting_time) || 0,
         method: process.level === 'L6' ? (process.method || 'manual') : null,
-        tool: process.level === 'L6' ? (process.tool || 'other') : null
+        tool: normalizeProcessTool(process.level, process.tool)
       }))
     });
 

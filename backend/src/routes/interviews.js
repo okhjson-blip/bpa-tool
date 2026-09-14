@@ -62,7 +62,16 @@ router.put('/processes/sync', requireCompanyWrite, [
   body('processes.*.waiting_time').isFloat({ min: 0 }),
   body('processes.*.approval_waiting_time').isFloat({ min: 0 }),
   body('processes.*.method').isIn(['manual', 'system']).optional({ nullable: true }),
-  body('processes.*.tool').isIn(['email', 'document', 'excel', 'web', 'erp', 'other']).optional({ nullable: true })
+  body('processes.*.tool').optional({ nullable: true }).custom((value) => {
+    if (value == null) return true;
+    if (typeof value !== 'string') {
+      throw new Error('도구는 텍스트로 입력해 주세요.');
+    }
+    if (value.trim().length > 80) {
+      throw new Error('도구명은 80자 이내로 입력해 주세요.');
+    }
+    return true;
+  })
 ], validate, interviewController.syncProcesses);
 
 // 개별 프로세스 업데이트
