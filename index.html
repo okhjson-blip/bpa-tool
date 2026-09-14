@@ -107,7 +107,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .sel-work-s{background:#e3f2fd;color:#1565c0;min-width:64px}
 .sel-tool{background:#f0f0f0;min-width:58px}
 .key-in{width:45px;font-size:12px;padding:2px 4px;border:1px solid var(--bd);border-radius:5px;text-align:right;font-family:inherit;color:var(--t);box-sizing:border-box}
-.key-in-clock{width:58px;text-align:center}
+.clock-edit{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.clock-edit .key-in{width:40px}
+.clock-edit span{font-size:11px;color:var(--mt);font-weight:700}
 .key-in:focus{border-color:var(--p);outline:none}
 .key-in::-webkit-inner-spin-button{opacity:.4}
 .bdw-t{font-size:11px;padding:2px 6px;border-radius:7px;font-weight:700}
@@ -682,7 +684,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
       <div class="card" style="padding:10px">
         <div class="card-title" style="margin-bottom:8px">프로세스 테이블 <span class="ct-b">직접 편집 가능</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
         <table class="tbl">
-          <thead><tr><th style="width:19px"></th><th style="width:64px">레벨</th><th>단위 업무명</th><th style="width:70px">작업방식</th><th style="width:64px">도구</th><th style="width:62px">수행(h:s)</th><th style="width:50px">대기(h)</th><th style="width:56px">승인대기(h)</th></tr></thead>
+          <thead><tr><th style="width:19px"></th><th style="width:64px">레벨</th><th>단위 업무명</th><th style="width:70px">작업방식</th><th style="width:64px">도구</th><th style="width:128px">수행시간(h:s)</th><th style="width:50px">대기(h)</th><th style="width:56px">승인대기(h)</th></tr></thead>
           <tbody id="processEditorBody">
             <tr style="background:#f8f4ff"><td style="color:#bbb;cursor:grab">⋮⋮</td><td><span class="lvc lv4">L4 모듈</span></td><td><b>🗂 SNS 채널 관리</b></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
             <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 기획</td><td>—</td><td>—</td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
@@ -699,7 +701,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
           </tbody>
         </table>
         <div style="display:flex;justify-content:space-between;margin-top:8px;align-items:center">
-          <div id="processEditorSummary" style="font-size:12px;color:var(--mt)">수행시간 합계: <b>0:00</b> | 승인 대기: <b>0h</b></div>
+          <div id="processEditorSummary" style="font-size:12px;color:var(--mt)">수행시간 합계: <b>0h:00s</b> | 승인 대기: <b>0h</b></div>
           <button class="btn btn-p btn-sm" id="btnRunBDW" onclick="openBDWStep()">BDW 진단 →</button>
         </div>
       </div>
@@ -748,7 +750,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="sc"><div class="sc-lbl">🔴 Bottleneck</div><div class="sc-val" style="color:var(--d)">1개</div><div class="sc-sub">수정사항을 반영한다 (20분) · L5 단위 게시물 승인</div></div>
     <div class="sc"><div class="sc-lbl">🟡 Delay</div><div class="sc-val" style="color:#f57f17">1개</div><div class="sc-sub">대기 0h + 승인대기 24h</div></div>
     <div class="sc"><div class="sc-lbl">⚫ Waste</div><div class="sc-val" style="color:#555">0개</div><div class="sc-sub">—</div></div>
-    <div class="sc"><div class="sc-lbl">⏱ 비효율 지수</div><div class="sc-val" style="color:var(--p)">28%</div><div class="sc-sub">1:28 중 0:25 비효율</div></div>
+    <div class="sc"><div class="sc-lbl">⏱ 비효율 지수</div><div class="sc-val" style="color:var(--p)">28%</div><div class="sc-sub">1h:28s 중 0h:25s 비효율</div></div>
   </div>
   <div class="card" style="padding:10px">
     <div class="card-title" style="margin-bottom:8px">BDW 태그 부착 <span class="ct-r">Bottleneck · Delay · Waste</span></div>
@@ -789,7 +791,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="sc"><div class="sc-lbl">전체 L6 Act</div><div class="sc-val" style="color:var(--p)">8개</div></div>
     <div class="sc"><div class="sc-lbl">A영역 (즉시 적용)</div><div class="sc-val" style="color:var(--s)">5개</div></div>
     <div class="sc"><div class="sc-lbl">예상 자동화율</div><div class="sc-val" style="color:var(--w)">68%</div></div>
-    <div class="sc"><div class="sc-lbl">절감 시간 (건당)</div><div class="sc-val" style="color:var(--d)">1:00</div><div class="sc-sub">1:28 → 0:28</div></div>
+    <div class="sc"><div class="sc-lbl">절감 시간 (건당)</div><div class="sc-val" style="color:var(--d)">1h:00s</div><div class="sc-sub">1h:28s → 0h:28s</div></div>
   </div>
   <div class="tabs">
     <div class="tab on" onclick="swTab(this,'t1')">📋 인라인 분석</div>
@@ -914,7 +916,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
           <div class="fte-sub" id="reportFTEDetail">과제 데이터를 불러오는 중입니다.</div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <div class="sc" style="flex:1"><div class="sc-lbl">연간 AX 절감 시간</div><div class="sc-val" style="color:var(--w)" id="reportSaving">0:00</div><div class="sc-sub" id="reportTimeCompare">건당 0:00</div></div>
+          <div class="sc" style="flex:1"><div class="sc-lbl">연간 AX 절감 시간</div><div class="sc-val" style="color:var(--w)" id="reportSaving">0h:00s</div><div class="sc-sub" id="reportTimeCompare">건당 0h:00s</div></div>
           <div class="sc" style="flex:1"><div class="sc-lbl">시간 절감률</div><div class="sc-val" style="color:var(--p)" id="reportSavingRate">0%</div><div class="sc-sub">AS-IS 대비</div></div>
           <div class="sc" style="flex:1"><div class="sc-lbl">자동화율</div><div class="sc-val" style="color:var(--s)" id="reportAutomationRate">0%</div><div class="sc-sub">AI 제안 수락 기준</div></div>
         </div>
@@ -981,16 +983,23 @@ function escapeHtml(value){
   return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
 }
 // 수행·절감시간은 분으로 계산하고, 화면 입력/출력만 시간:분(h:s)을 쓴다.
+let pendingClockFocus=null;
 function minutesToClock(minutes){
   const total=Math.max(0,Math.round(Number(minutes)||0));
-  return Math.floor(total/60)+':'+String(total%60).padStart(2,'0');
+  return Math.floor(total/60)+'h:'+String(total%60).padStart(2,'0')+'s';
 }
 function hoursToClock(hours){
   return minutesToClock(Math.round((Number(hours)||0)*60));
 }
+function splitClock(minutes){
+  const total=Math.max(0,Math.round(Number(minutes)||0));
+  return {hours:Math.floor(total/60),minutes:total%60};
+}
 function parseClockToMinutes(value){
   const text=String(value??'').trim();
   if(!text)return 0;
+  const labeled=text.match(/^(\d+)\s*h\s*:\s*(\d+)\s*s$/i);
+  if(labeled)return Math.max(0,Number(labeled[1])*60+Number(labeled[2]));
   const clock=text.match(/^(\d+)\s*:\s*(\d+)$/);
   if(clock)return Math.max(0,Number(clock[1])*60+Number(clock[2]));
   const asNumber=Number(text);
@@ -1654,7 +1663,11 @@ function showValidationPopup(title,issues){
   document.getElementById('validationPopupList').innerHTML=normalized.map(issue=>'<li>'+escapeHtml(issue)+'</li>').join('');
   document.getElementById('validationPopup').classList.add('open');
 }
-function closeValidationPopup(){document.getElementById('validationPopup').classList.remove('open');}
+function closeValidationPopup(){
+  document.getElementById('validationPopup').classList.remove('open');
+  const pending=pendingClockFocus;pendingClockFocus=null;
+  if(pending){pending.focus();if(typeof pending.select==='function')pending.select();}
+}
 function addParticipantRow(kind,participant={}){
   const container=document.getElementById(kind+'ParticipantRows');
   const row=document.createElement('div');row.className='frow participant-row';
@@ -2074,6 +2087,31 @@ async function generateAIDraft(){
 }
 
 function optionList(options,selected){return options.map(item=>'<option value="'+item.value+'" '+(item.value===selected?'selected':'')+'>'+item.label+'</option>').join('');}
+function rejectClockInput(input,previous,message){
+  input.value=previous;
+  pendingClockFocus=input;
+  showValidationPopup('수행시간을 확인해 주세요',[message]);
+}
+function setProcessExecutionPart(index,part,input){
+  const process=ctx.processes[index];
+  if(!process)return;
+  const current=splitClock(process.execution_time);
+  const raw=String(input.value??'').trim();
+  const next=Number(raw);
+  if(part==='minutes'){
+    if(raw===''||!Number.isFinite(next)||!Number.isInteger(next)||next<0||next>60){
+      rejectClockInput(input,current.minutes,'분은 0~60분 사이 값으로 입력해 주세요.');
+      return;
+    }
+    setProcessValue(index,'execution_time',current.hours*60+next);
+    return;
+  }
+  if(raw===''||!Number.isFinite(next)||!Number.isInteger(next)||next<0){
+    rejectClockInput(input,current.hours,'시간은 0 이상의 정수로 입력해 주세요.');
+    return;
+  }
+  setProcessValue(index,'execution_time',next*60+current.minutes);
+}
 function setProcessValue(index,field,value){
   if(['method','tool'].includes(field)&&ctx.processes[index]?.level!=='L6')return;
   if(field==='execution_time') value=parseClockToMinutes(value);
@@ -2123,7 +2161,8 @@ function renderProcessEditor(){
   document.getElementById('processEditorBody').innerHTML=ctx.processes.map((process,index)=>{
     const levelClass=process.level==='L4'?'lv4':process.level==='L5'?'lv5':'lv6';
     const isAct=process.level==='L6';
-    return '<tr class="'+(selectedProcessIndex===index?'process-row-selected':'')+'" onclick="selectProcessRow('+index+',this)"><td style="color:#bbb">⋮⋮</td><td><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><input class="fi" style="padding:4px 6px" value="'+escapeHtml(process.name)+'" onchange="setProcessValue('+index+',\'name\',this.value)"></td><td>'+(isAct?'<select class="sel-sm" onchange="setProcessValue('+index+',\'method\',this.value)">'+optionList(methods,process.method||'manual')+'</select>':'<span style="color:var(--mt)">—</span>')+'</td><td>'+(isAct?'<select class="sel-sm" onchange="setProcessValue('+index+',\'tool\',this.value)">'+optionList(tools,process.tool||'other')+'</select>':'<span style="color:var(--mt)">—</span>')+'</td><td><input type="text" inputmode="text" class="key-in key-in-clock" placeholder="h:s" value="'+minutesToClock(process.execution_time)+'" onchange="setProcessValue('+index+',\'execution_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.waiting_time||0)+'" onchange="setProcessValue('+index+',\'waiting_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.approval_waiting_time||0)+'" onchange="setProcessValue('+index+',\'approval_waiting_time\',this.value)"></td></tr>';
+    const clock=splitClock(process.execution_time);
+    return '<tr class="'+(selectedProcessIndex===index?'process-row-selected':'')+'" onclick="selectProcessRow('+index+',this)"><td style="color:#bbb">⋮⋮</td><td><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><input class="fi" style="padding:4px 6px" value="'+escapeHtml(process.name)+'" onchange="setProcessValue('+index+',\'name\',this.value)"></td><td>'+(isAct?'<select class="sel-sm" onchange="setProcessValue('+index+',\'method\',this.value)">'+optionList(methods,process.method||'manual')+'</select>':'<span style="color:var(--mt)">—</span>')+'</td><td>'+(isAct?'<select class="sel-sm" onchange="setProcessValue('+index+',\'tool\',this.value)">'+optionList(tools,process.tool||'other')+'</select>':'<span style="color:var(--mt)">—</span>')+'</td><td><span class="clock-edit"><input type="number" min="0" step="1" class="key-in" value="'+clock.hours+'" title="시간" aria-label="수행시간(시간)" onclick="event.stopPropagation()" onchange="setProcessExecutionPart('+index+',\'hours\',this)"><span>h</span><input type="number" min="0" step="1" class="key-in" value="'+clock.minutes+'" title="분" aria-label="수행시간(분)" onclick="event.stopPropagation()" onchange="setProcessExecutionPart('+index+',\'minutes\',this)"><span>s</span></span></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.waiting_time||0)+'" onchange="setProcessValue('+index+',\'waiting_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.approval_waiting_time||0)+'" onchange="setProcessValue('+index+',\'approval_waiting_time\',this.value)"></td></tr>';
   }).join('');
   const leafProcesses=ctx.processes.filter(process=>process.level==='L6');
   const total=leafProcesses.reduce((sum,p)=>sum+Number(p.execution_time||0),0);
