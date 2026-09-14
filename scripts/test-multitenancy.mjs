@@ -8,6 +8,7 @@ import {
   saveCompanyCredential
 } from '../backend/src/services/companyCredentialService.js';
 import { resolveSupabaseSecretKey } from '../backend/src/config/supabaseEnv.js';
+import { minutesToClock, parseClockToMinutes } from '../backend/src/utils/timeFormat.js';
 
 const apiBase = process.env.TEST_API_BASE || 'http://localhost:5000/api';
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -96,6 +97,13 @@ async function assertNoRows(table, column, value, message) {
 }
 
 async function main() {
+  assert.equal(minutesToClock(25), '0:25');
+  assert.equal(minutesToClock(88), '1:28');
+  assert.equal(minutesToClock(60), '1:00');
+  assert.equal(parseClockToMinutes('1:30'), 90);
+  assert.equal(parseClockToMinutes('1:90'), 150);
+  assert.equal(parseClockToMinutes('25'), 25);
+
   const health = await api('/health');
   assert.equal(health.response.status, 200, `health 실패: ${health.text}`);
 
@@ -447,7 +455,7 @@ async function main() {
   const csvBeforeSave = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
   assert.equal(csvBeforeSave.response.status, 200, `과제정보 CSV 생성 실패: ${csvBeforeSave.text}`);
   assert.match(csvBeforeSave.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
-  assert.match(csvBeforeSave.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 25분\]/);
+  assert.match(csvBeforeSave.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 0:25\]/);
   const emptyStoredAiFit = await api(`/analysis/project/${created.data.project.id}/ai-fit?task_id=${restorableTask.data.task.id}`, { token: userA.token });
   assert.equal(emptyStoredAiFit.response.status, 200, `저장 AI FIT 조회 실패: ${emptyStoredAiFit.text}`);
   assert.deepEqual(emptyStoredAiFit.data.analysis, []);
@@ -464,7 +472,7 @@ async function main() {
   const coreCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
   assert.equal(coreCsv.response.status, 200, `과제정보 CSV 생성 실패: ${coreCsv.text}`);
   assert.match(coreCsv.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
-  assert.match(coreCsv.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 25분\]/);
+  assert.match(coreCsv.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 0:25\]/);
 
   // 앞 단계 임시 저장이 이미 지나온 진행 단계를 되돌리면 안 된다.
   const backwardDraft = await api('/drafts/interview_answers', {
@@ -741,7 +749,7 @@ async function main() {
     });
     assert.equal(taskCsv.response.status, 200, `과제정보 CSV 생성 실패: ${taskCsv.text}`);
     assert.match(taskCsv.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
-    assert.match(taskCsv.data.raw || '', /SNS 채널을 관리한다 \[수작업 \| 웹 \| 60분\]/);
+    assert.match(taskCsv.data.raw || '', /SNS 채널을 관리한다 \[수작업 \| 웹 \| 1:00\]/);
 
     const adminTaskReport = await api(`/admin/tasks/${cascadeTask.id}/report`, { cookie: adminCookie });
     assert.equal(adminTaskReport.response.status, 200, `관리자 저장 리포트 조회 실패: ${adminTaskReport.text}`);
@@ -1002,7 +1010,7 @@ async function main() {
   console.log(JSON.stringify({
     ok: true,
     checks: [
-      'health', 'registration-status-check', 'explicit-profile-membership-registration', 'idempotent-signup-membership', 'email-only-session-rebind', 'anonymous-style-auth-rebind-keeps-drafts',
+      'clock-time-format', 'health', 'registration-status-check', 'explicit-profile-membership-registration', 'idempotent-signup-membership', 'email-only-session-rebind', 'anonymous-style-auth-rebind-keeps-drafts',
       testAdminPassword ? 'admin-user-crud-report-status-delete-cascade-and-bulk-process-sync' : 'admin-login-skipped',
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',

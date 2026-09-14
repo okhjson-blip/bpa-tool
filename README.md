@@ -146,7 +146,7 @@ bpa-tool/
 - `GET /api/analysis/project/:projectId/report/saved`: 마지막 정식 저장 리포트의 수행 빈도 등 사용자 입력 복원
 - `GET /api/analysis/project/:projectId/ai-fit`: 마지막으로 저장된 AI FIT 및 To-Be 상태 복원
 - `POST /api/analysis/project/:projectId/report/save`: 검증된 최신 PDF 리포트를 과제별 스냅샷으로 명시적 저장
-- `GET /api/analysis/project/:projectId/report.csv?task_id=:taskId`: 과제명·시작일·완료일·성과목표·As-Is·To-Be·난이도를 과제당 한 행으로 출력하는 UTF-8 CSV. As-Is/To-Be는 플로우차트 순서의 작업방식·도구·수행시간. 상세 양식은 `RESULT_REPORT_CSV_SCHEMA.md`를 따릅니다.
+- `GET /api/analysis/project/:projectId/report.csv?task_id=:taskId`: 과제명·시작일·완료일·성과목표·As-Is·To-Be·난이도를 과제당 한 행으로 출력하는 UTF-8 CSV. As-Is/To-Be는 플로우차트 순서의 작업방식·도구·수행시간(h:s). 상세 양식은 `RESULT_REPORT_CSV_SCHEMA.md`를 따릅니다.
 
 ## 운영 원칙
 

@@ -107,6 +107,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .sel-work-s{background:#e3f2fd;color:#1565c0;min-width:64px}
 .sel-tool{background:#f0f0f0;min-width:58px}
 .key-in{width:45px;font-size:12px;padding:2px 4px;border:1px solid var(--bd);border-radius:5px;text-align:right;font-family:inherit;color:var(--t);box-sizing:border-box}
+.key-in-clock{width:58px;text-align:center}
 .key-in:focus{border-color:var(--p);outline:none}
 .key-in::-webkit-inner-spin-button{opacity:.4}
 .bdw-t{font-size:11px;padding:2px 6px;border-radius:7px;font-weight:700}
@@ -638,7 +639,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="card">
     <div class="card-title">AI 생성 Draft <span class="ct-b">L5 단위~L6 Act 자동 분해</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button> <span id="draftStatus" style="font-size:12px;color:var(--mt);font-weight:600">인터뷰 답변을 입력하고 생성하세요.</span></div>
     <table class="tbl">
-      <thead><tr><th>레벨</th><th>단위 업무명</th><th>작업방식</th><th>사용도구</th><th>수행시간(분)</th><th>대기(h)</th><th>승인대기(h)</th></tr></thead>
+      <thead><tr><th>레벨</th><th>단위 업무명</th><th>작업방식</th><th>사용도구</th><th>수행시간(h:s)</th><th>대기(h)</th><th>승인대기(h)</th></tr></thead>
       <tbody id="draftBody">
         <tr><td><span class="lvc lv4">L4 모듈</span></td><td><b>🗂 SNS 채널 관리</b></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
         <tr><td style="padding-left:16px"><span class="lvc lv5">L5 단위</span></td><td>게시물 기획</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
@@ -681,7 +682,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
       <div class="card" style="padding:10px">
         <div class="card-title" style="margin-bottom:8px">프로세스 테이블 <span class="ct-b">직접 편집 가능</span> <button class="lv-popup-btn" onclick="openLvPopup()" title="업무 계층별 정의 보기">?</button></div>
         <table class="tbl">
-          <thead><tr><th style="width:19px"></th><th style="width:64px">레벨</th><th>단위 업무명</th><th style="width:70px">작업방식</th><th style="width:64px">도구</th><th style="width:53px">수행(분)</th><th style="width:50px">대기(h)</th><th style="width:56px">승인대기(h)</th></tr></thead>
+          <thead><tr><th style="width:19px"></th><th style="width:64px">레벨</th><th>단위 업무명</th><th style="width:70px">작업방식</th><th style="width:64px">도구</th><th style="width:62px">수행(h:s)</th><th style="width:50px">대기(h)</th><th style="width:56px">승인대기(h)</th></tr></thead>
           <tbody id="processEditorBody">
             <tr style="background:#f8f4ff"><td style="color:#bbb;cursor:grab">⋮⋮</td><td><span class="lvc lv4">L4 모듈</span></td><td><b>🗂 SNS 채널 관리</b></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
             <tr><td style="color:#bbb;cursor:grab">⋮⋮</td><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 기획</td><td>—</td><td>—</td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td><td><input type="number" class="key-in" placeholder="0"></td></tr>
@@ -698,7 +699,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
           </tbody>
         </table>
         <div style="display:flex;justify-content:space-between;margin-top:8px;align-items:center">
-          <div style="font-size:12px;color:var(--mt)">수행시간 합계: <b>88분</b> | 승인 대기: <b>24h</b></div>
+          <div id="processEditorSummary" style="font-size:12px;color:var(--mt)">수행시간 합계: <b>0:00</b> | 승인 대기: <b>0h</b></div>
           <button class="btn btn-p btn-sm" id="btnRunBDW" onclick="openBDWStep()">BDW 진단 →</button>
         </div>
       </div>
@@ -747,13 +748,13 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="sc"><div class="sc-lbl">🔴 Bottleneck</div><div class="sc-val" style="color:var(--d)">1개</div><div class="sc-sub">수정사항을 반영한다 (20분) · L5 단위 게시물 승인</div></div>
     <div class="sc"><div class="sc-lbl">🟡 Delay</div><div class="sc-val" style="color:#f57f17">1개</div><div class="sc-sub">대기 0h + 승인대기 24h</div></div>
     <div class="sc"><div class="sc-lbl">⚫ Waste</div><div class="sc-val" style="color:#555">0개</div><div class="sc-sub">—</div></div>
-    <div class="sc"><div class="sc-lbl">⏱ 비효율 지수</div><div class="sc-val" style="color:var(--p)">28%</div><div class="sc-sub">88분 중 25분 비효율</div></div>
+    <div class="sc"><div class="sc-lbl">⏱ 비효율 지수</div><div class="sc-val" style="color:var(--p)">28%</div><div class="sc-sub">1:28 중 0:25 비효율</div></div>
   </div>
   <div class="card" style="padding:10px">
     <div class="card-title" style="margin-bottom:8px">BDW 태그 부착 <span class="ct-r">Bottleneck · Delay · Waste</span></div>
     <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--mt);margin-bottom:8px"><span>각 단위 업무의 BDW 유형을 선택하세요. 태그는 플로우차트 노드 테두리에 동시 반영됩니다.</span><span class="panel-save-status" id="bdwImmediateSaveStatus">변경 시 즉시 Supabase에 저장됩니다.</span></div>
     <table class="tbl">
-      <thead><tr><th>레벨</th><th>단위 업무명</th><th>수행(분)</th><th>대기(h)</th><th>승인대기(h)</th><th>BDW 태그</th></tr></thead>
+      <thead><tr><th>레벨</th><th>단위 업무명</th><th>수행(h:s)</th><th>대기(h)</th><th>승인대기(h)</th><th>BDW 태그</th></tr></thead>
       <tbody id="bdwBody">
         <tr style="background:#f8f4ff"><td><span class="lvc lv4">L4 모듈</span></td><td><b>🗂 SNS 채널 관리</b></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
         <tr><td style="padding-left:14px"><span class="lvc lv5">L5 단위</span></td><td>게시물 기획</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
@@ -788,7 +789,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="sc"><div class="sc-lbl">전체 L6 Act</div><div class="sc-val" style="color:var(--p)">8개</div></div>
     <div class="sc"><div class="sc-lbl">A영역 (즉시 적용)</div><div class="sc-val" style="color:var(--s)">5개</div></div>
     <div class="sc"><div class="sc-lbl">예상 자동화율</div><div class="sc-val" style="color:var(--w)">68%</div></div>
-    <div class="sc"><div class="sc-lbl">절감 시간 (건당)</div><div class="sc-val" style="color:var(--d)">60분</div><div class="sc-sub">88분 → 28분</div></div>
+    <div class="sc"><div class="sc-lbl">절감 시간 (건당)</div><div class="sc-val" style="color:var(--d)">1:00</div><div class="sc-sub">1:28 → 0:28</div></div>
   </div>
   <div class="tabs">
     <div class="tab on" onclick="swTab(this,'t1')">📋 인라인 분석</div>
@@ -799,7 +800,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="card" style="padding:10px">
       <div class="card-title" style="margin-bottom:8px">AI FIT 스코어 <span class="ct-o">AI 적용 가능성 × 비효율성</span> <button class="lv-popup-btn" onclick="openAiFitPopup()" title="점수 척도 설명 보기">?</button></div>
       <table class="tbl">
-        <thead><tr><th style="width:42px;text-align:center">수락</th><th>단위 업무명 (L6 Act)</th><th style="width:67px">AI 가능성</th><th style="width:67px">비효율성</th><th style="width:51px">분류</th><th style="width:150px">추천 AI 기술</th><th style="width:50px">난이도</th><th style="width:56px">절감(분)</th></tr></thead>
+        <thead><tr><th style="width:42px;text-align:center">수락</th><th>단위 업무명 (L6 Act)</th><th style="width:67px">AI 가능성</th><th style="width:67px">비효율성</th><th style="width:51px">분류</th><th style="width:150px">추천 AI 기술</th><th style="width:50px">난이도</th><th style="width:62px">절감(h:s)</th></tr></thead>
         <tbody id="aiFitBody">
           <tr><td colspan="8" class="empty-state">AI FIT 분석을 실행하면 단위 업무별 수락 항목이 표시됩니다.</td></tr>
         </tbody>
@@ -913,7 +914,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
           <div class="fte-sub" id="reportFTEDetail">과제 데이터를 불러오는 중입니다.</div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <div class="sc" style="flex:1"><div class="sc-lbl">연간 AX 절감 시간</div><div class="sc-val" style="color:var(--w)" id="reportSaving">0h</div><div class="sc-sub" id="reportTimeCompare">건당 0분</div></div>
+          <div class="sc" style="flex:1"><div class="sc-lbl">연간 AX 절감 시간</div><div class="sc-val" style="color:var(--w)" id="reportSaving">0:00</div><div class="sc-sub" id="reportTimeCompare">건당 0:00</div></div>
           <div class="sc" style="flex:1"><div class="sc-lbl">시간 절감률</div><div class="sc-val" style="color:var(--p)" id="reportSavingRate">0%</div><div class="sc-sub">AS-IS 대비</div></div>
           <div class="sc" style="flex:1"><div class="sc-lbl">자동화율</div><div class="sc-val" style="color:var(--s)" id="reportAutomationRate">0%</div><div class="sc-sub">AI 제안 수락 기준</div></div>
         </div>
@@ -978,6 +979,22 @@ const apiBase=window.location.protocol==='file:'?'http://localhost:5000/api':'/a
 
 function escapeHtml(value){
   return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+}
+// 수행·절감시간은 분으로 계산하고, 화면 입력/출력만 시간:분(h:s)을 쓴다.
+function minutesToClock(minutes){
+  const total=Math.max(0,Math.round(Number(minutes)||0));
+  return Math.floor(total/60)+':'+String(total%60).padStart(2,'0');
+}
+function hoursToClock(hours){
+  return minutesToClock(Math.round((Number(hours)||0)*60));
+}
+function parseClockToMinutes(value){
+  const text=String(value??'').trim();
+  if(!text)return 0;
+  const clock=text.match(/^(\d+)\s*:\s*(\d+)$/);
+  if(clock)return Math.max(0,Number(clock[1])*60+Number(clock[2]));
+  const asNumber=Number(text);
+  return Number.isFinite(asNumber)?Math.max(0,Math.round(asNumber)):0;
 }
 function isValidEmail(value){
   const email=String(value??'').trim();
@@ -2002,12 +2019,12 @@ function renderDraftTable(){
     const levelClass=process.level==='L4'?'lv4':process.level==='L5'?'lv5':'lv6';
     const indent=process.level==='L4'?0:process.level==='L5'?16:28;
     const isAct=process.level==='L6';
-    return '<tr><td style="padding-left:'+indent+'px"><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><b>'+escapeHtml(process.name)+'</b></td><td>'+(isAct?escapeHtml(process.method==='system'?'시스템':'수작업'):'—')+'</td><td>'+(isAct?escapeHtml(process.tool||'other'):'—')+'</td><td>'+Number(process.execution_time||0)+'</td><td>'+Number(process.waiting_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td></tr>';
+    return '<tr><td style="padding-left:'+indent+'px"><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><b>'+escapeHtml(process.name)+'</b></td><td>'+(isAct?escapeHtml(process.method==='system'?'시스템':'수작업'):'—')+'</td><td>'+(isAct?escapeHtml(process.tool||'other'):'—')+'</td><td>'+minutesToClock(process.execution_time)+'</td><td>'+Number(process.waiting_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td></tr>';
   }).join('');
   const leafProcesses=ctx.processes.filter(process=>process.level==='L6');
   const total=leafProcesses.reduce((sum,p)=>sum+Number(p.execution_time||0),0);
   const approval=leafProcesses.reduce((sum,p)=>sum+Number(p.approval_waiting_time||0),0);
-  document.getElementById('draftSummary').innerHTML='수행시간 합계: <b>'+total+'분</b> | 승인 대기: <b>'+approval+'h</b>';
+  document.getElementById('draftSummary').innerHTML='수행시간 합계: <b>'+minutesToClock(total)+'</b> | 승인 대기: <b>'+approval+'h</b>';
 }
 
 function aggregateProcessHierarchy(processes=[]){
@@ -2059,7 +2076,8 @@ async function generateAIDraft(){
 function optionList(options,selected){return options.map(item=>'<option value="'+item.value+'" '+(item.value===selected?'selected':'')+'>'+item.label+'</option>').join('');}
 function setProcessValue(index,field,value){
   if(['method','tool'].includes(field)&&ctx.processes[index]?.level!=='L6')return;
-  if(['execution_time','waiting_time','approval_waiting_time'].includes(field)) value=Number(value)||0;
+  if(field==='execution_time') value=parseClockToMinutes(value);
+  else if(['waiting_time','approval_waiting_time'].includes(field)) value=Number(value)||0;
   ctx.processes[index][field]=value;
   aggregateProcessHierarchy(ctx.processes);
   ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
@@ -2105,8 +2123,13 @@ function renderProcessEditor(){
   document.getElementById('processEditorBody').innerHTML=ctx.processes.map((process,index)=>{
     const levelClass=process.level==='L4'?'lv4':process.level==='L5'?'lv5':'lv6';
     const isAct=process.level==='L6';
-    return '<tr class="'+(selectedProcessIndex===index?'process-row-selected':'')+'" onclick="selectProcessRow('+index+',this)"><td style="color:#bbb">⋮⋮</td><td><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><input class="fi" style="padding:4px 6px" value="'+escapeHtml(process.name)+'" onchange="setProcessValue('+index+',\'name\',this.value)"></td><td>'+(isAct?'<select class="sel-sm" onchange="setProcessValue('+index+',\'method\',this.value)">'+optionList(methods,process.method||'manual')+'</select>':'<span style="color:var(--mt)">—</span>')+'</td><td>'+(isAct?'<select class="sel-sm" onchange="setProcessValue('+index+',\'tool\',this.value)">'+optionList(tools,process.tool||'other')+'</select>':'<span style="color:var(--mt)">—</span>')+'</td><td><input type="number" min="0" class="key-in" value="'+Number(process.execution_time||0)+'" onchange="setProcessValue('+index+',\'execution_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.waiting_time||0)+'" onchange="setProcessValue('+index+',\'waiting_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.approval_waiting_time||0)+'" onchange="setProcessValue('+index+',\'approval_waiting_time\',this.value)"></td></tr>';
+    return '<tr class="'+(selectedProcessIndex===index?'process-row-selected':'')+'" onclick="selectProcessRow('+index+',this)"><td style="color:#bbb">⋮⋮</td><td><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><input class="fi" style="padding:4px 6px" value="'+escapeHtml(process.name)+'" onchange="setProcessValue('+index+',\'name\',this.value)"></td><td>'+(isAct?'<select class="sel-sm" onchange="setProcessValue('+index+',\'method\',this.value)">'+optionList(methods,process.method||'manual')+'</select>':'<span style="color:var(--mt)">—</span>')+'</td><td>'+(isAct?'<select class="sel-sm" onchange="setProcessValue('+index+',\'tool\',this.value)">'+optionList(tools,process.tool||'other')+'</select>':'<span style="color:var(--mt)">—</span>')+'</td><td><input type="text" inputmode="text" class="key-in key-in-clock" placeholder="h:s" value="'+minutesToClock(process.execution_time)+'" onchange="setProcessValue('+index+',\'execution_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.waiting_time||0)+'" onchange="setProcessValue('+index+',\'waiting_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.approval_waiting_time||0)+'" onchange="setProcessValue('+index+',\'approval_waiting_time\',this.value)"></td></tr>';
   }).join('');
+  const leafProcesses=ctx.processes.filter(process=>process.level==='L6');
+  const total=leafProcesses.reduce((sum,p)=>sum+Number(p.execution_time||0),0);
+  const approval=leafProcesses.reduce((sum,p)=>sum+Number(p.approval_waiting_time||0),0);
+  const summary=document.getElementById('processEditorSummary');
+  if(summary)summary.innerHTML='수행시간 합계: <b>'+minutesToClock(total)+'</b> | 승인 대기: <b>'+approval+'h</b>';
 }
 async function saveProcessEditorDraft(){
   if(!ctx.taskId||!ctx.processes.length){setPanelDraftStatus('syncStatus','저장할 프로세스가 없습니다.','var(--d)');return;}
@@ -2135,7 +2158,7 @@ function renderFlowchart(){
   if(!ctx.processes.length){canvas.innerHTML='<div class="empty-state">표시할 프로세스가 없습니다.</div>';return;}
   canvas.innerHTML='<div class="flow-stack">'+ctx.processes.map((process,index)=>{
     const times=[];
-    if(Number(process.execution_time)) times.push(Number(process.execution_time)+'분');
+    if(Number(process.execution_time)) times.push(minutesToClock(process.execution_time));
     if(Number(process.waiting_time)) times.push('대기 '+Number(process.waiting_time)+'h');
     if(Number(process.approval_waiting_time)) times.push('승인대기 '+Number(process.approval_waiting_time)+'h');
     const methodLabel={manual:'수작업',system:'시스템'}[process.method]||'수작업';
@@ -2169,11 +2192,11 @@ async function updateBDWTag(processId,value){
 }
 function renderBDW(data){
   const diagnosis=data.diagnosis;
-  document.getElementById('bdwSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">🔴 Bottleneck</div><div class="sc-val" style="color:var(--d)">'+diagnosis.bottleneck_count+'개</div></div><div class="sc"><div class="sc-lbl">🟡 Delay</div><div class="sc-val" style="color:#f57f17">'+diagnosis.delay_count+'개</div></div><div class="sc"><div class="sc-lbl">⚫ Waste</div><div class="sc-val">'+diagnosis.waste_count+'개</div></div><div class="sc"><div class="sc-lbl">⏱ 비효율 지수</div><div class="sc-val" style="color:var(--p)">'+Math.round(diagnosis.inefficiency_rate)+'%</div><div class="sc-sub">총 '+diagnosis.total_execution_time+'분</div></div>';
+  document.getElementById('bdwSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">🔴 Bottleneck</div><div class="sc-val" style="color:var(--d)">'+diagnosis.bottleneck_count+'개</div></div><div class="sc"><div class="sc-lbl">🟡 Delay</div><div class="sc-val" style="color:#f57f17">'+diagnosis.delay_count+'개</div></div><div class="sc"><div class="sc-lbl">⚫ Waste</div><div class="sc-val">'+diagnosis.waste_count+'개</div></div><div class="sc"><div class="sc-lbl">⏱ 비효율 지수</div><div class="sc-val" style="color:var(--p)">'+Math.round(diagnosis.inefficiency_rate)+'%</div><div class="sc-sub">총 '+minutesToClock(diagnosis.total_execution_time)+'</div></div>';
   const tagOptions=[{value:'normal',label:'정상'},{value:'bottleneck',label:'Bottleneck'},{value:'delay',label:'Delay'},{value:'waste',label:'Waste'}];
-  document.getElementById('bdwBody').innerHTML=data.processes.map(process=>'<tr><td><span class="lvc lv6">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td>'+escapeHtml(process.name)+'</td><td>'+Number(process.execution_time||0)+'</td><td>'+Number(process.waiting_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td><td><select class="sel-sm" onchange="updateBDWTag('+process.id+',this.value)">'+optionList(tagOptions,process.bdw_tag||'normal')+'</select></td></tr>').join('');
+  document.getElementById('bdwBody').innerHTML=data.processes.map(process=>'<tr><td><span class="lvc lv6">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td>'+escapeHtml(process.name)+'</td><td>'+minutesToClock(process.execution_time)+'</td><td>'+Number(process.waiting_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td><td><select class="sel-sm" onchange="updateBDWTag('+process.id+',this.value)">'+optionList(tagOptions,process.bdw_tag||'normal')+'</select></td></tr>').join('');
   const modelText=ctx.bdwMeta?.model_used?' · '+escapeHtml(ctx.bdwMeta.model_used):'';
-  document.getElementById('bdwSummaryText').innerHTML='<b style="font-size:14px">🔍 BDW 진단 요약'+modelText+'</b><br>병목 '+diagnosis.bottleneck_count+'건 · Delay '+diagnosis.delay_count+'건 · Waste '+diagnosis.waste_count+'건<br>수행 '+diagnosis.total_execution_time+'분 · 대기 '+Number(diagnosis.total_waiting_time_hours||0)+'시간 · 비효율 '+diagnosis.inefficient_time+'분 ('+Math.round(diagnosis.inefficiency_rate)+'%)';
+  document.getElementById('bdwSummaryText').innerHTML='<b style="font-size:14px">🔍 BDW 진단 요약'+modelText+'</b><br>병목 '+diagnosis.bottleneck_count+'건 · Delay '+diagnosis.delay_count+'건 · Waste '+diagnosis.waste_count+'건<br>수행 '+minutesToClock(diagnosis.total_execution_time)+' · 대기 '+Number(diagnosis.total_waiting_time_hours||0)+'시간 · 비효율 '+minutesToClock(diagnosis.inefficient_time)+' ('+Math.round(diagnosis.inefficiency_rate)+'%)';
   const tags=new Map(data.processes.map(item=>[item.id,item.bdw_tag]));ctx.processes.forEach(item=>item.bdw_tag=tags.get(item.id)||'normal');renderFlowchart();
 }
 async function openBDWStep(){
@@ -2189,9 +2212,9 @@ function renderAIFit(result){
   const processOrder=new Map((ctx.processes||[]).filter(process=>process.level==='L6').map((process,index)=>[Number(process.id),index]));
   const analysis=[...(result.analysis||[])].sort((a,b)=>(processOrder.get(Number(a.process_id))??Number.MAX_SAFE_INTEGER)-(processOrder.get(Number(b.process_id))??Number.MAX_SAFE_INTEGER));const summary=result.summary||{};ctx.aiResult={...result,analysis};
   const totalSaving=analysis.reduce((sum,item)=>sum+Number(item.estimated_time_savings||0),0);
-  document.getElementById('fitSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">전체 L6 Act</div><div class="sc-val" style="color:var(--p)">'+analysis.length+'개</div><div class="sc-sub">'+escapeHtml(result.model_used||'AI')+'</div></div><div class="sc"><div class="sc-lbl">A영역 (즉시 적용)</div><div class="sc-val" style="color:var(--s)">'+Number(summary.immediate_application_count||0)+'개</div></div><div class="sc"><div class="sc-lbl">예상 자동화율</div><div class="sc-val" style="color:var(--w)">'+Number(summary.automation_rate||0)+'%</div></div><div class="sc"><div class="sc-lbl">예상 절감</div><div class="sc-val" style="color:var(--d)">'+totalSaving+'분</div></div>';
+  document.getElementById('fitSummaryCards').innerHTML='<div class="sc"><div class="sc-lbl">전체 L6 Act</div><div class="sc-val" style="color:var(--p)">'+analysis.length+'개</div><div class="sc-sub">'+escapeHtml(result.model_used||'AI')+'</div></div><div class="sc"><div class="sc-lbl">A영역 (즉시 적용)</div><div class="sc-val" style="color:var(--s)">'+Number(summary.immediate_application_count||0)+'개</div></div><div class="sc"><div class="sc-lbl">예상 자동화율</div><div class="sc-val" style="color:var(--w)">'+Number(summary.automation_rate||0)+'%</div></div><div class="sc"><div class="sc-lbl">예상 절감</div><div class="sc-val" style="color:var(--d)">'+minutesToClock(totalSaving)+'</div></div>';
   const acceptedIds=new Set((ctx.acceptedAiProcessIds||[]).map(Number));
-  document.getElementById('aiFitBody').innerHTML=analysis.map(item=>{const processId=Number(item.process_id);const accepted=acceptedIds.has(processId);const score=Math.max(1,Math.min(5,Math.round(Number(item.inefficiency)||1)));const category=String(item.fit_category||'D').toLowerCase();const difficulty=['low','medium','high'].includes(item.difficulty)?item.difficulty:'medium';const difficultyLabel={low:'하',medium:'중',high:'상'}[difficulty];return '<tr class="'+(accepted?'ai-accepted':'')+'"><td style="text-align:center"><input class="ai-accept" type="checkbox" value="'+processId+'" '+(accepted?'checked':'')+' onchange="onAISuggestionCheckChange()" aria-label="'+escapeHtml(item.name)+' AI 제안 수락"></td><td>'+escapeHtml(item.name)+'</td><td><span class="aisc sc'+Math.max(1,Math.min(5,Math.round(Number(item.ai_possibility)||1)))+'">'+Number(item.ai_possibility||0)+'</span></td><td><span class="aisc ineff-'+score+'">'+Number(item.inefficiency||0)+'</span></td><td><span class="fit-'+category+'">'+escapeHtml(item.fit_category||'D')+'</span></td><td>'+escapeHtml(item.recommended_tech||'—')+'</td><td><span class="difficulty-badge difficulty-'+difficulty+'">'+difficultyLabel+'</span></td><td><b>'+Number(item.estimated_time_savings||0)+'</b></td></tr>';}).join('');
+  document.getElementById('aiFitBody').innerHTML=analysis.map(item=>{const processId=Number(item.process_id);const accepted=acceptedIds.has(processId);const score=Math.max(1,Math.min(5,Math.round(Number(item.inefficiency)||1)));const category=String(item.fit_category||'D').toLowerCase();const difficulty=['low','medium','high'].includes(item.difficulty)?item.difficulty:'medium';const difficultyLabel={low:'하',medium:'중',high:'상'}[difficulty];return '<tr class="'+(accepted?'ai-accepted':'')+'"><td style="text-align:center"><input class="ai-accept" type="checkbox" value="'+processId+'" '+(accepted?'checked':'')+' onchange="onAISuggestionCheckChange()" aria-label="'+escapeHtml(item.name)+' AI 제안 수락"></td><td>'+escapeHtml(item.name)+'</td><td><span class="aisc sc'+Math.max(1,Math.min(5,Math.round(Number(item.ai_possibility)||1)))+'">'+Number(item.ai_possibility||0)+'</span></td><td><span class="aisc ineff-'+score+'">'+Number(item.inefficiency||0)+'</span></td><td><span class="fit-'+category+'">'+escapeHtml(item.fit_category||'D')+'</span></td><td>'+escapeHtml(item.recommended_tech||'—')+'</td><td><span class="difficulty-badge difficulty-'+difficulty+'">'+difficultyLabel+'</span></td><td><b>'+minutesToClock(item.estimated_time_savings)+'</b></td></tr>';}).join('');
   const grouped={A:[],B:[],C:[],D:[]};analysis.forEach(item=>grouped[item.fit_category]?.push(item));
   const categoryMeaning={A:{title:'즉시 적용',detail:'AI 가능성↑ + 비효율성↑'},B:{title:'수동 개선 우선',detail:'AI 가능성↓ + 비효율성↑'},C:{title:'장기 검토',detail:'AI 가능성↑ + 비효율성↓'},D:{title:'현상 유지',detail:'AI 가능성↓ + 비효율성↓'}};
   document.getElementById('aiFitMatrix').innerHTML=['B','A','D','C'].map(category=>'<div class="mq mq'+category+'"><div class="mq-lbl">'+category+' '+categoryMeaning[category].title+'</div><div style="font-size:11px;color:var(--mt);margin-bottom:4px">'+categoryMeaning[category].detail+'</div>'+grouped[category].map(item=>'<span class="mq-item">'+escapeHtml(item.name)+'</span>').join('')+'</div>').join('');
@@ -2245,7 +2268,7 @@ function renderToBeComparison(toBeProcesses){
     const method=isToBe&&applied?'AI 자동화':(methodLabels[process.method]||'수작업');
     const badgeClass=isToBe&&applied?'ai':process.method==='system'?'system':'manual';
     const badge='<span class="automation-badge '+badgeClass+'">'+escapeHtml(method)+'</span>';
-    const meta='도구: '+escapeHtml(tool)+' · 수행시간: '+time+'분';
+    const meta='도구: '+escapeHtml(tool)+' · 수행시간: '+minutesToClock(time);
     const content='<div class="comparison-node '+nodeClass+'"><div class="comparison-node-name">'+(index+1)+'. '+escapeHtml(process.name)+badge+'</div><div class="comparison-node-meta">'+meta+'</div></div>';
     return content+(index<items.length-1?'<div class="comparison-arrow">↓</div>':'');
   }).join('');
@@ -2265,9 +2288,9 @@ async function runAIFit(){
 function renderReport(report){
   const stats=report.statistics;
   document.getElementById('reportFTE').textContent=Number(stats.fte_equivalent||0).toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
-  document.getElementById('reportFTEDetail').textContent='연간 절감 '+Number(stats.annual_savings_hours||0)+'h ÷ 2,248h = '+stats.fte_equivalent+' FTE';
-  document.getElementById('reportSaving').textContent=Number(stats.annual_savings_hours||0)+'h';
-  document.getElementById('reportTimeCompare').textContent='건당 '+Number(stats.time_savings||0)+'분 · '+Number(stats.as_is_total_time||0)+'→'+Number(stats.to_be_total_time||0)+'분';
+  document.getElementById('reportFTEDetail').textContent='연간 절감 '+hoursToClock(stats.annual_savings_hours)+' ÷ 2,248h = '+stats.fte_equivalent+' FTE';
+  document.getElementById('reportSaving').textContent=hoursToClock(stats.annual_savings_hours);
+  document.getElementById('reportTimeCompare').textContent='건당 '+minutesToClock(stats.time_savings)+' · '+minutesToClock(stats.as_is_total_time)+'→'+minutesToClock(stats.to_be_total_time);
   document.getElementById('reportSavingRate').textContent=Number(stats.time_savings_rate||0)+'%';
   document.getElementById('reportAutomationRate').textContent=Number(stats.automation_rate||0)+'%';
   document.getElementById('reportDevCost').textContent='₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR');
@@ -2352,11 +2375,11 @@ function buildPrintableReport(report){
   parts.push('<section><h2>STATIK 업무 구조</h2><p>'+hierarchyValues.map((value,index)=>'<b>'+hierarchyLabels[index]+':</b> '+escapeHtml(value||'미등록')).join(' › ')+'</p><p>과제 목표: '+escapeHtml(report.task_goal||'미등록')+'</p></section>');
   const participantRows=(report.task_participants||[]).map(person=>[person.name||'',person.position||'',person.role||'',person.email||'']);
   parts.push('<section><h2>과제 참여자</h2>'+(participantRows.length?reportTable(['이름','직급','역할','이메일'],participantRows):'<p>등록된 과제 참여자가 없습니다.</p>')+'</section>');
-  parts.push('<section><h2>AS-IS 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','프로세스','작업방식','도구','수행(분)','대기(h)','승인대기(h)'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',toolLabels[item.tool]||item.tool||'기타 도구',item.execution_time||0,item.waiting_time||0,item.approval_waiting_time||0]))+'</section>');
-  parts.push('<section><h2>BDW 진단</h2><p>요약: 병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p>'+reportTable(['순번','레벨','단위 업무','수행(분)','대기(h)','승인대기(h)','BDW 태그'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,item.execution_time||0,item.waiting_time||0,item.approval_waiting_time||0,bdwLabels[item.bdw_type]||item.bdw_type||'정상']))+'</section>');
-  parts.push('<section><h2>AI FIT 분석</h2>'+reportTable(['순번','단위 업무','추천 AI 기술','구현 난이도','AI 가능성','비효율성','분류'],(report.ai_fit_analysis||[]).map((item,index)=>[index+1,item.name||'',item.recommended_tech||'',difficultyLabels[item.difficulty]||'중',item.ai_possibility||0,item.inefficiency||0,item.fit_category||'']))+'</section>');
-  parts.push('<section><h2>To-Be 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','To-Be 프로세스','작업방식','도구','예상 수행(분)','구현 난이도'],report.to_be_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',toolLabels[item.tool]||item.tool||'기타 도구',item.estimated_execution_time||0,item.ai_applied?(difficultyLabels[item.difficulty]||'중'):'-']))+'</section>');
-  parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',stats.as_is_total_time+'분'],['To-Be 수행시간',stats.to_be_total_time+'분'],['건당 절감시간',stats.time_savings+'분'],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['AI 자동화 구현 난이도',stats.automation_difficulty||'해당 없음'],['수행 빈도',({day:'일',week:'주',month:'월',year:'년'}[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회 (연간 '+Number(stats.annual_frequency||52)+'회)'],['연간 절감시간',stats.annual_savings_hours+'시간'],['절감 FTE',stats.fte_equivalent],['예상 개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
+  parts.push('<section><h2>AS-IS 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','프로세스','작업방식','도구','수행(h:s)','대기(h)','승인대기(h)'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',toolLabels[item.tool]||item.tool||'기타 도구',minutesToClock(item.execution_time),item.waiting_time||0,item.approval_waiting_time||0]))+'</section>');
+  parts.push('<section><h2>BDW 진단</h2><p>요약: 병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p>'+reportTable(['순번','레벨','단위 업무','수행(h:s)','대기(h)','승인대기(h)','BDW 태그'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,minutesToClock(item.execution_time),item.waiting_time||0,item.approval_waiting_time||0,bdwLabels[item.bdw_type]||item.bdw_type||'정상']))+'</section>');
+  parts.push('<section><h2>AI FIT 분석</h2>'+reportTable(['순번','단위 업무','추천 AI 기술','구현 난이도','AI 가능성','비효율성','분류','절감(h:s)'],(report.ai_fit_analysis||[]).map((item,index)=>[index+1,item.name||'',item.recommended_tech||'',difficultyLabels[item.difficulty]||'중',item.ai_possibility||0,item.inefficiency||0,item.fit_category||'',minutesToClock(item.estimated_time_savings)]))+'</section>');
+  parts.push('<section><h2>To-Be 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','To-Be 프로세스','작업방식','도구','예상 수행(h:s)','구현 난이도'],report.to_be_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',toolLabels[item.tool]||item.tool||'기타 도구',minutesToClock(item.estimated_execution_time),item.ai_applied?(difficultyLabels[item.difficulty]||'중'):'-']))+'</section>');
+  parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',minutesToClock(stats.as_is_total_time)],['To-Be 수행시간',minutesToClock(stats.to_be_total_time)],['건당 절감시간',minutesToClock(stats.time_savings)],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['AI 자동화 구현 난이도',stats.automation_difficulty||'해당 없음'],['수행 빈도',({day:'일',week:'주',month:'월',year:'년'}[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회 (연간 '+Number(stats.annual_frequency||52)+'회)'],['연간 절감시간',hoursToClock(stats.annual_savings_hours)],['절감 FTE',stats.fte_equivalent],['예상 개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
   return parts.join('');
 }
 function printReportPDF(report,title,metaHtml){
@@ -2487,7 +2510,7 @@ bootstrapApplication();
     </div>
     <div class="lv-row">
       <div class="lv-badge"><span class="lv-badge-num" style="background:#fce4ec;color:#c62828">L6 Act</span><span class="lv-badge-nm">최소 행위</span></div>
-      <div class="lv-desc"><div class="lv-def">더 이상 쪼갤 수 없는 사람의 실제 행동 단위</div><div class="lv-sub">수행 시간(분) 필수 입력 · BDW 진단 기준 단위</div><div class="lv-ex">예: 트렌드 키워드를 검색한다, 초안을 작성한다, 게시물을 업로드한다</div></div>
+      <div class="lv-desc"><div class="lv-def">더 이상 쪼갤 수 없는 사람의 실제 행동 단위</div><div class="lv-sub">수행 시간(h:s) 필수 입력 · BDW 진단 기준 단위</div><div class="lv-ex">예: 트렌드 키워드를 검색한다, 초안을 작성한다, 게시물을 업로드한다</div></div>
     </div>
   </div>
 </div>
@@ -2534,7 +2557,7 @@ bootstrapApplication();
     <div class="tbox" style="font-size:13px">
       <b>FTE(Full-Time Equivalent)</b>는 절감된 업무시간을 전일제 인력 1명의 연간 업무량으로 환산한 값입니다.<br><br>
       ① 연간 수행 횟수 = 기간당 수행 횟수 × 환산계수(일 365 · 주 52 · 월 12)<br>
-      ② 연간 AX 절감 시간 = 건당 절감 시간(분) × 연간 수행 횟수 ÷ 60<br>
+      ② 연간 AX 절감 시간 = 건당 절감 시간(분으로 환산) × 연간 수행 횟수 ÷ 60, 결과는 시간:분(h:s)<br>
       ③ 절감 FTE = 연간 AX 절감 시간 ÷ 2,248시간
     </div>
     <div class="inline-status" id="ftePopupExample" style="margin-top:10px">현재 과제 데이터를 불러온 뒤 실제 산식이 표시됩니다.</div>
@@ -2570,7 +2593,7 @@ function openAiFitPopup(){document.getElementById('aiFitPopup').classList.add('o
 function closeAiFitPopup(){document.getElementById('aiFitPopup').classList.remove('open')}
 function openFtePopup(){
   const frequency=getReportFrequency();const stats=ctx.report?.statistics;
-  const detail=stats?'건당 '+Number(stats.time_savings||0)+'분 × 연간 '+Number(stats.annual_frequency||frequency.annual)+'회 ÷ 60 = '+Number(stats.annual_savings_hours||0)+'시간 → '+Number(stats.fte_equivalent||0)+' FTE':'현재 설정: '+frequency.label+' '+frequency.count+'회 → 연간 '+frequency.annual+'회';
+  const detail=stats?'건당 '+minutesToClock(stats.time_savings)+' × 연간 '+Number(stats.annual_frequency||frequency.annual)+'회 = '+hoursToClock(stats.annual_savings_hours)+' → '+Number(stats.fte_equivalent||0)+' FTE':'현재 설정: '+frequency.label+' '+frequency.count+'회 → 연간 '+frequency.annual+'회';
   document.getElementById('ftePopupExample').textContent=detail;
   document.getElementById('ftePopup').classList.add('open');
 }

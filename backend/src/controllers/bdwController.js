@@ -2,6 +2,7 @@ import { db } from '../config/database.js';
 import LLMService from '../services/llmService.js';
 import { getCompanyApiKey } from '../services/companyCredentialService.js';
 import { buildTaskReport } from '../services/reportService.js';
+import { minutesToClock } from '../utils/timeFormat.js';
 
 async function getTaskL6Processes(projectId, taskId) {
   const condition = { project_id: parseInt(projectId) };
@@ -420,7 +421,7 @@ function processToolLabel(tool) {
 }
 
 function flowNodeText({ name, method, tool, executionTime, aiApplied = false }) {
-  return `${name} [${processMethodLabel(method, aiApplied)} | ${processToolLabel(tool)} | ${Number(executionTime) || 0}분]`;
+  return `${name} [${processMethodLabel(method, aiApplied)} | ${processToolLabel(tool)} | ${minutesToClock(executionTime)}]`;
 }
 
 function averageAutomationDifficulty(toBeProcesses, analysisByProcessId) {
