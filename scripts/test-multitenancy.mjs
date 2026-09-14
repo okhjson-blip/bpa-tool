@@ -432,7 +432,9 @@ async function main() {
   assert.equal(coreReport.data.as_is_processes[0].method, 'manual');
   assert.equal(coreReport.data.as_is_processes[0].tool, 'excel');
   const csvBeforeSave = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
-  assert.equal(csvBeforeSave.response.status, 409, 'DB 이관 CSV가 리포트 저장 전에 출력되었습니다.');
+  assert.equal(csvBeforeSave.response.status, 200, `과제정보 CSV 생성 실패: ${csvBeforeSave.text}`);
+  assert.match(csvBeforeSave.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
+  assert.match(csvBeforeSave.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 25분\]/);
   const emptyStoredAiFit = await api(`/analysis/project/${created.data.project.id}/ai-fit?task_id=${restorableTask.data.task.id}`, { token: userA.token });
   assert.equal(emptyStoredAiFit.response.status, 200, `저장 AI FIT 조회 실패: ${emptyStoredAiFit.text}`);
   assert.deepEqual(emptyStoredAiFit.data.analysis, []);
@@ -447,9 +449,9 @@ async function main() {
   });
   assert.equal(savedYearlyReport.response.status, 200, `연 단위 결과 리포트 저장 실패: ${savedYearlyReport.text}`);
   const coreCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
-  assert.equal(coreCsv.response.status, 200, `DB 이관 CSV 생성 실패: ${coreCsv.text}`);
-  assert.match(coreCsv.data.raw || '', /^\ufeff?"csv_schema_version","source_table"/);
-  assert.match(coreCsv.data.raw || '', /판매 데이터를 검토한다/);
+  assert.equal(coreCsv.response.status, 200, `과제정보 CSV 생성 실패: ${coreCsv.text}`);
+  assert.match(coreCsv.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
+  assert.match(coreCsv.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 25분\]/);
 
   // 앞 단계 임시 저장이 이미 지나온 진행 단계를 되돌리면 안 된다.
   const backwardDraft = await api('/drafts/interview_answers', {
@@ -724,9 +726,9 @@ async function main() {
     const taskCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${cascadeTask.id}`, {
       token: userA.token
     });
-    assert.equal(taskCsv.response.status, 200, `DB 이관 CSV 생성 실패: ${taskCsv.text}`);
-    assert.match(taskCsv.data.raw || '', /^\ufeff?"csv_schema_version","source_table"/);
-    assert.match(taskCsv.data.raw || '', /SNS 채널을 관리한다/);
+    assert.equal(taskCsv.response.status, 200, `과제정보 CSV 생성 실패: ${taskCsv.text}`);
+    assert.match(taskCsv.data.raw || '', /^\ufeff?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
+    assert.match(taskCsv.data.raw || '', /SNS 채널을 관리한다 \[수작업 \| 웹 \| 60분\]/);
 
     const adminTaskReport = await api(`/admin/tasks/${cascadeTask.id}/report`, { cookie: adminCookie });
     assert.equal(adminTaskReport.response.status, 200, `관리자 저장 리포트 조회 실패: ${adminTaskReport.text}`);
