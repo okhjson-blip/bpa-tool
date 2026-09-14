@@ -282,54 +282,34 @@ export const syncProcesses = async (req, res) => {
     const projectId = Number(req.body.projectId);
     const taskId = Number(req.body.taskId);
     const interviewId = req.body.interviewId ? Number(req.body.interviewId) : null;
-    const task = await db.selectOne('tasks', { id: taskId });
-    if (!task || Number(task.project_id) !== projectId) {
-      return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
-    }
     const ids = requestedProcesses.filter((process) => process.id != null).map((process) => Number(process.id));
     if (new Set(ids).size !== ids.length) {
       return res.status(400).json({ error: '중복된 프로세스가 포함되어 있습니다.' });
     }
 
-    const accessibleProcesses = await db.select('processes', { project_id: projectId, task_id: taskId });
-    const accessibleIds = new Set(accessibleProcesses.map((process) => Number(process.id)));
-    if (ids.some((id) => !accessibleIds.has(id))) {
-      return res.status(404).json({ error: '접근할 수 없는 프로세스가 포함되어 있습니다.' });
-    }
-    const deletedIds = (req.body.deleted_process_ids || []).map(Number);
-    if (new Set(deletedIds).size !== deletedIds.length || deletedIds.some((id) => ids.includes(id))) {
-      return res.status(400).json({ error: '삭제 목록에 중복되거나 현재 저장할 프로세스가 포함되어 있습니다.' });
-    }
-    if (deletedIds.some((id) => !accessibleIds.has(id))) {
-      return res.status(404).json({ error: '삭제할 수 없는 프로세스가 포함되어 있습니다.' });
-    }
-    await Promise.all(deletedIds.map((id) => db.delete('processes', id)));
+    // 임시 저장본이 들고 있던 삭제 대상 ID가 이미 사라졌거나 지금 저장할 행과
+    // 겹쳐도 저장이 막히지 않도록 걸러낸 뒤 넘긴다. 남은 처리는 단일 트랜잭션
+    // 함수가 맡으므로 중간에 실패해도 부분 저장 상태가 남지 않는다.
+    const deletedIds = [...new Set((req.body.deleted_process_ids || []).map(Number))]
+      .filter((id) => Number.isInteger(id) && !ids.includes(id));
 
-    const processes = [];
-    for (let index = 0; index < requestedProcesses.length; index += 1) {
-      const process = requestedProcesses[index];
-      const level = process.level;
-      const values = {
-        level,
+    const processes = await db.rpc('sync_task_processes', {
+      p_project_id: projectId,
+      p_task_id: taskId,
+      p_interview_id: interviewId,
+      p_deleted_ids: deletedIds,
+      p_processes: requestedProcesses.map((process) => ({
+        id: process.id == null ? null : Number(process.id),
+        level: process.level,
         name: process.name,
         description: process.description || '',
         execution_time: Number(process.execution_time) || 0,
         waiting_time: Number(process.waiting_time) || 0,
         approval_waiting_time: Number(process.approval_waiting_time) || 0,
-        method: level === 'L6' ? (process.method || 'manual') : null,
-        tool: level === 'L6' ? (process.tool || 'other') : null,
-        sort_order: index,
-        status: 'confirmed'
-      };
-      if (process.id != null) processes.push(await db.update('processes', Number(process.id), values));
-      else processes.push(await db.insert('processes', {
-        project_id: projectId,
-        task_id: taskId,
-        interview_id: interviewId,
-        ...values
-      }));
-    }
-    await db.update('tasks', taskId, { current_step: 3 });
+        method: process.level === 'L6' ? (process.method || 'manual') : null,
+        tool: process.level === 'L6' ? (process.tool || 'other') : null
+      }))
+    });
 
     res.json({
       message: `${processes.length}개 프로세스를 저장하고 플로우차트와 동기화했습니다.`,
@@ -337,6 +317,9 @@ export const syncProcesses = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    if (error?.code === 'P0002') {
+      return res.status(404).json({ error: '프로젝트에 속한 과제를 찾을 수 없습니다.' });
+    }
     res.status(500).json({ error: '프로세스 일괄 동기화 중 오류가 발생했습니다.' });
   }
 };

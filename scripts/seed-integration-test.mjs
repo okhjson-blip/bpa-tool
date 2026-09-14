@@ -107,9 +107,15 @@ async function createIntegrationSet(index, runId) {
   const userClient = createClient(supabaseUrl, publishableKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
-  const signIn = await userClient.auth.signInAnonymously({
-    options: { data: { name: userName, email, company_id: company.id, auth_mode: 'partner' } }
+  const password = `Bpa1!${crypto.randomBytes(16).toString('base64url')}`;
+  const createdUser = await service.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name: userName, auth_mode: 'partner' }
   });
+  if (createdUser.error) throw createdUser.error;
+  const signIn = await userClient.auth.signInWithPassword({ email, password });
   if (signIn.error) throw signIn.error;
   const token = signIn.data.session.access_token;
 

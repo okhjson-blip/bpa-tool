@@ -97,13 +97,16 @@ export const getBDWDiagnosis = async (req, res) => {
 
   try {
     const processes = await getTaskL6Processes(projectId, req.query.task_id);
-    const tags = await db.select('bdw_tags');
+    // 전수 조회는 PostgREST 행 제한에 잘려 일부 태그가 조용히 누락되므로
+    // 현재 과제의 프로세스 ID로만 조회한다.
+    const tags = await db.selectIn('bdw_tags', 'process_id', processes.map((process) => Number(process.id)));
+    const tagByProcessId = new Map(tags.map((tag) => [Number(tag.process_id), tag]));
 
     // 각 프로세스에 태그 연결
-    const processesWithTags = processes.map((proc) => {
-      const tag = tags.find((t) => Number(t.process_id) === Number(proc.id));
-      return { ...proc, bdw_tag: tag?.bdw_type || 'normal' };
-    });
+    const processesWithTags = processes.map((proc) => ({
+      ...proc,
+      bdw_tag: tagByProcessId.get(Number(proc.id))?.bdw_type || 'normal'
+    }));
 
     // 통계
     const bottlenecks = processesWithTags.filter((p) => p.bdw_tag === 'bottleneck');

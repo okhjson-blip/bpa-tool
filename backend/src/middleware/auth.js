@@ -37,7 +37,11 @@ export async function authenticate(req, res, next) {
     const profile = await serviceDb.selectOne('profiles', { user_id: user.id });
 
     const memberships = await serviceDb.select('company_memberships', { user_id: user.id });
-    const companies = memberships.length ? await serviceDb.select('companies') : [];
+    const companies = await serviceDb.selectIn(
+      'companies',
+      'id',
+      memberships.map((membership) => Number(membership.company_id))
+    );
     const companyById = new Map(companies.map((company) => [Number(company.id), company]));
     const enrichedMemberships = memberships.map((membership) => ({
       ...membership,
@@ -72,6 +76,18 @@ export function requireCompanyUser(req, res, next) {
   req.auth.company = req.auth.activeMembership.company;
   req.auth.memberRole = req.auth.activeMembership.role;
   next();
+}
+
+// 임시 저장 소유자는 세션마다 바뀔 수 있는 Auth 사용자가 아니라
+// 이메일 기준 협력사 사용자 계정으로 판정한다.
+export async function resolveCompanyAccountId(req) {
+  if (req.auth.accountId !== undefined) return req.auth.accountId;
+  const account = await serviceDb.selectOne('company_user_accounts', {
+    company_id: Number(req.auth.companyId),
+    auth_user_id: req.auth.user.id
+  });
+  req.auth.accountId = account ? Number(account.id) : null;
+  return req.auth.accountId;
 }
 
 export function requireCompanyWrite(req, res, next) {

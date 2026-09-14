@@ -51,6 +51,16 @@ function unwrap(result) {
   return result.data;
 }
 
+const IN_CHUNK_SIZE = 200;
+
+function chunk(values, size) {
+  const chunks = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
+}
+
 function createDatabase(clientProvider) {
   return {
     async insert(table, values) {
@@ -67,10 +77,27 @@ function createDatabase(clientProvider) {
       return unwrap(await query);
     },
 
+    // 조건 없는 전수 조회는 PostgREST 기본 행 제한에 잘려 결과가 조용히 누락되므로
+    // 필요한 키 목록만 나눠서 조회한다.
+    async selectIn(table, column, values, condition = null) {
+      const unique = [...new Set((values || []).filter((value) => value != null))];
+      if (!unique.length) return [];
+      const pages = await Promise.all(chunk(unique, IN_CHUNK_SIZE).map(async (keys) => {
+        let query = clientProvider().from(table).select('*');
+        if (condition) query = applyCondition(query, condition);
+        return unwrap(await query.in(column, keys));
+      }));
+      return pages.flat();
+    },
+
     async selectOne(table, condition) {
       const query = applyCondition(clientProvider().from(table).select('*'), condition).limit(1);
       const rows = unwrap(await query);
       return rows[0] || null;
+    },
+
+    async rpc(name, params) {
+      return unwrap(await clientProvider().rpc(name, params));
     },
 
     async update(table, id, values) {

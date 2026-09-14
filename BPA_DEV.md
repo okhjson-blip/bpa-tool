@@ -5,7 +5,7 @@
 - UI 진입점: 저장소 루트 `index.html`
 - 프런트엔드 도구: Vite
 - 백엔드: Node.js + Express (로컬 서버 및 Vercel Function)
-- 인증: 협력사 Supabase 익명 세션 자동 복원, 관리자 HttpOnly 서명 세션
+- 인증: 협력사 Supabase 이메일 OTP 로그인 및 세션 자동 복원, 관리자 HttpOnly 서명 세션
 - 데이터베이스: Supabase PostgreSQL + JWT 기반 RLS
 - 개발 API 주소: `http://localhost:5000/api`
 - 개발 UI 주소: `http://localhost:3000`
@@ -41,11 +41,12 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 - `companies`: 관리자가 협력사명과 컨설팅 연도·상/하반기로 등록하며 `active` 또는 `suspended` 상태를 가집니다. 동일 협력사는 서로 다른 컨설팅 차수로 등록할 수 있습니다.
 - `profiles`: Supabase Auth `user_id`와 이름·이메일·애플리케이션 역할을 연결합니다.
 - `company_memberships`: 사용자와 협력사를 연결하고 `company_admin`, `company_editor`, `company_viewer` 역할을 관리합니다.
-- `company_user_accounts`: 관리자 사용자 선등록과 자유 가입을 연결하는 디렉터리입니다. `auth_user_id`는 최초 로그인 전에는 `NULL`이며, 같은 협력사·이메일로 접속하면 익명 Auth 사용자와 연결됩니다. 최근 세션 복원 시 `last_access_at`을 갱신합니다.
+- `company_user_accounts`: 관리자 사용자 선등록과 자유 가입을 연결하는 디렉터리입니다. `auth_user_id`는 최초 로그인 전에는 `NULL`이며, 같은 협력사·이메일로 접속하면 Auth 사용자와 연결됩니다. 최근 세션 복원 시 `last_access_at`을 갱신합니다.
 - 관리자 사용자 등록 화면은 공통 `isValidEmail` 검증을 거친 뒤 HttpOnly 관리자 세션으로 `/api/admin/users`를 호출합니다. 백엔드는 양수 `company_id`, 이름 길이와 이메일 형식을 다시 검증하고 Service Role로 `company_user_accounts`에 기록합니다.
-- `panel_drafts`: 협력사·사용자·패널 키·화면 범위별 최신 수동 임시 저장 payload를 JSONB로 보관합니다. 프로젝트·과제 외래키 삭제 시 연관 저장본도 정리됩니다.
+- `panel_drafts`: 협력사·사용자 계정·패널 키·화면 범위별 최신 수동 임시 저장 payload를 JSONB로 보관합니다. 소유자 판정 기준은 `account_id`(이메일 기준 `company_user_accounts.id`)이며 `user_id`는 마지막 저장자 감사용입니다. 프로젝트·과제 외래키 삭제 시 연관 저장본도 정리됩니다.
+- 임시 저장은 `tasks.current_step`을 단조 증가로만 갱신합니다. 프로세스 일괄 저장은 `sync_task_processes` RPC가 단일 트랜잭션으로 처리하며 존재하지 않는 프로세스 ID는 신규 행으로 되살립니다.
 - `interviews.task_id`, `interviews.answers`: 인터뷰를 과제에 직접 연결하고 화면 질문 순서의 답변 배열을 저장하여 재접속·이전 단계 이동 시 복원합니다. 기존 인터뷰는 연결된 프로세스의 `task_id`로 역연결합니다.
-- 협력사 사용자는 활성 협력사와 이름·이메일을 입력하고 `시작하기`를 클릭합니다. 같은 협력사·이메일의 기존 디렉터리 계정은 기존 로그인 세션을 유지하면서 현재 Supabase 익명 세션에도 접근 멤버십을 연결합니다. 미등록 사용자는 안내 후 `등록`을 직접 클릭한 경우에만 프로필과 `company_editor` 멤버십을 생성합니다. 이메일 승인 절차는 사용하지 않습니다.
+- 협력사 사용자는 활성 협력사와 이름·이메일을 입력하고 `인증코드 받기`를 클릭합니다. 메일로 받은 OTP(또는 매직 링크)를 확인한 뒤 기존 사용자는 같은 이메일 Auth 계정으로 접속하고, 미등록 사용자는 안내 후 `등록`을 직접 클릭한 경우에만 프로필과 `company_editor` 멤버십을 생성합니다. 임시 저장은 이메일 기준 `company_user_accounts`에 묶이므로 기기나 브라우저가 바뀌어도 이어받습니다.
 - 브라우저는 Supabase 세션을 자동 복원하고 모든 보호 API에 Access Token을 전달합니다.
 - 백엔드 업무 데이터 클라이언트는 Publishable Key와 사용자 JWT를 사용합니다. 클라이언트 요청의 회사명이나 `company_id`를 신뢰하지 않고 RLS가 허용한 회사 데이터만 조회·변경합니다.
 - 관리자 비밀번호는 Supabase Edge Function Secret `BPA_ADMIN_PASSWORD`에만 저장합니다. Vercel 백엔드는 Secret Key로 `admin-password-verify` 함수를 호출해 일치 여부만 받은 뒤 8시간 유효한 HttpOnly 서명 쿠키를 발급합니다.

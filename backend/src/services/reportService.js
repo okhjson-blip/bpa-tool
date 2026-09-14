@@ -52,12 +52,11 @@ export async function buildTaskReport({
   })).filter((process) => process.level === 'L6')
     .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || Number(a.id) - Number(b.id));
   const processIds = new Set(processes.map((process) => Number(process.id)));
-  const [allBdwTags, projectAiAnalysis, projectToBeProcesses] = await Promise.all([
-    database.select('bdw_tags'),
+  const [bdwTags, projectAiAnalysis, projectToBeProcesses] = await Promise.all([
+    database.selectIn('bdw_tags', 'process_id', [...processIds]),
     database.select('ai_analysis', { project_id: normalizedProjectId }),
     database.select('to_be_processes', { project_id: normalizedProjectId })
   ]);
-  const bdwTags = allBdwTags.filter((tag) => processIds.has(Number(tag.process_id)));
   const processOrder = new Map(processes.map((process, index) => [Number(process.id), index]));
   const aiAnalysis = projectAiAnalysis
     .filter((analysis) => processIds.has(Number(analysis.process_id)))

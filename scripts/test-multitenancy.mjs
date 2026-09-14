@@ -44,15 +44,22 @@ async function api(path, { token, cookie, method = 'GET', body } = {}) {
   return { response, data, text };
 }
 
+// 익명 로그인을 제거했으므로 검증용 사용자도 실제 이메일 계정으로 만든다.
 async function createTestUser(label) {
   const email = `bpa-${label}-${runId}@example.com`;
-  const client = userClient();
-  const { data, error } = await client.auth.signInAnonymously({
-    options: { data: { name: `검증 사용자 ${label.toUpperCase()}`, email, auth_mode: 'partner' } }
+  const password = `Bpa1!${crypto.randomBytes(16).toString('base64url')}`;
+  const created = await service.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name: `검증 사용자 ${label.toUpperCase()}`, auth_mode: 'partner' }
   });
+  if (created.error) throw created.error;
+  createdUserIds.push(created.data.user.id);
+  const client = userClient();
+  const { data, error } = await client.auth.signInWithPassword({ email, password });
   if (error) throw error;
-  createdUserIds.push(data.user.id);
-  return { user: data.user, email, client, token: data.session.access_token };
+  return { user: data.user, email, password, client, token: data.session.access_token };
 }
 
 async function createTestCompany(label) {
@@ -135,26 +142,30 @@ async function main() {
     assert.equal(registeredCheck.data.registered, true, '등록 완료 사용자를 미등록자로 판별함');
   }
 
+  // 다른 기기·브라우저에서 같은 이메일로 다시 접속하는 상황. 이메일 로그인으로
+  // 바뀌었으므로 동일한 Auth 사용자로 연결되어야 한다.
   const returningClient = userClient();
-  const { data: returningAuth, error: returningAuthError } = await returningClient.auth.signInAnonymously({
-    options: { data: { name: '검증 사용자 A', email: userA.email, company_id: companyA.id, auth_mode: 'partner' } }
+  const { data: returningAuth, error: returningAuthError } = await returningClient.auth.signInWithPassword({
+    email: userA.email,
+    password: userA.password
   });
   if (returningAuthError) throw returningAuthError;
-  createdUserIds.push(returningAuth.user.id);
+  assert.equal(returningAuth.user.id, userA.user.id, '같은 이메일 재접속이 다른 Auth 사용자로 연결됨');
+  const returningToken = returningAuth.session.access_token;
   const returningRegistrationCheck = await api('/auth/check-registration', {
-    token: returningAuth.session.access_token,
+    token: returningToken,
     method: 'POST',
     body: { email: userA.email, company_id: companyA.id }
   });
   assert.equal(returningRegistrationCheck.response.status, 200, `재접속 사용자 등록 확인 실패: ${returningRegistrationCheck.text}`);
   assert.equal(returningRegistrationCheck.data.registered, true, '새 세션의 기존 이메일을 등록자로 확인하지 못함');
   const returningLogin = await api('/auth/complete-profile', {
-    token: returningAuth.session.access_token,
+    token: returningToken,
     method: 'POST',
     body: { name: '검증 사용자 A', email: userA.email, company_id: companyA.id }
   });
-  assert.equal(returningLogin.response.status, 200, `새 익명 세션의 기존 이메일 로그인 복원 실패: ${returningLogin.text}`);
-  const returningMe = await api('/auth/me', { token: returningAuth.session.access_token });
+  assert.equal(returningLogin.response.status, 200, `재접속 세션의 기존 이메일 로그인 복원 실패: ${returningLogin.text}`);
+  const returningMe = await api('/auth/me', { token: returningToken });
   assert.equal(returningMe.response.status, 200, `복원된 기존 이메일 세션 조회 실패: ${returningMe.text}`);
   assert.ok(returningMe.data.memberships.some((item) =>
     Number(item.company_id) === Number(companyA.id) && item.status === 'active'
@@ -236,6 +247,10 @@ async function main() {
   const loadedPanelDraft = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: userA.token });
   assert.equal(loadedPanelDraft.response.status, 200, `패널 임시 저장 자동 로딩 실패: ${loadedPanelDraft.text}`);
   assert.equal(loadedPanelDraft.data.payload.name, '임시 프로젝트명');
+  // 다른 기기에서 다시 접속한 세션도 직전 임시 저장본을 그대로 이어받아야 한다.
+  const rejoinedPanelDraft = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: returningToken });
+  assert.equal(rejoinedPanelDraft.response.status, 200, `재접속 세션 임시 저장 조회 실패: ${rejoinedPanelDraft.text}`);
+  assert.equal(rejoinedPanelDraft.data?.payload?.name, '임시 프로젝트명', '재접속 세션이 직전 임시 저장 내용을 불러오지 못했습니다.');
   const isolatedPanelDraft = await api(`/drafts/project_basic?scope_key=${encodeURIComponent(draftScope)}`, { token: userB.token });
   assert.equal(isolatedPanelDraft.response.status, 200);
   assert.equal(isolatedPanelDraft.data, null, '다른 협력사 사용자가 임시 저장 내용을 조회함');
@@ -350,15 +365,74 @@ async function main() {
   if (processStep.error) throw processStep.error;
   assert.equal(processStep.data.current_step, 3, '프로세스 저장 후 현재 단계가 3으로 기록되지 않았습니다.');
 
+  // 임시 저장본이 이미 삭제된 프로세스 ID를 들고 있어도 저장이 막히면 안 된다.
+  const staleProcessSync = await api('/interviews/processes/sync', {
+    token: userA.token,
+    method: 'PUT',
+    body: {
+      projectId: created.data.project.id,
+      taskId: restorableTask.data.task.id,
+      interviewId: savedInterview.data.interview.id,
+      deleted_process_ids: [coreL5Id],
+      processes: [{
+        id: coreL5Id,
+        level: 'L6',
+        name: '되살아난 단위 업무를 확인한다',
+        description: '',
+        execution_time: 30,
+        waiting_time: 0,
+        approval_waiting_time: 0,
+        method: 'manual',
+        tool: 'excel'
+      }, {
+        id: coreL6.id,
+        level: 'L6',
+        name: coreL6.name,
+        description: '',
+        execution_time: 25,
+        waiting_time: 0,
+        approval_waiting_time: 0,
+        method: 'manual',
+        tool: 'excel'
+      }]
+    }
+  });
+  assert.equal(staleProcessSync.response.status, 200, `사라진 프로세스 ID 포함 동기화 실패: ${staleProcessSync.text}`);
+  assert.equal(staleProcessSync.data.processes.length, 2);
+  assert.notEqual(Number(staleProcessSync.data.processes[0].id), Number(coreL5Id), '존재하지 않는 ID가 새 행으로 저장되지 않았습니다.');
+  assert.equal(staleProcessSync.data.processes[0].name, '되살아난 단위 업무를 확인한다');
+  const restoredStaleId = Number(staleProcessSync.data.processes[0].id);
+  const cleanupStaleSync = await api('/interviews/processes/sync', {
+    token: userA.token,
+    method: 'PUT',
+    body: {
+      projectId: created.data.project.id,
+      taskId: restorableTask.data.task.id,
+      interviewId: savedInterview.data.interview.id,
+      deleted_process_ids: [restoredStaleId, coreL5Id],
+      processes: [{
+        id: coreL6.id,
+        level: 'L6',
+        name: coreL6.name,
+        description: '',
+        execution_time: 25,
+        waiting_time: 0,
+        approval_waiting_time: 0,
+        method: 'manual',
+        tool: 'excel'
+      }]
+    }
+  });
+  assert.equal(cleanupStaleSync.response.status, 200, `사라진 삭제 ID 포함 동기화 실패: ${cleanupStaleSync.text}`);
+  assert.equal(cleanupStaleSync.data.processes.length, 1);
+
   const coreReport = await api(`/analysis/project/${created.data.project.id}/report?task_id=${restorableTask.data.task.id}`, { token: userA.token });
   assert.equal(coreReport.response.status, 200, `과제 리포트 생성 실패: ${coreReport.text}`);
   assert.equal(coreReport.data.task_participants.length, 2);
   assert.equal(coreReport.data.as_is_processes[0].method, 'manual');
   assert.equal(coreReport.data.as_is_processes[0].tool, 'excel');
-  const coreCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
-  assert.equal(coreCsv.response.status, 200, `과제정보 CSV 생성 실패: ${coreCsv.text}`);
-  assert.match(coreCsv.data.raw || '', /^﻿?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
-  assert.match(coreCsv.data.raw || '', /판매 데이터를 검토한다 \[수작업 \| 엑셀 \| 25분\]/);
+  const csvBeforeSave = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
+  assert.equal(csvBeforeSave.response.status, 409, 'DB 이관 CSV가 리포트 저장 전에 출력되었습니다.');
   const emptyStoredAiFit = await api(`/analysis/project/${created.data.project.id}/ai-fit?task_id=${restorableTask.data.task.id}`, { token: userA.token });
   assert.equal(emptyStoredAiFit.response.status, 200, `저장 AI FIT 조회 실패: ${emptyStoredAiFit.text}`);
   assert.deepEqual(emptyStoredAiFit.data.analysis, []);
@@ -372,6 +446,28 @@ async function main() {
     body: { taskId: restorableTask.data.task.id, frequency_unit: 'year', frequency_count: 4 }
   });
   assert.equal(savedYearlyReport.response.status, 200, `연 단위 결과 리포트 저장 실패: ${savedYearlyReport.text}`);
+  const coreCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${restorableTask.data.task.id}`, { token: userA.token });
+  assert.equal(coreCsv.response.status, 200, `DB 이관 CSV 생성 실패: ${coreCsv.text}`);
+  assert.match(coreCsv.data.raw || '', /^\ufeff?"csv_schema_version","source_table"/);
+  assert.match(coreCsv.data.raw || '', /판매 데이터를 검토한다/);
+
+  // 앞 단계 임시 저장이 이미 지나온 진행 단계를 되돌리면 안 된다.
+  const backwardDraft = await api('/drafts/interview_answers', {
+    token: userA.token,
+    method: 'PUT',
+    body: {
+      scope_key: `task:${restorableTask.data.task.id}`,
+      project_id: created.data.project.id,
+      task_id: restorableTask.data.task.id,
+      payload: { answers: ['다시 검토 중'] }
+    }
+  });
+  assert.equal(backwardDraft.response.status, 200, `앞 단계 임시 저장 실패: ${backwardDraft.text}`);
+  const stepAfterBackwardDraft = await service.from('tasks').select('current_step').eq('id', restorableTask.data.task.id).single();
+  if (stepAfterBackwardDraft.error) throw stepAfterBackwardDraft.error;
+  assert.equal(stepAfterBackwardDraft.data.current_step, 6, '앞 단계 임시 저장이 진행 단계를 되돌렸습니다.');
+  await api(`/drafts/interview_answers?scope_key=${encodeURIComponent(`task:${restorableTask.data.task.id}`)}`, { token: userA.token, method: 'DELETE' });
+
   const listedCompletedTasks = await api(`/projects/${created.data.project.id}/tasks`, { token: userA.token });
   const listedCompletedTask = listedCompletedTasks.data.find((item) => Number(item.id) === Number(restorableTask.data.task.id));
   assert.equal(listedCompletedTask.status, 'completed');
@@ -628,9 +724,9 @@ async function main() {
     const taskCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${cascadeTask.id}`, {
       token: userA.token
     });
-    assert.equal(taskCsv.response.status, 200, `과제정보 CSV 생성 실패: ${taskCsv.text}`);
-    assert.match(taskCsv.data.raw || '', /^﻿?"과제명","시작일","완료일","성과목표","As-Is","To-Be","난이도"/);
-    assert.match(taskCsv.data.raw || '', /SNS 채널을 관리한다 \[수작업 \| 웹 \| 60분\]/);
+    assert.equal(taskCsv.response.status, 200, `DB 이관 CSV 생성 실패: ${taskCsv.text}`);
+    assert.match(taskCsv.data.raw || '', /^\ufeff?"csv_schema_version","source_table"/);
+    assert.match(taskCsv.data.raw || '', /SNS 채널을 관리한다/);
 
     const adminTaskReport = await api(`/admin/tasks/${cascadeTask.id}/report`, { cookie: adminCookie });
     assert.equal(adminTaskReport.response.status, 200, `관리자 저장 리포트 조회 실패: ${adminTaskReport.text}`);
@@ -896,8 +992,9 @@ async function main() {
       'credential-encryption-roundtrip',
       'invalid-key-rejected-without-secret-leak',
       realGeminiKey ? 'real-gemini-connection-persistence-and-analysis' : 'real-gemini-skipped',
-      'project-create-and-cascade-delete', 'partner-task-delete-and-cascade', 'panel-draft-save-load-isolation-delete', 'task-period-boundary', 'task-update-and-interview-restore', 'report-participants-and-completion', 'api-company-isolation', 'direct-rls-isolation',
-      'process-add-reorder-delete-l6-fields-task-csv-year-frequency-and-step-restore'
+      'project-create-and-cascade-delete', 'partner-task-delete-and-cascade', 'panel-draft-save-load-isolation-delete', 'panel-draft-follows-email-across-devices', 'task-period-boundary', 'task-update-and-interview-restore', 'report-participants-and-completion', 'api-company-isolation', 'direct-rls-isolation',
+      'process-add-reorder-delete-l6-fields-task-csv-year-frequency-and-step-restore',
+      'stale-process-id-recovered-as-insert', 'draft-save-keeps-current-step-monotonic'
     ]
   }));
 }

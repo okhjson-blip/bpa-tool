@@ -135,8 +135,8 @@ export async function completeProfile(req, res) {
       name,
       email,
       accessedAt,
-      // 협력사 로그인은 이메일 승인/비밀번호 없이 동작하므로 같은 회사와
-      // 이메일로 다시 접속한 익명 Auth 세션을 기존 디렉터리에 연결한다.
+      // 같은 협력사·이메일이면 Auth 사용자가 바뀌어도(익명→이메일 OTP 이전 포함)
+      // 기존 디렉터리 계정에 다시 연결해 임시 저장본을 이어받는다.
       allowRebind: true
     });
     if (!directoryAccount) return alreadyRegistered(res);

@@ -102,9 +102,15 @@ if (mode === 'create-login-flow') {
     process.env.SUPABASE_PUBLISHABLE_KEY,
     { auth: { persistSession: false, autoRefreshToken: false } }
   );
-  const signIn = await browserClient.auth.signInAnonymously({
-    options: { data: { name: '브라우저 검증 사용자', email, company_id: company.id, auth_mode: 'partner' } }
+  const password = `Bpa1!${crypto.randomBytes(16).toString('base64url')}`;
+  const createdUser = await service.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name: '브라우저 검증 사용자', auth_mode: 'partner' }
   });
+  if (createdUser.error) throw createdUser.error;
+  const signIn = await browserClient.auth.signInWithPassword({ email, password });
   if (signIn.error) throw signIn.error;
   const token = signIn.data.session.access_token;
   await api('/auth/complete-profile', token, 'POST', {
