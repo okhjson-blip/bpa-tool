@@ -10,6 +10,11 @@ import {
 import { resolveSupabaseSecretKey } from '../backend/src/config/supabaseEnv.js';
 import { minutesToClock, parseClockToMinutes } from '../backend/src/utils/timeFormat.js';
 import { processToolLabel } from '../backend/src/utils/processTool.js';
+import {
+  remainingMinutesAfterAutomation,
+  normalizeAiFitSavings,
+  toBeExecutionMinutes
+} from '../backend/src/utils/aiFitTime.js';
 
 const apiBase = process.env.TEST_API_BASE || 'http://localhost:5000/api';
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -107,6 +112,13 @@ async function main() {
   assert.equal(processToolLabel('web'), '웹');
   assert.equal(processToolLabel('other'), '기타 도구');
   assert.equal(processToolLabel('other', '카카오워크'), '기타 도구(카카오워크)');
+  assert.equal(remainingMinutesAfterAutomation(25, 5), 2);
+  assert.equal(remainingMinutesAfterAutomation(25, 4), 3);
+  assert.equal(remainingMinutesAfterAutomation(20, 3), 9);
+  assert.equal(normalizeAiFitSavings(25, 5, 5), 23);
+  assert.equal(normalizeAiFitSavings(25, 24, 5), 24);
+  assert.equal(normalizeAiFitSavings(25, 3, 2), 3);
+  assert.equal(toBeExecutionMinutes(25, 23), 2);
 
   const health = await api('/health');
   assert.equal(health.response.status, 200, `health 실패: ${health.text}`);

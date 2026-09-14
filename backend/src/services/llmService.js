@@ -72,7 +72,10 @@ const AI_FIT_SCHEMA = {
           inefficiency: { type: 'integer', enum: [1, 2, 3, 4, 5] },
           recommended_tech: { type: 'string' },
           difficulty: { type: 'string', enum: ['low', 'medium', 'high'] },
-          estimated_time_savings: { type: 'integer' },
+          estimated_time_savings: {
+            type: 'integer',
+            description: 'As-Is 사람 수행시간(분)에서 줄어드는 사람 투입 분. To-Be 남은 시간은 트리거·검토·예외만. AI/시스템 경과시간은 제외.'
+          },
           rationale: { type: 'string' }
         },
         required: [
@@ -92,6 +95,7 @@ function compactProcesses(processes) {
     id: process.id,
     name: process.name,
     description: process.description || '',
+    as_is_human_minutes: Number(process.execution_time) || 0,
     execution_time_minutes: Number(process.execution_time) || 0,
     waiting_time_hours: Number(process.waiting_time) || 0,
     approval_waiting_time_hours: Number(process.approval_waiting_time) || 0,
@@ -214,7 +218,20 @@ ${JSON.stringify(compactProcesses(processes))}`;
 - D 현상 유지: AI 가능성 낮음 + 비효율성 낮음
 점수를 부여할 때 위 높음/낮음 기준과 척도 정의에 맞는 정수 하나를 선택하세요.
 
-추천 기술, 비개발자 관점 구현 난이도(low=하, medium=중, high=상), 현재 수행시간을 넘지 않는 예상 절감시간(분), 짧은 근거를 제공하고 모든 process_id를 정확히 한 번씩 포함하세요.
+추천 기술, 비개발자 관점 구현 난이도(low=하, medium=중, high=상), 사람 수행시간 절감분(분), 짧은 근거를 제공하고 모든 process_id를 정확히 한 번씩 포함하세요.
+
+[절감시간 산출]
+- estimated_time_savings는 As-Is 사람 수행시간(as_is_human_minutes)에서 줄어드는 사람 투입 분입니다.
+- To-Be 남은 사람 수행시간 = as_is_human_minutes − estimated_time_savings 입니다. 이 남은 시간은 트리거·검토·예외 처리에 사람이 쓰는 시간만입니다.
+- AI·자동화·시스템이 생성하는 경과시간(초안 생성, 배치 처리, API 호출)은 사람 수행시간에 넣지 마세요.
+- 대기시간(h)·승인대기시간(h)은 절감시간에 포함하지 마세요.
+- 절감은 0 이상, as_is_human_minutes 이하입니다.
+- AI 가능성 점수와 남은 사람 시간은 반드시 맞추세요.
+  - 5점: 남은 사람 시간 ≈ As-Is의 1~10% 또는 최대 2분. 예: As-Is 25분 초안 작성 → AI 초안 + 사람 검토 2분 → 절감 23분.
+  - 4점: 남은 사람 시간 ≈ As-Is의 10~25% 또는 최대 3분.
+  - 3점: 남은 사람 시간 ≈ As-Is의 30~50%.
+  - 1~2점: 보조만 가능하면 남은 사람 시간 ≈ As-Is의 70~90%.
+- 4~5점을 주면서 절감이 수 분에 그치면 안 됩니다. 자동화 추천과 절감 규모가 같아야 합니다.
 
 [프로세스]
 ${JSON.stringify(compactProcesses(processes))}`;

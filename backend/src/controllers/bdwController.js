@@ -4,6 +4,7 @@ import { getCompanyApiKey } from '../services/companyCredentialService.js';
 import { buildTaskReport } from '../services/reportService.js';
 import { minutesToClock } from '../utils/timeFormat.js';
 import { processToolLabel } from '../utils/processTool.js';
+import { normalizeAiFitSavings, toBeExecutionMinutes } from '../utils/aiFitTime.js';
 
 async function getTaskL6Processes(projectId, taskId) {
   const condition = { project_id: parseInt(projectId) };
@@ -186,7 +187,11 @@ export const analyzeAIFit = async (req, res) => {
         fit_category: category,
         recommended_tech: String(generated.recommended_tech || '업무 표준화'),
         difficulty: ['low', 'medium', 'high'].includes(generated.difficulty) ? generated.difficulty : 'medium',
-        estimated_time_savings: Math.round(clamp(generated.estimated_time_savings, 0, executionTime)),
+        estimated_time_savings: normalizeAiFitSavings(
+          executionTime,
+          generated.estimated_time_savings,
+          aiPossibility
+        ),
         rationale: String(generated.rationale || '')
       };
     });
@@ -308,7 +313,7 @@ export const createToBe = async (req, res) => {
         ai_applied: isAccepted,
         original_execution_time: executionTime,
         estimated_execution_time: analysis
-          ? Math.max(0, executionTime - analysis.estimated_time_savings)
+          ? toBeExecutionMinutes(executionTime, analysis.estimated_time_savings)
           : executionTime,
         automation_method: analysis?.recommended_tech || 'manual'
       });
