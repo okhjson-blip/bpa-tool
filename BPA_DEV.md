@@ -107,7 +107,7 @@ Vite의 `root`는 저장소 루트이며 `index.html`을 읽습니다. 빌드 �
 
 결과 리포트 API는 `project_id`와 `task_id`에 속한 L6 Act, BDW, AI FIT, To-Be 데이터만 집계합니다. PDF 출력은 과제 참여자, BDW 요약·전체 목록, 작업방식·도구를 포함한 L6 AS-IS·To-Be 등 전체 분석 섹션을 인쇄 전용 창으로 구성합니다. `GET /api/analysis/project/:projectId/report.csv?task_id=:taskId`는 과제명·시작일·완료일·성과목표·As-Is·To-Be·난이도를 과제당 한 행의 UTF-8 CSV로 반환합니다. As-Is/To-Be는 플로우차트와 같은 순서로 각 노드의 작업방식·도구·수행시간을 포함합니다. 상세 열 정의는 `RESULT_REPORT_CSV_SCHEMA.md`를 따릅니다.
 
-To-Be 생성 API는 클라이언트가 전달한 분석 수치를 신뢰하지 않고 `accepted_process_ids`만 받아, 서버에 저장된 해당 프로젝트·과제의 AI FIT 결과로 처리시간과 적용 방식을 계산합니다. 수락한 L6의 To-Be 수행시간 = As-Is 사람 수행시간 − AI FIT 절감분이며, 남은 시간은 트리거·검토·예외 처리에 쓰는 사람 투입시간입니다. AI·시스템 경과시간은 To-Be 수행시간에 넣지 않습니다. AI 가능성 3점 이상이면 서버가 절감분의 하한을 보정합니다.
+To-Be 생성 API는 클라이언트가 전달한 분석 수치를 신뢰하지 않고 `accepted_process_ids`만 받아, 서버에 저장된 해당 프로젝트·과제의 AI FIT 결과로 처리시간과 적용 방식을 계산합니다. 수락한 L6의 To-Be 수행시간 = As-Is 사람 수행시간 − AI FIT 절감분이며, 남은 시간은 트리거·검토·예외 처리에 쓰는 사람 투입시간입니다. AI·시스템 경과시간은 To-Be 수행시간에 넣지 않습니다. AI FIT은 남은 사람 시간(`remaining_human_minutes`)을 먼저 정한 뒤 절감분 = As-Is − 남은 시간으로 산출합니다. AI 가능성 3점 이상이면 서버가 절감분의 하한을 보정합니다.
 
 AI Draft 프롬프트에는 STATIK L1 구분(조직 기능), L2 대분류(업무 도메인), L3 중분류(핵심 기능), L4 모듈, L5 단위(독립 업무), L6 Act(최소 행위)의 전체 정의와 등록 과제의 L1~L4 컨텍스트를 포함합니다. 백엔드는 L6 Act 명칭이 목적어와 하나의 동사로 구성되었는지 검증한 후 저장합니다.
 

@@ -72,15 +72,19 @@ const AI_FIT_SCHEMA = {
           inefficiency: { type: 'integer', enum: [1, 2, 3, 4, 5] },
           recommended_tech: { type: 'string' },
           difficulty: { type: 'string', enum: ['low', 'medium', 'high'] },
+          remaining_human_minutes: {
+            type: 'integer',
+            description: 'To-Be에서 사람이 쓰는 분. 트리거·검토·예외만. AI/시스템 경과시간은 제외. estimated_time_savings가 아님.'
+          },
           estimated_time_savings: {
             type: 'integer',
-            description: 'As-Is 사람 수행시간(분)에서 줄어드는 사람 투입 분. To-Be 남은 시간은 트리거·검토·예외만. AI/시스템 경과시간은 제외.'
+            description: 'as_is_human_minutes - remaining_human_minutes. 남은 시간이 아니라 줄어드는 사람 투입 분.'
           },
           rationale: { type: 'string' }
         },
         required: [
           'process_id', 'ai_possibility', 'inefficiency', 'recommended_tech', 'difficulty',
-          'estimated_time_savings', 'rationale'
+          'remaining_human_minutes', 'estimated_time_savings', 'rationale'
         ],
         additionalProperties: false
       }
@@ -218,20 +222,31 @@ ${JSON.stringify(compactProcesses(processes))}`;
 - D 현상 유지: AI 가능성 낮음 + 비효율성 낮음
 점수를 부여할 때 위 높음/낮음 기준과 척도 정의에 맞는 정수 하나를 선택하세요.
 
-추천 기술, 비개발자 관점 구현 난이도(low=하, medium=중, high=상), 사람 수행시간 절감분(분), 짧은 근거를 제공하고 모든 process_id를 정확히 한 번씩 포함하세요.
+추천 기술, 비개발자 관점 구현 난이도(low=하, medium=중, high=상), remaining_human_minutes, estimated_time_savings, 짧은 근거를 제공하고 모든 process_id를 정확히 한 번씩 포함하세요.
 
 [절감시간 산출]
-- estimated_time_savings는 As-Is 사람 수행시간(as_is_human_minutes)에서 줄어드는 사람 투입 분입니다.
-- To-Be 남은 사람 수행시간 = as_is_human_minutes − estimated_time_savings 입니다. 이 남은 시간은 트리거·검토·예외 처리에 사람이 쓰는 시간만입니다.
-- AI·자동화·시스템이 생성하는 경과시간(초안 생성, 배치 처리, API 호출)은 사람 수행시간에 넣지 마세요.
-- 대기시간(h)·승인대기시간(h)은 절감시간에 포함하지 마세요.
-- 절감은 0 이상, as_is_human_minutes 이하입니다.
-- AI 가능성 점수와 남은 사람 시간은 반드시 맞추세요.
-  - 5점: 남은 사람 시간 ≈ As-Is의 1~10% 또는 최대 2분. 예: As-Is 25분 초안 작성 → AI 초안 + 사람 검토 2분 → 절감 23분.
-  - 4점: 남은 사람 시간 ≈ As-Is의 10~25% 또는 최대 3분.
-  - 3점: 남은 사람 시간 ≈ As-Is의 30~50%.
-  - 1~2점: 보조만 가능하면 남은 사람 시간 ≈ As-Is의 70~90%.
-- 4~5점을 주면서 절감이 수 분에 그치면 안 됩니다. 자동화 추천과 절감 규모가 같아야 합니다.
+순서를 지키세요. 점수를 먼저 정한 뒤 남은 사람 시간을 정하고, 절감분은 뺄셈으로만 구하세요.
+1) remaining_human_minutes = To-Be에서 사람이 쓰는 분(트리거·검토·예외만)
+2) estimated_time_savings = as_is_human_minutes − remaining_human_minutes
+estimated_time_savings는 남은 시간이 아닙니다. 예: As-Is 25분, 남은 사람 시간 2분 → remaining_human_minutes=2, estimated_time_savings=23.
+
+이 산출에서 '과장 없이'를 과소 절감으로 해석하지 마세요. AI·자동화·시스템 경과시간(초안 생성, 배치, API)과 대기시간(h)·승인대기시간(h)은 사람 시간에 넣지 마세요.
+method가 system이고 as_is_human_minutes가 이미 짧으면 추가 절감은 0에 가깝게 두세요.
+
+remaining_human_minutes 가이드:
+- 5점: min(As-Is의 10%, 2분)
+- 4점: min(As-Is의 20%, 3분)
+- 3점: As-Is의 30~50%
+- 2점: As-Is의 70~90%
+- 1점: As-Is의 90~100%(절감 0~소수)
+
+예:
+- As-Is 25분, 5점 → remaining 2, savings 23
+- As-Is 40분, 4점 → remaining 3, savings 37
+- As-Is 20분, 3점 → remaining 8, savings 12
+- As-Is 30분, 2점 → remaining 26, savings 4
+- As-Is 15분, 1점 → remaining 15, savings 0
+JSON 작성 전 각 행에서 savings + remaining = as_is_human_minutes 인지, 4~5점인데 savings가 수 분에 그치지 않는지 확인하세요.
 
 [프로세스]
 ${JSON.stringify(compactProcesses(processes))}`;

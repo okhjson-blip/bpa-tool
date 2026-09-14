@@ -13,6 +13,7 @@ import { processToolLabel } from '../backend/src/utils/processTool.js';
 import {
   remainingMinutesAfterAutomation,
   normalizeAiFitSavings,
+  resolveAiFitSavings,
   toBeExecutionMinutes
 } from '../backend/src/utils/aiFitTime.js';
 
@@ -119,6 +120,9 @@ async function main() {
   assert.equal(normalizeAiFitSavings(25, 24, 5), 24);
   assert.equal(normalizeAiFitSavings(25, 3, 2), 3);
   assert.equal(toBeExecutionMinutes(25, 23), 2);
+  assert.equal(resolveAiFitSavings(25, 2, 2, 5), 23);
+  assert.equal(resolveAiFitSavings(25, 23, 2, 5), 23);
+  assert.equal(resolveAiFitSavings(25, 3, 22, 2), 3);
 
   const health = await api('/health');
   assert.equal(health.response.status, 200, `health 실패: ${health.text}`);
