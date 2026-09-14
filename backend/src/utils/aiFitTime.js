@@ -6,8 +6,8 @@ export function remainingMinutesAfterAutomation(asIsMinutes, aiPossibility) {
   const asIs = asNonNegativeMinutes(asIsMinutes);
   const score = Math.max(1, Math.min(5, Math.round(Number(aiPossibility) || 1)));
   if (asIs <= 0 || score < 3) return asIs;
-  if (score >= 5) return Math.min(2, Math.round(asIs * 0.1));
-  if (score >= 4) return Math.min(3, Math.max(1, Math.round(asIs * 0.2)));
+  if (score >= 5) return Math.min(20, Math.round(asIs * 0.1));
+  if (score >= 4) return Math.min(60, Math.max(1, Math.round(asIs * 0.2)));
   return Math.max(1, Math.round(asIs * 0.45));
 }
 

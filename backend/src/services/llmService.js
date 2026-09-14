@@ -228,25 +228,27 @@ ${JSON.stringify(compactProcesses(processes))}`;
 순서를 지키세요. 점수를 먼저 정한 뒤 남은 사람 시간을 정하고, 절감분은 뺄셈으로만 구하세요.
 1) remaining_human_minutes = To-Be에서 사람이 쓰는 분(트리거·검토·예외만)
 2) estimated_time_savings = as_is_human_minutes − remaining_human_minutes
-estimated_time_savings는 남은 시간이 아닙니다. 예: As-Is 25분, 남은 사람 시간 2분 → remaining_human_minutes=2, estimated_time_savings=23.
+estimated_time_savings는 남은 시간이 아닙니다. 예: As-Is 200분, 남은 사람 시간 20분 → remaining_human_minutes=20, estimated_time_savings=180.
 
 이 산출에서 '과장 없이'를 과소 절감으로 해석하지 마세요. AI·자동화·시스템 경과시간(초안 생성, 배치, API)과 대기시간(h)·승인대기시간(h)은 사람 시간에 넣지 마세요.
 method가 system이고 as_is_human_minutes가 이미 짧으면 추가 절감은 0에 가깝게 두세요.
 
 remaining_human_minutes 가이드:
-- 5점: min(As-Is의 10%, 2분)
-- 4점: min(As-Is의 20%, 3분)
+- 5점: min(As-Is의 10%, 20분)
+- 4점: min(As-Is의 20%, 1시간)
 - 3점: As-Is의 30~50%
 - 2점: As-Is의 70~90%
 - 1점: As-Is의 90~100%(절감 0~소수)
 
 예:
-- As-Is 25분, 5점 → remaining 2, savings 23
-- As-Is 40분, 4점 → remaining 3, savings 37
+- As-Is 25분, 5점 → remaining 3, savings 22
+- As-Is 200분, 5점 → remaining 20, savings 180
+- As-Is 40분, 4점 → remaining 8, savings 32
+- As-Is 400분, 4점 → remaining 60(1시간), savings 340
 - As-Is 20분, 3점 → remaining 8, savings 12
 - As-Is 30분, 2점 → remaining 26, savings 4
 - As-Is 15분, 1점 → remaining 15, savings 0
-JSON 작성 전 각 행에서 savings + remaining = as_is_human_minutes 인지, 4~5점인데 savings가 수 분에 그치지 않는지 확인하세요.
+JSON 작성 전 각 행에서 savings + remaining = as_is_human_minutes 인지, 4~5점인데 남은 사람 시간이 상한(5점 20분, 4점 1시간)을 넘지 않는지 확인하세요.
 
 [프로세스]
 ${JSON.stringify(compactProcesses(processes))}`;

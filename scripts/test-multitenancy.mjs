@@ -113,10 +113,13 @@ async function main() {
   assert.equal(processToolLabel('web'), '웹');
   assert.equal(processToolLabel('other'), '기타 도구');
   assert.equal(processToolLabel('other', '카카오워크'), '기타 도구(카카오워크)');
-  assert.equal(remainingMinutesAfterAutomation(25, 5), 2);
-  assert.equal(remainingMinutesAfterAutomation(25, 4), 3);
+  assert.equal(remainingMinutesAfterAutomation(25, 5), 3);
+  assert.equal(remainingMinutesAfterAutomation(200, 5), 20);
+  assert.equal(remainingMinutesAfterAutomation(25, 4), 5);
+  assert.equal(remainingMinutesAfterAutomation(400, 4), 60);
   assert.equal(remainingMinutesAfterAutomation(20, 3), 9);
-  assert.equal(normalizeAiFitSavings(25, 5, 5), 23);
+  assert.equal(normalizeAiFitSavings(25, 5, 5), 22);
+  assert.equal(normalizeAiFitSavings(200, 50, 5), 180);
   assert.equal(normalizeAiFitSavings(25, 24, 5), 24);
   assert.equal(normalizeAiFitSavings(25, 3, 2), 3);
   assert.equal(toBeExecutionMinutes(25, 23), 2);
