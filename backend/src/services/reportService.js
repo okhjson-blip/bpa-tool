@@ -154,6 +154,7 @@ export async function buildTaskReport({
         automation_method: toBe?.automation_method || 'manual',
         method: toBe?.ai_applied ? 'ai' : (process.method || 'manual'),
         tool: toBe?.ai_applied ? (toBe?.automation_method || 'AI') : (process.tool || 'other'),
+        tool_other: toBe?.ai_applied ? null : (process.tool_other || null),
         difficulty: analysisByProcessId.get(Number(process.id))?.difficulty || 'medium'
       };
     }),

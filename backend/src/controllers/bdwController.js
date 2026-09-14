@@ -3,6 +3,7 @@ import LLMService from '../services/llmService.js';
 import { getCompanyApiKey } from '../services/companyCredentialService.js';
 import { buildTaskReport } from '../services/reportService.js';
 import { minutesToClock } from '../utils/timeFormat.js';
+import { processToolLabel } from '../utils/processTool.js';
 
 async function getTaskL6Processes(projectId, taskId) {
   const condition = { project_id: parseInt(projectId) };
@@ -408,20 +409,9 @@ function processMethodLabel(method, aiApplied = false) {
   return method === 'system' ? '시스템' : '수작업';
 }
 
-function processToolLabel(tool) {
-  const labels = {
-    email: '이메일',
-    document: '문서',
-    excel: '엑셀',
-    web: '웹',
-    erp: 'ERP',
-    other: '기타 도구'
-  };
-  return labels[tool] || String(tool || '기타 도구');
-}
-
-function flowNodeText({ name, method, tool, executionTime, aiApplied = false }) {
-  return `${name} [${processMethodLabel(method, aiApplied)} | ${processToolLabel(tool)} | ${minutesToClock(executionTime)}]`;
+function flowNodeText({ name, method, tool, toolOther, executionTime, aiApplied = false }) {
+  const toolText = aiApplied ? processToolLabel(tool) : processToolLabel(tool, toolOther);
+  return `${name} [${processMethodLabel(method, aiApplied)} | ${toolText} | ${minutesToClock(executionTime)}]`;
 }
 
 function averageAutomationDifficulty(toBeProcesses, analysisByProcessId) {
@@ -464,6 +454,7 @@ export const exportTaskCsv = async (req, res) => {
       name: process.name,
       method: process.method,
       tool: process.tool,
+      toolOther: process.tool_other,
       executionTime: process.execution_time
     })).join(' > ');
     const toBeFlow = processes
@@ -473,6 +464,7 @@ export const exportTaskCsv = async (req, res) => {
           name: toBe?.name || process.name,
           method: process.method,
           tool: toBe?.ai_applied ? toBe.automation_method : process.tool,
+          toolOther: toBe?.ai_applied ? null : process.tool_other,
           executionTime: toBe?.estimated_execution_time ?? process.execution_time,
           aiApplied: toBe?.ai_applied === true
         });

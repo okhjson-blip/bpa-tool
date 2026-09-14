@@ -96,7 +96,8 @@ function compactProcesses(processes) {
     waiting_time_hours: Number(process.waiting_time) || 0,
     approval_waiting_time_hours: Number(process.approval_waiting_time) || 0,
     method: process.method || 'manual',
-    tool: process.tool || 'other'
+    tool: process.tool || 'other',
+    tool_other: process.tool === 'other' ? (process.tool_other || null) : null
   }));
 }
 

@@ -9,6 +9,7 @@ import {
 } from '../backend/src/services/companyCredentialService.js';
 import { resolveSupabaseSecretKey } from '../backend/src/config/supabaseEnv.js';
 import { minutesToClock, parseClockToMinutes } from '../backend/src/utils/timeFormat.js';
+import { processToolLabel } from '../backend/src/utils/processTool.js';
 
 const apiBase = process.env.TEST_API_BASE || 'http://localhost:5000/api';
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -103,6 +104,9 @@ async function main() {
   assert.equal(parseClockToMinutes('1h:30s'), 90);
   assert.equal(parseClockToMinutes('12h:30s'), 750);
   assert.equal(parseClockToMinutes('25'), 25);
+  assert.equal(processToolLabel('web'), '웹');
+  assert.equal(processToolLabel('other'), '기타 도구');
+  assert.equal(processToolLabel('other', '카카오워크'), '기타 도구(카카오워크)');
 
   const health = await api('/health');
   assert.equal(health.response.status, 200, `health 실패: ${health.text}`);
@@ -719,12 +723,18 @@ async function main() {
           waiting_time: 0,
           approval_waiting_time: 0,
           method: 'manual',
-          tool: '  카카오워크  '
+          tool: 'other',
+          tool_other: '  카카오워크  '
         }]
       }
     });
     assert.equal(customToolSync.response.status, 200, `기타 도구 직접 입력 동기화 실패: ${customToolSync.text}`);
-    assert.equal(customToolSync.data.processes[1].tool, '카카오워크');
+    assert.equal(customToolSync.data.processes[1].tool, 'other');
+    assert.equal(customToolSync.data.processes[1].tool_other, '카카오워크');
+
+    const customToolCsv = await api(`/analysis/project/${created.data.project.id}/report.csv?task_id=${cascadeTask.id}`, { token: userA.token });
+    assert.equal(customToolCsv.response.status, 200, `기타 도구 CSV 생성 실패: ${customToolCsv.text}`);
+    assert.match(customToolCsv.data.raw || '', /SNS 채널을 관리한다 \[수작업 \| 기타 도구\(카카오워크\) \| 1h:00s\]/);
 
     const emptyOtherToolSync = await api('/interviews/processes/sync', {
       token: userA.token,
@@ -751,12 +761,14 @@ async function main() {
           waiting_time: 0,
           approval_waiting_time: 0,
           method: 'manual',
-          tool: ''
+          tool: 'other',
+          tool_other: ''
         }]
       }
     });
     assert.equal(emptyOtherToolSync.response.status, 200, `기타 도구 미입력 동기화 실패: ${emptyOtherToolSync.text}`);
     assert.equal(emptyOtherToolSync.data.processes[1].tool, 'other');
+    assert.equal(emptyOtherToolSync.data.processes[1].tool_other, null);
 
     const deletedAddedProcess = await api('/interviews/processes/sync', {
       token: userA.token,

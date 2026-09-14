@@ -1013,21 +1013,27 @@ const PRESET_PROCESS_TOOLS=['email','document','excel','web','erp'];
 function isPresetProcessTool(tool){
   return PRESET_PROCESS_TOOLS.includes(tool);
 }
-function processToolSelectValue(tool){
+function processToolKind(tool){
   return isPresetProcessTool(tool)?tool:'other';
 }
-function processOtherToolText(tool){
-  return (!tool||tool==='other'||isPresetProcessTool(tool))?'':String(tool);
+function processOtherToolText(process){
+  if(processToolKind(process.tool)!=='other')return '';
+  const extra=String(process.tool_other||'').trim();
+  if(extra)return extra;
+  if(process.tool&&process.tool!=='other'&&!isPresetProcessTool(process.tool))return String(process.tool);
+  return '';
 }
-function displayProcessTool(tool){
+function displayProcessTool(tool,toolOther){
   const labels={email:'이메일',document:'문서',excel:'엑셀',web:'웹',erp:'ERP',other:'기타 도구'};
-  if(labels[tool])return labels[tool];
-  return String(tool||'기타 도구');
+  const extra=String(toolOther||'').trim();
+  if(labels[tool])return tool==='other'&&extra?labels[tool]+'('+extra+')':labels[tool];
+  return extra||String(tool||'기타 도구');
 }
-function displayProcessToolPhrase(tool){
-  const phrases={email:'이메일을',document:'문서를',excel:'엑셀을',web:'웹을',erp:'ERP를',other:'기타 도구를'};
+function displayProcessToolPhrase(tool,toolOther){
+  const phrases={email:'이메일을',document:'문서를',excel:'엑셀을',web:'웹을',erp:'ERP를'};
   if(phrases[tool])return phrases[tool];
-  return String(tool||'기타 도구')+'를';
+  const extra=String(toolOther||'').trim();
+  return extra?extra+'를':'기타 도구를';
 }
 function isValidEmail(value){
   const email=String(value??'').trim();
@@ -2056,7 +2062,7 @@ function renderDraftTable(){
     const levelClass=process.level==='L4'?'lv4':process.level==='L5'?'lv5':'lv6';
     const indent=process.level==='L4'?0:process.level==='L5'?16:28;
     const isAct=process.level==='L6';
-    return '<tr><td style="padding-left:'+indent+'px"><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><b>'+escapeHtml(process.name)+'</b></td><td>'+(isAct?escapeHtml(process.method==='system'?'시스템':'수작업'):'—')+'</td><td>'+(isAct?escapeHtml(displayProcessTool(process.tool)):'—')+'</td><td>'+minutesToClock(process.execution_time)+'</td><td>'+Number(process.waiting_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td></tr>';
+    return '<tr><td style="padding-left:'+indent+'px"><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><b>'+escapeHtml(process.name)+'</b></td><td>'+(isAct?escapeHtml(process.method==='system'?'시스템':'수작업'):'—')+'</td><td>'+(isAct?escapeHtml(displayProcessTool(process.tool,process.tool_other)):'—')+'</td><td>'+minutesToClock(process.execution_time)+'</td><td>'+Number(process.waiting_time||0)+'</td><td>'+Number(process.approval_waiting_time||0)+'</td></tr>';
   }).join('');
   const leafProcesses=ctx.processes.filter(process=>process.level==='L6');
   const total=leafProcesses.reduce((sum,p)=>sum+Number(p.execution_time||0),0);
@@ -2139,22 +2145,32 @@ function setProcessExecutionPart(index,part,input){
 function setProcessToolKind(index,kind){
   const process=ctx.processes[index];
   if(!process||process.level!=='L6')return;
-  const next=kind==='other'?(isPresetProcessTool(process.tool)?'other':(process.tool||'other')):kind;
-  setProcessValue(index,'tool',next);
+  process.tool=kind==='other'?'other':kind;
+  if(kind!=='other')process.tool_other=null;
+  setProcessValue(index,'tool',process.tool);
   if(kind==='other'){
     const input=document.querySelector('#processEditorBody .tool-other-in[data-index="'+index+'"]');
     if(input){input.focus();input.select();}
   }
 }
 function setProcessOtherTool(index,value){
-  const text=String(value||'').trim().slice(0,80);
-  setProcessValue(index,'tool',text||'other');
+  const process=ctx.processes[index];
+  if(!process||process.level!=='L6')return;
+  process.tool='other';
+  process.tool_other=String(value||'').trim().slice(0,80)||null;
+  setProcessValue(index,'tool','other');
 }
 function setProcessValue(index,field,value){
   if(['method','tool'].includes(field)&&ctx.processes[index]?.level!=='L6')return;
   if(field==='execution_time') value=parseClockToMinutes(value);
   else if(['waiting_time','approval_waiting_time'].includes(field)) value=Number(value)||0;
-  else if(field==='tool') value=String(value||'').trim().slice(0,80)||'other';
+  else if(field==='tool'){
+    const process=ctx.processes[index];
+    const kind=isPresetProcessTool(value)?value:'other';
+    process.tool=kind;
+    if(kind!=='other')process.tool_other=null;
+    value=kind;
+  }
   ctx.processes[index][field]=value;
   aggregateProcessHierarchy(ctx.processes);
   ctx.bdw=null;ctx.bdwMeta=null;ctx.aiResult=null;ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;
@@ -2176,7 +2192,7 @@ function requireSelectedProcess(){if(selectedProcessIndex<0||!ctx.processes[sele
 function addProcessRow(){
   const insertAt=selectedProcessIndex>=0?selectedProcessIndex+1:ctx.processes.length;
   const selected=ctx.processes[selectedProcessIndex];const level=selected?.level==='L4'?'L5':'L6';
-  ctx.processes.splice(insertAt,0,{id:null,level,name:level==='L5'?'새 단위 업무':'새 행위를 입력한다',description:'',execution_time:0,waiting_time:0,approval_waiting_time:0,method:level==='L6'?'manual':null,tool:level==='L6'?'other':null,status:'draft'});
+  ctx.processes.splice(insertAt,0,{id:null,level,name:level==='L5'?'새 단위 업무':'새 행위를 입력한다',description:'',execution_time:0,waiting_time:0,approval_waiting_time:0,method:level==='L6'?'manual':null,tool:level==='L6'?'other':null,tool_other:null,status:'draft'});
   selectedProcessIndex=insertAt;markProcessWorkspaceChanged('새 행이 추가되었습니다. 저장 또는 플로우차트 동기화를 실행해 주세요.');
 }
 function moveSelectedProcess(delta){
@@ -2190,7 +2206,7 @@ function deleteSelectedProcess(){
 }
 function changeSelectedProcessLevel(){
   if(!requireSelectedProcess())return;const process=ctx.processes[selectedProcessIndex];const levels=['L4','L5','L6'];process.level=levels[(levels.indexOf(process.level)+1)%levels.length];
-  if(process.level==='L6'){process.method=process.method||'manual';process.tool=process.tool||'other';}else{process.method=null;process.tool=null;}
+  if(process.level==='L6'){process.method=process.method||'manual';process.tool=process.tool||'other';if(process.tool!=='other')process.tool_other=null;}else{process.method=null;process.tool=null;process.tool_other=null;}
   markProcessWorkspaceChanged((statikLevelLabels[process.level]||process.level)+'로 변경되었습니다.');
 }
 function renderProcessEditor(){
@@ -2201,9 +2217,9 @@ function renderProcessEditor(){
     const levelClass=process.level==='L4'?'lv4':process.level==='L5'?'lv5':'lv6';
     const isAct=process.level==='L6';
     const clock=splitClock(process.execution_time);
-    const toolKind=processToolSelectValue(process.tool);
+    const toolKind=processToolKind(process.tool);
     const toolCell=isAct
-      ? '<span class="tool-edit"><select class="sel-sm" onclick="event.stopPropagation()" onchange="setProcessToolKind('+index+',this.value)">'+optionList(tools,toolKind)+'</select>'+(toolKind==='other'?'<input class="fi tool-other-in" data-index="'+index+'" maxlength="80" placeholder="도구명 (선택)" title="other 도구명 (미입력 가능)" value="'+escapeHtml(processOtherToolText(process.tool))+'" onclick="event.stopPropagation()" onchange="setProcessOtherTool('+index+',this.value)">':'')+'</span>'
+      ? '<span class="tool-edit"><select class="sel-sm" onclick="event.stopPropagation()" onchange="setProcessToolKind('+index+',this.value)">'+optionList(tools,toolKind)+'</select>'+(toolKind==='other'?'<input class="fi tool-other-in" data-index="'+index+'" maxlength="80" placeholder="도구명 (선택)" title="other 도구명 (미입력 가능)" value="'+escapeHtml(processOtherToolText(process))+'" onclick="event.stopPropagation()" onchange="setProcessOtherTool('+index+',this.value)">':'')+'</span>'
       : '<span style="color:var(--mt)">—</span>';
     return '<tr class="'+(selectedProcessIndex===index?'process-row-selected':'')+'" onclick="selectProcessRow('+index+',this)"><td style="color:#bbb">⋮⋮</td><td><span class="lvc '+levelClass+'">'+escapeHtml(statikLevelLabels[process.level]||process.level)+'</span></td><td><input class="fi" style="padding:4px 6px" value="'+escapeHtml(process.name)+'" onchange="setProcessValue('+index+',\'name\',this.value)"></td><td>'+(isAct?'<select class="sel-sm" onchange="setProcessValue('+index+',\'method\',this.value)">'+optionList(methods,process.method||'manual')+'</select>':'<span style="color:var(--mt)">—</span>')+'</td><td>'+toolCell+'</td><td><span class="clock-edit"><input type="number" min="0" step="1" class="key-in" value="'+clock.hours+'" title="시간" aria-label="수행시간(시간)" onclick="event.stopPropagation()" onchange="setProcessExecutionPart('+index+',\'hours\',this)"><span>h</span><input type="number" min="0" step="1" class="key-in" value="'+clock.minutes+'" title="분" aria-label="수행시간(분)" onclick="event.stopPropagation()" onchange="setProcessExecutionPart('+index+',\'minutes\',this)"><span>s</span></span></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.waiting_time||0)+'" onchange="setProcessValue('+index+',\'waiting_time\',this.value)"></td><td><input type="number" min="0" step="0.1" class="key-in" value="'+Number(process.approval_waiting_time||0)+'" onchange="setProcessValue('+index+',\'approval_waiting_time\',this.value)"></td></tr>';
   }).join('');
@@ -2244,7 +2260,7 @@ function renderFlowchart(){
     if(Number(process.waiting_time)) times.push('대기 '+Number(process.waiting_time)+'h');
     if(Number(process.approval_waiting_time)) times.push('승인대기 '+Number(process.approval_waiting_time)+'h');
     const methodLabel={manual:'수작업',system:'시스템'}[process.method]||'수작업';
-    const toolLabel=displayProcessToolPhrase(process.tool);
+    const toolLabel=displayProcessToolPhrase(process.tool,process.tool_other);
     const workDescription=process.level==='L6'?methodLabel+'으로 '+toolLabel+' 활용한다':'';
     const tag=process.bdw_tag&&process.bdw_tag!=='normal'?' '+process.bdw_tag:'';
     const nodeMeta=[workDescription,...times].filter(Boolean).join(' · ');
@@ -2257,7 +2273,7 @@ async function syncProcesses(silent=false){
   const status=document.getElementById('syncStatus');
   status.style.color='var(--mt)';status.textContent='Supabase 저장 및 플로우차트 동기화 중...';
   try{
-    const payload=ctx.processes.map((process,index)=>({...(process.id!=null?{id:Number(process.id)}:{}),level:process.level,name:process.name,description:process.description||'',execution_time:Number(process.execution_time)||0,waiting_time:Number(process.waiting_time)||0,approval_waiting_time:Number(process.approval_waiting_time)||0,method:process.level==='L6'?(process.method||'manual'):null,tool:process.level==='L6'?(process.tool||'other'):null,sort_order:index}));
+    const payload=ctx.processes.map((process,index)=>({...(process.id!=null?{id:Number(process.id)}:{}),level:process.level,name:process.name,description:process.description||'',execution_time:Number(process.execution_time)||0,waiting_time:Number(process.waiting_time)||0,approval_waiting_time:Number(process.approval_waiting_time)||0,method:process.level==='L6'?(process.method||'manual'):null,tool:process.level==='L6'?processToolKind(process.tool):null,tool_other:process.level==='L6'&&processToolKind(process.tool)==='other'?(processOtherToolText(process)||null):null,sort_order:index}));
     const result=await apiRequest('/interviews/processes/sync',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({projectId:ctx.projectId,taskId:ctx.taskId,interviewId:ctx.interviewId,deleted_process_ids:ctx.deletedProcessIds,processes:payload})});
     ctx.processes=result.processes||ctx.processes;
     ctx.deletedProcessIds=[];selectedProcessIndex=-1;aggregateProcessHierarchy(ctx.processes);await clearPanelDraft('process_editor');
@@ -2345,7 +2361,7 @@ function renderToBeComparison(toBeProcesses){
   const flowNodes=(items,mode)=>items.map((process,index)=>{
     const toBe=toBeById.get(Number(process.id));const applied=Boolean(toBe?.ai_applied);const isToBe=mode==='tobe';const systemAutomated=isToBe&&!applied&&process.method==='system';
     const time=isToBe?Number(toBe?.estimated_execution_time??process.execution_time??0):Number(process.execution_time||0);
-    const tool=isToBe&&applied?(toBe?.automation_method||'AI 자동화 도구'):displayProcessTool(process.tool);
+    const tool=isToBe&&applied?(toBe?.automation_method||'AI 자동화 도구'):displayProcessTool(process.tool,process.tool_other);
     const nodeClass=isToBe?(applied?'applied':systemAutomated?'system':'manual'):'asis';
     const method=isToBe&&applied?'AI 자동화':(methodLabels[process.method]||'수작업');
     const badgeClass=isToBe&&applied?'ai':process.method==='system'?'system':'manual';
@@ -2456,10 +2472,10 @@ function buildPrintableReport(report){
   parts.push('<section><h2>STATIK 업무 구조</h2><p>'+hierarchyValues.map((value,index)=>'<b>'+hierarchyLabels[index]+':</b> '+escapeHtml(value||'미등록')).join(' › ')+'</p><p>과제 목표: '+escapeHtml(report.task_goal||'미등록')+'</p></section>');
   const participantRows=(report.task_participants||[]).map(person=>[person.name||'',person.position||'',person.role||'',person.email||'']);
   parts.push('<section><h2>과제 참여자</h2>'+(participantRows.length?reportTable(['이름','직급','역할','이메일'],participantRows):'<p>등록된 과제 참여자가 없습니다.</p>')+'</section>');
-  parts.push('<section><h2>AS-IS 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','프로세스','작업방식','도구','수행(h:s)','대기(h)','승인대기(h)'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',displayProcessTool(item.tool),minutesToClock(item.execution_time),item.waiting_time||0,item.approval_waiting_time||0]))+'</section>');
+  parts.push('<section><h2>AS-IS 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','프로세스','작업방식','도구','수행(h:s)','대기(h)','승인대기(h)'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',displayProcessTool(item.tool,item.tool_other),minutesToClock(item.execution_time),item.waiting_time||0,item.approval_waiting_time||0]))+'</section>');
   parts.push('<section><h2>BDW 진단</h2><p>요약: 병목 '+report.bdw_diagnosis.bottlenecks+'개 · Delay '+report.bdw_diagnosis.delays+'개 · Waste '+report.bdw_diagnosis.wastes+'개</p>'+reportTable(['순번','레벨','단위 업무','수행(h:s)','대기(h)','승인대기(h)','BDW 태그'],report.as_is_processes.map((item,index)=>[index+1,item.level||'L6',item.name,minutesToClock(item.execution_time),item.waiting_time||0,item.approval_waiting_time||0,bdwLabels[item.bdw_type]||item.bdw_type||'정상']))+'</section>');
   parts.push('<section><h2>AI FIT 분석</h2>'+reportTable(['순번','단위 업무','추천 AI 기술','구현 난이도','AI 가능성','비효율성','분류','절감(h:s)'],(report.ai_fit_analysis||[]).map((item,index)=>[index+1,item.name||'',item.recommended_tech||'',difficultyLabels[item.difficulty]||'중',item.ai_possibility||0,item.inefficiency||0,item.fit_category||'',minutesToClock(item.estimated_time_savings)]))+'</section>');
-  parts.push('<section><h2>To-Be 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','To-Be 프로세스','작업방식','도구','예상 수행(h:s)','구현 난이도'],report.to_be_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',displayProcessTool(item.tool),minutesToClock(item.estimated_execution_time),item.ai_applied?(difficultyLabels[item.difficulty]||'중'):'-']))+'</section>');
+  parts.push('<section><h2>To-Be 프로세스 (L6 Act)</h2>'+reportTable(['순번','레벨','To-Be 프로세스','작업방식','도구','예상 수행(h:s)','구현 난이도'],report.to_be_processes.map((item,index)=>[index+1,item.level||'L6',item.name,methodLabels[item.method]||'수작업',displayProcessTool(item.tool,item.tool_other),minutesToClock(item.estimated_execution_time),item.ai_applied?(difficultyLabels[item.difficulty]||'중'):'-']))+'</section>');
   parts.push('<section><h2>AX 성과지표</h2>'+reportTable(['지표','과제 기준 산출값'],[['AS-IS 수행시간',minutesToClock(stats.as_is_total_time)],['To-Be 수행시간',minutesToClock(stats.to_be_total_time)],['건당 절감시간',minutesToClock(stats.time_savings)],['시간 절감률',stats.time_savings_rate+'%'],['자동화율',stats.automation_rate+'%'],['AI 자동화 구현 난이도',stats.automation_difficulty||'해당 없음'],['수행 빈도',({day:'일',week:'주',month:'월',year:'년'}[stats.frequency_unit]||'주')+' '+Number(stats.frequency_count||1)+'회 (연간 '+Number(stats.annual_frequency||52)+'회)'],['연간 절감시간',hoursToClock(stats.annual_savings_hours)],['절감 FTE',stats.fte_equivalent],['예상 개발비','₩'+Number(stats.estimated_development_cost||0).toLocaleString('ko-KR')]])+'</section>');
   return parts.join('');
 }

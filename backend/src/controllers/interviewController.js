@@ -2,12 +2,7 @@ import { db } from '../config/database.js';
 import maskSensitiveData from '../middleware/dataMasking.js';
 import LLMService from '../services/llmService.js';
 import { getCompanyApiKey } from '../services/companyCredentialService.js';
-
-function normalizeProcessTool(level, tool) {
-  if (level !== 'L6') return null;
-  const text = String(tool ?? '').trim().slice(0, 80);
-  return text || 'other';
-}
+import { normalizeProcessToolFields } from '../utils/processTool.js';
 
 export const createInterview = async (req, res) => {
   const { projectId } = req.params;
@@ -111,6 +106,7 @@ export const analyzeInterview = async (req, res) => {
         approval_waiting_time: Math.max(0, Number(proc.approval_waiting_time) || 0),
         method: proc.level === 'L6' ? (allowedMethods.has(proc.method) ? proc.method : 'manual') : null,
         tool: proc.level === 'L6' ? (allowedTools.has(proc.tool) ? proc.tool : 'other') : null,
+        tool_other: null,
         sort_order: index
       }));
     if (!normalizedProcesses.length || !normalizedProcesses.some((proc) => proc.level === 'L6')) {
@@ -154,6 +150,7 @@ export const analyzeInterview = async (req, res) => {
         approval_waiting_time: proc.approval_waiting_time,
         method: proc.method,
         tool: proc.tool,
+        tool_other: null,
         sort_order: proc.sort_order,
         status: 'draft'
       });
@@ -215,7 +212,7 @@ export const updateProcess = async (req, res) => {
   const { processId } = req.params;
   const {
     name, description, execution_time, waiting_time,
-    approval_waiting_time, method, tool, status
+    approval_waiting_time, method, tool, tool_other, status
   } = req.body;
 
   try {
@@ -233,10 +230,19 @@ export const updateProcess = async (req, res) => {
     };
     if (current.level === 'L6') {
       values.method = method;
-      if (tool !== undefined) values.tool = normalizeProcessTool('L6', tool);
+      if (tool !== undefined || tool_other !== undefined) {
+        const normalized = normalizeProcessToolFields(
+          'L6',
+          tool === undefined ? current.tool : tool,
+          tool_other === undefined ? current.tool_other : tool_other
+        );
+        values.tool = normalized.tool;
+        values.tool_other = normalized.tool_other;
+      }
     } else {
       values.method = null;
       values.tool = null;
+      values.tool_other = null;
     }
     Object.keys(values).forEach((key) => values[key] === undefined && delete values[key]);
     const process = await db.update('processes', parseInt(processId), values);
@@ -304,17 +310,21 @@ export const syncProcesses = async (req, res) => {
       p_task_id: taskId,
       p_interview_id: interviewId,
       p_deleted_ids: deletedIds,
-      p_processes: requestedProcesses.map((process) => ({
-        id: process.id == null ? null : Number(process.id),
-        level: process.level,
-        name: process.name,
-        description: process.description || '',
-        execution_time: Number(process.execution_time) || 0,
-        waiting_time: Number(process.waiting_time) || 0,
-        approval_waiting_time: Number(process.approval_waiting_time) || 0,
-        method: process.level === 'L6' ? (process.method || 'manual') : null,
-        tool: normalizeProcessTool(process.level, process.tool)
-      }))
+      p_processes: requestedProcesses.map((process) => {
+        const normalized = normalizeProcessToolFields(process.level, process.tool, process.tool_other);
+        return {
+          id: process.id == null ? null : Number(process.id),
+          level: process.level,
+          name: process.name,
+          description: process.description || '',
+          execution_time: Number(process.execution_time) || 0,
+          waiting_time: Number(process.waiting_time) || 0,
+          approval_waiting_time: Number(process.approval_waiting_time) || 0,
+          method: process.level === 'L6' ? (process.method || 'manual') : null,
+          tool: normalized.tool,
+          tool_other: normalized.tool_other
+        };
+      })
     });
 
     res.json({
