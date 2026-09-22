@@ -414,6 +414,15 @@ function csvCell(value) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+function participantNamesByRole(participants, role) {
+  if (!Array.isArray(participants)) return '';
+  return participants
+    .filter((participant) => String(participant?.role || '').trim() === role)
+    .map((participant) => String(participant?.name || '').trim())
+    .filter(Boolean)
+    .join(', ');
+}
+
 export async function exportTaskCsv(req, res) {
   const consultingYear = Number(req.query.consulting_year);
   const consultingHalf = String(req.query.consulting_half || '').trim();
@@ -433,14 +442,20 @@ export async function exportTaskCsv(req, res) {
       const project = projectById.get(Number(task.project_id));
       const company = project ? companyById.get(Number(project.company_id)) : null;
       if (!project || !company) return null;
-      return [company?.name || '', project?.name || '', task.name || task.l4 || ''];
+      return [
+        company?.name || '',
+        project?.name || '',
+        task.name || task.l4 || '',
+        participantNamesByRole(task.participants, '과제 리더'),
+        participantNamesByRole(task.participants, '과제 담당자')
+      ];
     }).filter(Boolean).sort((left, right) =>
       left[0].localeCompare(right[0], 'ko') ||
       left[1].localeCompare(right[1], 'ko') ||
       left[2].localeCompare(right[2], 'ko')
     );
     const content = `\uFEFF${[
-      ['협력사명', '프로젝트명', '과제명'],
+      ['협력사명', '프로젝트명', '과제명', '과제 리더', '과제 담당자'],
       ...rows
     ].map((row) => row.map(csvCell).join(',')).join('\r\n')}`;
 
