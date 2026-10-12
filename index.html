@@ -146,8 +146,11 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .auth-tab{flex:1;border:0;background:transparent;padding:8px;border-radius:6px;font-family:inherit;font-weight:700;color:var(--mt);cursor:pointer}
 .auth-tab.on{background:#fff;color:var(--p);box-shadow:0 1px 5px rgba(6,15,69,.12)}
 .admin-company{background:#fff;border:1px solid var(--bd);border-radius:9px;margin-bottom:9px;overflow:hidden}
-.admin-company-hd{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer}
-.admin-company-name{font-size:15px;font-weight:800;flex:1}
+.admin-company-hd{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;flex-wrap:wrap}
+.admin-company-name{font-size:15px;font-weight:800;flex:1;min-width:96px}
+.admin-company-search{display:flex;align-items:center;gap:4px;flex:0 0 auto}
+.admin-company-search-input{width:188px;height:30px;padding:4px 8px;font-size:12px}
+.admin-search-result{font-size:12px;color:var(--mt);margin:0 0 8px}
 .admin-company-round{font-size:11px;font-weight:700;color:var(--p);background:var(--pl);padding:3px 8px;border-radius:10px;white-space:nowrap}
 .admin-company-body{display:none;border-top:1px solid var(--bd);padding:10px 13px;background:#fafbfe}
 .admin-company.open .admin-company-body{display:block}
@@ -194,6 +197,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .admin-task-item{display:flex;align-items:center;gap:7px;padding:4px 0;border-top:1px dashed #edf0f5}
 .admin-task-item:first-child{border-top:0}
 .admin-task-item-name{flex:1;color:#444}
+.admin-task-people{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--mt)}
 .admin-report-popup .popup-box{max-width:1080px;width:94%;padding:24px 28px}
 .admin-report-meta{font-size:12px;color:var(--mt);padding:9px 11px;background:#f7f8fb;border:1px solid var(--bd);border-radius:7px;margin-bottom:14px}
 .admin-report-content section{margin:0 0 20px}
@@ -467,7 +471,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div class="inline-status" id="adminCompanyStatus">등록된 협력사는 협력사 등록 화면에서 선택할 수 있습니다.</div>
   </div>
   <div class="srow admin-summary" id="adminSummaryCards"></div>
-  <div class="admin-list-toolbar"><span>협력사별 전체 프로젝트와 과제 목록입니다. 저장된 리포트가 있는 과제만 <b>상세 조회</b> 버튼이 활성화됩니다.</span><div style="display:flex;gap:6px"><button class="btn btn-o btn-sm" type="button" onclick="openAdminDashboard()">목록 새로고침</button><button class="btn btn-o btn-sm" type="button" onclick="setAllAdminCompaniesOpen(true)">전체 펼치기</button><button class="btn btn-o btn-sm" type="button" onclick="setAllAdminCompaniesOpen(false)">전체 접기</button></div></div>
+  <div class="admin-list-toolbar"><span>협력사별 전체 프로젝트와 과제 목록입니다. 각 협력사 행에서 과제명 또는 참여자 이름으로 검색하면 일치하는 과제만 표시됩니다. 저장된 리포트가 있는 과제만 <b>상세 조회</b> 버튼이 활성화됩니다.</span><div style="display:flex;gap:6px"><button class="btn btn-o btn-sm" type="button" onclick="openAdminDashboard()">목록 새로고침</button><button class="btn btn-o btn-sm" type="button" onclick="setAllAdminCompaniesOpen(true)">전체 펼치기</button><button class="btn btn-o btn-sm" type="button" onclick="setAllAdminCompaniesOpen(false)">전체 접기</button></div></div>
   <div id="adminCompanyList"></div>
 </div>
 
@@ -967,6 +971,7 @@ let ctx={project:'',projectId:null,projectData:null,projectEngine:null,taskId:nu
 const appState={authenticated:false,user:null,profile:null,membership:null,isAdmin:false,authMode:'partner',companyId:null,companyName:'',companyRegistered:false,aiEngine:'gemini',aiConnections:{}};
 let companyProjects=[];
 let adminCompanies=[];
+let adminCompanyFilters={};
 let adminUsers=[];
 let partnerRegistrationInProgress=false;
 let editingProjectId=null;
@@ -1491,6 +1496,70 @@ function initializeConsultingYears(){
     const option=document.createElement('option');option.value=String(year);option.textContent=year+'년';option.selected=year===currentYear;select.appendChild(option);
   }
 }
+function adminTaskParticipants(task){
+  let participants=task?.participants;
+  if(typeof participants==='string'){try{participants=JSON.parse(participants);}catch{participants=[];}}
+  return Array.isArray(participants)?participants:[];
+}
+function adminTaskMatchesQuery(task, query){
+  const needle=String(query||'').trim().toLowerCase();
+  if(!needle)return true;
+  const name=String(task.name||task.l4||'').toLowerCase();
+  if(name.includes(needle))return true;
+  return adminTaskParticipants(task).some(person=>String(person?.name||'').trim().toLowerCase().includes(needle));
+}
+function renderAdminTaskItem(task){
+  const taskCompleted=task.status==='completed'||task.has_report;
+  const taskActive=task.status!=='suspended'&&!taskCompleted;
+  const people=adminTaskParticipants(task).map(person=>String(person?.name||'').trim()).filter(Boolean);
+  const reportControl=task.has_report
+    ? '<span style="font-size:10px;color:var(--mt)">'+escapeHtml(task.report_saved_at?new Date(task.report_saved_at).toLocaleDateString('ko-KR')+' 저장':'저장 완료')+'</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();openAdminTaskReport('+Number(task.id)+')">상세 조회</button>'
+    : '<button class="btn btn-o btn-sm" type="button" disabled title="협력사 모드에서 결과 리포트를 저장하면 활성화됩니다.">상세 조회</button>';
+  return '<div class="admin-task-item"><span class="admin-task-item-name">과제 · '+escapeHtml(task.name||task.l4)+'</span>'+(people.length?'<span class="admin-task-people">'+escapeHtml(people.join(', '))+'</span>':'')+'<span class="admin-status '+(taskActive?'active':'suspended')+'">'+(taskActive?'활성':'완료')+'</span>'+reportControl+'<button class="btn btn-o btn-sm admin-delete-btn" type="button" onclick="event.stopPropagation();adminDeleteTask('+Number(task.id)+')">과제 삭제</button></div>';
+}
+function renderAdminCompanyProjects(company, query){
+  const needle=String(query||'').trim();
+  let matchedTasks=0;
+  const projects=(company.projects||[]).map(project=>{
+    const tasks=(project.tasks||[]).filter(task=>adminTaskMatchesQuery(task, needle));
+    if(needle&&!tasks.length)return '';
+    matchedTasks+=tasks.length;
+    const projectActive=project.status!=='suspended';
+    const taskHtml=tasks.length?tasks.map(renderAdminTaskItem).join(''):'등록된 과제 없음';
+    return '<div class="admin-project"><div class="admin-project-head"><b class="admin-project-name">'+escapeHtml(project.name)+'</b><span class="admin-status '+(projectActive?'active':'suspended')+'">'+(projectActive?'활성':'완료')+'</span><span style="font-size:11px;color:var(--mt)">'+escapeHtml(formatPeriod(project))+'</span><button class="btn btn-o btn-sm admin-delete-btn" type="button" onclick="event.stopPropagation();adminDeleteProject('+Number(project.id)+')">프로젝트 삭제</button></div><div class="admin-task-list">'+taskHtml+'</div></div>';
+  }).filter(Boolean);
+  if(!projects.length){
+    return needle
+      ? '<div class="empty-state">「'+escapeHtml(needle)+'」과 일치하는 과제명 또는 참여자가 없습니다.</div>'
+      : '<div class="empty-state">등록된 프로젝트가 없습니다.</div>';
+  }
+  const summary=needle?'<div class="admin-search-result">검색 결과 과제 '+matchedTasks+'건</div>':'';
+  return summary+projects.join('');
+}
+function renderAdminCompanyCard(company){
+  const companyId=Number(company.id);
+  const nextStatus=company.status==='active'?'suspended':'active';
+  const query=adminCompanyFilters[companyId]||'';
+  const search='<div class="admin-company-search" onclick="event.stopPropagation()"><input class="fi admin-company-search-input" id="adminCompanySearch'+companyId+'" type="search" placeholder="과제명 또는 참여자" aria-label="'+escapeHtml(company.name)+' 과제 검색" value="'+escapeHtml(query)+'" oninput="filterAdminCompanyTasks('+companyId+')" onsearch="filterAdminCompanyTasks('+companyId+')"><button class="btn btn-o btn-sm" type="button" onclick="filterAdminCompanyTasks('+companyId+')">검색</button></div>';
+  return '<div class="admin-company'+(String(query).trim()?' open':'')+'" id="adminCompany'+companyId+'"><div class="admin-company-hd" onclick="toggleAdminCompany('+companyId+')"><span class="status-chip '+(company.status==='active'?'st-done':'st-prog')+'">'+(company.status==='active'?'활성':'완료')+'</span><div class="admin-company-name">'+escapeHtml(company.name)+'</div><span class="admin-company-round">'+escapeHtml(consultingRoundLabel(company))+'</span><span style="font-size:12px;color:var(--mt)">프로젝트 '+Number(company.active_project_count||0)+'/'+Number(company.project_count||0)+' 활성 · 과제 '+Number(company.active_task_count||0)+'/'+Number(company.task_count||0)+' 활성</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();adminChangeCompanyStatus('+companyId+',\''+nextStatus+'\')">'+(nextStatus==='active'?'활성화':'완료 처리')+'</button><button class="btn btn-o btn-sm admin-delete-btn" type="button" onclick="event.stopPropagation();adminDeleteCompany('+companyId+')">협력사 삭제</button>'+search+'</div><div class="admin-company-body">'+renderAdminCompanyProjects(company, query)+'</div></div>';
+}
+function renderAdminCompanyList(companies){
+  const list=document.getElementById('adminCompanyList');
+  const visibleIds=new Set(companies.map(company=>Number(company.id)));
+  Object.keys(adminCompanyFilters).forEach(companyId=>{if(!visibleIds.has(Number(companyId)))delete adminCompanyFilters[companyId];});
+  list.innerHTML=companies.map(renderAdminCompanyCard).join('')||'<div class="empty-state">등록된 협력사가 없습니다.</div>';
+}
+function filterAdminCompanyTasks(companyId){
+  const input=document.getElementById('adminCompanySearch'+companyId);
+  const query=input?input.value:'';
+  adminCompanyFilters[companyId]=query;
+  const company=adminCompanies.find(item=>Number(item.id)===Number(companyId));
+  const card=document.getElementById('adminCompany'+companyId);
+  const body=card?.querySelector('.admin-company-body');
+  if(!company||!body)return;
+  body.innerHTML=renderAdminCompanyProjects(company, query);
+  if(String(query).trim())card.classList.add('open');
+}
 async function openAdminDashboard(){
   if(!appState.isAdmin){showWelcome();return;}
   setHeaderVisible(true);hideFlowChrome();show('pageAdmin');setHdrSingle('협력사/과제 관리');initializeConsultingYears();
@@ -1509,22 +1578,7 @@ async function openAdminDashboard(){
       ['전체 프로젝트',totals.projects,'var(--p)'],['활성 프로젝트',totals.activeProjects,'var(--s)'],
       ['전체 과제',totals.tasks,'var(--p)'],['활성 과제',totals.activeTasks,'var(--s)']
     ].map(item=>'<div class="sc"><div class="sc-lbl">'+item[0]+'</div><div class="sc-val" style="color:'+item[2]+'">'+item[1]+'</div></div>').join('');
-    list.innerHTML=companies.map(company=>{
-      const nextStatus=company.status==='active'?'suspended':'active';
-      const projects=(company.projects||[]).map(project=>{
-        const projectActive=project.status!=='suspended';
-        const tasks=(project.tasks||[]).length?(project.tasks||[]).map(task=>{
-          const taskCompleted=task.status==='completed'||task.has_report;
-          const taskActive=task.status!=='suspended'&&!taskCompleted;
-          const reportControl=task.has_report
-            ? '<span style="font-size:10px;color:var(--mt)">'+escapeHtml(task.report_saved_at?new Date(task.report_saved_at).toLocaleDateString('ko-KR')+' 저장':'저장 완료')+'</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();openAdminTaskReport('+Number(task.id)+')">상세 조회</button>'
-            : '<button class="btn btn-o btn-sm" type="button" disabled title="협력사 모드에서 결과 리포트를 저장하면 활성화됩니다.">상세 조회</button>';
-          return '<div class="admin-task-item"><span class="admin-task-item-name">과제 · '+escapeHtml(task.name||task.l4)+'</span><span class="admin-status '+(taskActive?'active':'suspended')+'">'+(taskActive?'활성':'완료')+'</span>'+reportControl+'<button class="btn btn-o btn-sm admin-delete-btn" type="button" onclick="event.stopPropagation();adminDeleteTask('+Number(task.id)+')">과제 삭제</button></div>';
-        }).join(''):'등록된 과제 없음';
-        return '<div class="admin-project"><div class="admin-project-head"><b class="admin-project-name">'+escapeHtml(project.name)+'</b><span class="admin-status '+(projectActive?'active':'suspended')+'">'+(projectActive?'활성':'완료')+'</span><span style="font-size:11px;color:var(--mt)">'+escapeHtml(formatPeriod(project))+'</span><button class="btn btn-o btn-sm admin-delete-btn" type="button" onclick="event.stopPropagation();adminDeleteProject('+Number(project.id)+')">프로젝트 삭제</button></div><div class="admin-task-list">'+tasks+'</div></div>';
-      }).join('');
-      return '<div class="admin-company" id="adminCompany'+Number(company.id)+'"><div class="admin-company-hd" onclick="toggleAdminCompany('+Number(company.id)+')"><span class="status-chip '+(company.status==='active'?'st-done':'st-prog')+'">'+(company.status==='active'?'활성':'완료')+'</span><div class="admin-company-name">'+escapeHtml(company.name)+'</div><span class="admin-company-round">'+escapeHtml(consultingRoundLabel(company))+'</span><span style="font-size:12px;color:var(--mt)">프로젝트 '+Number(company.active_project_count||0)+'/'+Number(company.project_count||0)+' 활성 · 과제 '+Number(company.active_task_count||0)+'/'+Number(company.task_count||0)+' 활성</span><button class="btn btn-o btn-sm" type="button" onclick="event.stopPropagation();adminChangeCompanyStatus('+Number(company.id)+',\''+nextStatus+'\')">'+(nextStatus==='active'?'활성화':'완료 처리')+'</button><button class="btn btn-o btn-sm admin-delete-btn" type="button" onclick="event.stopPropagation();adminDeleteCompany('+Number(company.id)+')">협력사 삭제</button></div><div class="admin-company-body">'+(projects||'<div class="empty-state">등록된 프로젝트가 없습니다.</div>')+'</div></div>';
-    }).join('')||'<div class="empty-state">등록된 협력사가 없습니다.</div>';
+    renderAdminCompanyList(companies);
   }catch(error){list.innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
 }
 function adminCompanyOptions(selectedId){
