@@ -13,7 +13,7 @@ router.post('/', requireCompanyWrite, [
   body('analysis_goal').trim().notEmpty(),
   body('start_date').isISO8601({ strict: true }),
   body('end_date').isISO8601({ strict: true }),
-  body('ai_engine').isIn(['gemini', 'chatgpt', 'claude']).optional(),
+  body('ai_engine').isIn(['gemini', 'chatgpt', 'claude', 'openrouter', 'github']).optional(),
   body('participants').isArray()
 ], validate, projectController.createProject);
 

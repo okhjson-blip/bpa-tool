@@ -160,12 +160,19 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
 .admin-delete-btn{color:var(--d)!important;border-color:#f1b8b8!important;background:#fffafa!important}
 .admin-delete-btn:hover{background:#fff0f0!important}
 .admin-task-list{font-size:12px;color:var(--mt);margin-top:5px;line-height:1.6}
-.ai-setting-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ai-setting-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .ai-setting-card{border:1px solid var(--bd);border-radius:10px;padding:15px;background:#fff}
 .ai-setting-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
 .ai-setting-name{font-size:16px;font-weight:900;color:var(--p)}
 .ai-setting-meta{min-height:38px;font-size:11px;color:var(--mt);line-height:1.6;margin-bottom:9px}
-@media(max-width:900px){.ai-setting-grid{grid-template-columns:1fr}}
+.ai-priority-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.ai-priority-row{display:flex;align-items:center;gap:10px;border:1px solid var(--bd);border-radius:10px;padding:12px 14px;background:#fff}
+.ai-priority-rank{min-width:42px;height:42px;border-radius:10px;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900}
+.ai-priority-main{flex:1;min-width:0}
+.ai-priority-title{font-size:14px;font-weight:800;color:var(--t)}
+.ai-priority-sub{font-size:11px;color:var(--mt);margin-top:3px;line-height:1.5}
+.ai-priority-actions{display:flex;gap:6px;flex-wrap:wrap}
+@media(max-width:900px){.ai-setting-grid{grid-template-columns:1fr}.ai-priority-row{flex-wrap:wrap}}
 .fit-a{background:#e8f5e9;color:var(--s);font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
 .fit-b{background:#fff3e0;color:var(--w);font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
 .fit-c{background:#e3f2fd;color:#1565c0;font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px}
@@ -393,7 +400,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="hdr-r">
     <div class="hdr-company" id="headerCompany">회사 미등록</div>
     <div class="hdr-user" id="headerUser" style="display:none"></div>
-    <button class="hdr-logout" id="btnAISettings" type="button" onclick="openAISettings()">AI API 관리</button>
+    <button class="hdr-logout" id="btnAISettings" type="button" onclick="openAdminAiSettings()" style="display:none">AI API 관리</button>
     <button class="hdr-logout" id="btnLogout" type="button" onclick="logoutApplication()">로그아웃</button>
   </div>
 </div>
@@ -451,7 +458,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
         </section>
         <div class="start-wrap">
           <button class="btn btn-p start-btn" id="btnStartApplication" type="button" onclick="startApplication()">시작하기 →</button>
-          <div class="start-hint">로그인 후 협력사 설정에서 외부 AI API Key를 등록할 수 있습니다.</div>
+          <div class="start-hint">AI 분석은 시스템 관리자가 등록한 API로 자동 연결됩니다.</div>
         </div>
       </div>
     </div>
@@ -464,7 +471,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div><div class="list-title">협력사/과제 관리</div><div class="list-sub">전체 협력사의 프로젝트와 과제를 조회하고 협력사 상태를 관리합니다.</div></div>
     <div style="display:flex;gap:8px"><button class="btn btn-p" type="button" onclick="openAdminCsvPopup()">CSV 파일 다운로드</button><button class="btn btn-o" type="button" onclick="logoutApplication()">로그아웃</button></div>
   </div>
-  <div class="admin-page-tabs"><button class="admin-page-tab on" type="button" onclick="openAdminDashboard()">협력사/과제 관리</button><button class="admin-page-tab" type="button" onclick="openAdminUserManagement()">협력사/사용자 관리</button></div>
+  <div class="admin-page-tabs"><button class="admin-page-tab on" type="button" onclick="openAdminDashboard()">협력사/과제 관리</button><button class="admin-page-tab" type="button" onclick="openAdminUserManagement()">협력사/사용자 관리</button><button class="admin-page-tab" type="button" onclick="openAdminAiSettings()">AI API 관리</button></div>
   <div class="card">
     <div class="card-title">협력사 등록 <span class="ct-b">계정 선택 목록에 즉시 반영</span></div>
     <div class="welcome-row"><div class="fg" style="flex:1.5"><span class="fl">협력사명 <span class="req">*</span></span><input class="fi" id="adminCompanyName" placeholder="예: ABC 컨설팅"></div><div class="fg"><span class="fl">컨설팅 연도 <span class="req">*</span></span><select class="fi" id="adminConsultingYear"></select></div><div class="fg"><span class="fl">컨설팅 반기 <span class="req">*</span></span><select class="fi" id="adminConsultingHalf"><option value="상반기">상반기</option><option value="하반기">하반기</option></select></div><button class="btn btn-p register-btn" type="button" onclick="adminCreateCompany()">협력사 등록</button></div>
@@ -481,7 +488,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
     <div><div class="list-title">협력사/사용자 관리</div><div class="list-sub">협력사별 사용자를 등록하고 이름, 이메일 주소와 최근 접속 시간을 관리합니다.</div></div>
     <button class="btn btn-o" type="button" onclick="logoutApplication()">로그아웃</button>
   </div>
-  <div class="admin-page-tabs"><button class="admin-page-tab" type="button" onclick="openAdminDashboard()">협력사/과제 관리</button><button class="admin-page-tab on" type="button" onclick="openAdminUserManagement()">협력사/사용자 관리</button></div>
+  <div class="admin-page-tabs"><button class="admin-page-tab" type="button" onclick="openAdminDashboard()">협력사/과제 관리</button><button class="admin-page-tab on" type="button" onclick="openAdminUserManagement()">협력사/사용자 관리</button><button class="admin-page-tab" type="button" onclick="openAdminAiSettings()">AI API 관리</button></div>
   <div class="card">
     <div class="card-title" id="adminUserFormTitle">협력사 사용자 등록 <span class="ct-b">이메일 형식 검증</span></div>
     <div class="frow">
@@ -537,16 +544,32 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   </div>
 </div>
 
-<!-- PAGE: 협력사 AI API 설정 -->
+<!-- PAGE: 시스템 관리자 AI API 설정 -->
 <div class="sv" id="pageAISettings">
   <div class="list-hd">
-    <div><div class="list-title">외부 AI API 관리</div><div class="list-sub"><span id="aiSettingsCompany">협력사</span> 전용 API Key를 연결하고 안전하게 관리합니다.</div></div>
-    <button class="btn btn-o" type="button" onclick="openProjectList()">프로젝트 목록으로</button>
+    <div><div class="list-title">시스템 AI API 관리</div><div class="list-sub">협력사와 무관하게 전역으로 사용하는 AI API를 등록하고 연결 우선순위를 관리합니다.</div></div>
+    <button class="btn btn-o" type="button" onclick="logoutApplication()">로그아웃</button>
+  </div>
+  <div class="admin-page-tabs"><button class="admin-page-tab" type="button" onclick="openAdminDashboard()">협력사/과제 관리</button><button class="admin-page-tab" type="button" onclick="openAdminUserManagement()">협력사/사용자 관리</button><button class="admin-page-tab on" type="button" onclick="openAdminAiSettings()">AI API 관리</button></div>
+  <div class="card">
+    <div class="card-title">AI API 등록 <span class="ct-b">AES-256-GCM 암호화 · 연결 확인 후 저장</span></div>
+    <div style="font-size:12px;color:var(--mt);line-height:1.7;margin-bottom:14px">Gemini, OpenAI, Claude, OpenRouter, GitHub Models를 등록할 수 있습니다. 1번 API 사용한도 초과 시 2번, 이어서 3번 API로 자동 전환됩니다.</div>
+    <div class="frow">
+      <div class="fg"><label class="fl" for="adminAiProvider">프로바이더 <span class="req">*</span></label><select class="fi" id="adminAiProvider" onchange="syncAdminAiModelPlaceholder()"></select></div>
+      <div class="fg"><label class="fl" for="adminAiDisplayName">표시 이름</label><input class="fi" id="adminAiDisplayName" maxlength="120" placeholder="예: 운영용 Gemini"></div>
+      <div class="fg"><label class="fl" for="adminAiPriority">우선순위</label><input class="fi" id="adminAiPriority" type="number" min="1" max="9999" placeholder="비우면 맨 뒤"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl" for="adminAiModel">모델(선택)</label><input class="fi" id="adminAiModel" maxlength="120" placeholder="비우면 기본 모델"></div>
+      <div class="fg" style="flex:1.4"><label class="fl" for="adminAiApiKey">API Key <span class="req">*</span></label><input class="fi mask" id="adminAiApiKey" type="password" autocomplete="new-password" placeholder="API Key 입력"></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn btn-p" id="btnAdminAiSave" type="button" onclick="saveAdminAiCredential()">연결 확인 및 등록</button></div>
+    </div>
+    <div class="inline-status" id="adminAiStatus">등록된 API는 모든 협력사 AI 분석에 공통으로 사용됩니다.</div>
   </div>
   <div class="card">
-    <div class="card-title">협력사별 AI 엔진 <span class="ct-b">AES-256-GCM 암호화 저장</span></div>
-    <div style="font-size:12px;color:var(--mt);line-height:1.7;margin-bottom:14px">연결 확인에 성공한 Key만 저장되며, 저장 후 원문은 화면이나 API 응답에 다시 표시하지 않습니다. 프로젝트에 지정된 엔진의 Key가 자동으로 사용됩니다.</div>
-    <div class="ai-setting-grid" id="aiSettingsGrid"></div>
+    <div class="card-title">연결 우선순위 <span class="ct-b">위가 1번 · 사용한도 초과 시 다음으로 폴백</span></div>
+    <div class="admin-list-toolbar"><span>우선순위 숫자를 바꾸거나 위/아래 버튼으로 순서를 조정한 뒤 저장하세요.</span><button class="btn btn-o btn-sm" type="button" onclick="openAdminAiSettings()">목록 새로고침</button></div>
+    <div class="ai-priority-list" id="adminAiPriorityList"><div class="loading-state">AI API 설정을 불러오는 중입니다...</div></div>
   </div>
 </div>
 
@@ -1107,7 +1130,7 @@ async function clearPanelDraft(panelKey){
 }
 function setHeaderVisible(visible){
   document.querySelector('.hdr').style.display=visible?'flex':'none';
-  document.getElementById('btnAISettings').style.display=visible&&!appState.isAdmin?'inline-block':'none';
+  document.getElementById('btnAISettings').style.display=visible&&appState.isAdmin?'inline-block':'none';
   document.getElementById('headerUser').style.display=visible&&!appState.isAdmin?'block':'none';
 }
 function showWelcome(){
@@ -1445,43 +1468,97 @@ async function startApplication(){
   await openProjectList();
 }
 
-const aiEngineLabels={gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude'};
+const aiEngineLabels={gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude',openrouter:'OpenRouter',github:'GitHub Models'};
+const aiEngineModelHints={gemini:'gemini-3.5-flash-lite',chatgpt:'gpt-5-nano',claude:'claude-sonnet-5',openrouter:'openai/gpt-4o-mini',github:'openai/gpt-4o-mini'};
+let adminAiCredentials=[];
 async function refreshAIConnectionState(){
-  if(!appState.authenticated||appState.isAdmin){appState.aiConnections={};return [];}
-  const connections=await apiRequest('/connections');
-  appState.aiConnections=Object.fromEntries(connections.map(item=>[item.engine,item]));
-  const preferred=connections.find(item=>item.configured&&item.is_default)?.engine||['gemini','chatgpt','claude'].find(engine=>appState.aiConnections[engine]?.configured);
-  if(preferred)appState.aiEngine=preferred;
-  return connections;
+  if(!appState.authenticated||appState.isAdmin){appState.aiConnections={available:false};return null;}
+  const status=await apiRequest('/connections');
+  appState.aiConnections=status;
+  if(status.primary_provider)appState.aiEngine=status.primary_provider;
+  return status;
 }
-function renderAISettings(){
-  const grid=document.getElementById('aiSettingsGrid');
-  grid.innerHTML=['gemini','chatgpt','claude'].map(engine=>{const item=appState.aiConnections[engine];const configured=Boolean(item?.configured);const isDefault=Boolean(item?.is_default);return '<div class="ai-setting-card"><div class="ai-setting-head"><div class="ai-setting-name">'+aiEngineLabels[engine]+'</div><span class="status-chip '+(configured?'st-done':'st-new')+'">'+(isDefault?'기본 엔진':configured?'연결됨':'미등록')+'</span></div><div class="ai-setting-meta">'+(configured?'Key '+escapeHtml(item.key_hint)+'<br>모델 '+escapeHtml(item.model||'확인됨'):'협력사 전용 API Key를 등록해 주세요.')+'</div><input class="fi mask" id="aiKey_'+engine+'" type="password" autocomplete="new-password" placeholder="새 API Key 입력"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-p btn-sm" id="aiSave_'+engine+'" type="button" onclick="saveAIConnection(\''+engine+'\')">연결 확인 및 저장</button>'+(configured&&!isDefault?'<button class="btn btn-o btn-sm" type="button" onclick="setDefaultAIConnection(\''+engine+'\')">기본 엔진 설정</button>':'')+(configured?'<button class="btn btn-o btn-sm" type="button" onclick="deleteAIConnection(\''+engine+'\')">삭제</button>':'')+'</div><div class="inline-status" id="aiStatus_'+engine+'" style="margin-top:8px"></div></div>';}).join('');
+function syncAdminAiModelPlaceholder(){
+  const provider=document.getElementById('adminAiProvider').value;
+  document.getElementById('adminAiModel').placeholder=aiEngineModelHints[provider]||'모델 ID (선택)';
 }
-async function openAISettings(){
-  if(!appState.companyRegistered||appState.isAdmin){showWelcome();return;}
-  setHeaderVisible(true);hideFlowChrome();show('pageAISettings');setHdrSingle('외부 AI API 관리');
-  document.getElementById('aiSettingsCompany').textContent=appState.companyName;
-  document.getElementById('aiSettingsGrid').innerHTML='<div class="loading-state">AI API 설정을 불러오는 중입니다...</div>';
-  try{await refreshAIConnectionState();renderAISettings();}
-  catch(error){document.getElementById('aiSettingsGrid').innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';}
+function fillAdminAiProviderOptions(providers){
+  const select=document.getElementById('adminAiProvider');
+  const current=select.value;
+  const list=(providers&&providers.length?providers:Object.keys(aiEngineLabels));
+  select.innerHTML=list.map(provider=>'<option value="'+provider+'">'+escapeHtml(aiEngineLabels[provider]||provider)+'</option>').join('');
+  if(list.includes(current))select.value=current;
+  syncAdminAiModelPlaceholder();
 }
-async function saveAIConnection(engine){
-  const input=document.getElementById('aiKey_'+engine);const button=document.getElementById('aiSave_'+engine);const status=document.getElementById('aiStatus_'+engine);const apiKey=input.value.trim();
+function renderAdminAiPriorityList(){
+  const list=document.getElementById('adminAiPriorityList');
+  if(!adminAiCredentials.length){list.innerHTML='<div class="empty-state">등록된 시스템 AI API가 없습니다. 위에서 Key를 등록해 주세요.</div>';return;}
+  list.innerHTML=adminAiCredentials.map((item,index)=>{
+    const label=escapeHtml(item.display_name||aiEngineLabels[item.provider]||item.provider);
+    const meta='Key '+escapeHtml(item.key_hint||'등록됨')+' · 모델 '+escapeHtml(item.model||'기본')+(item.configured?'':' · 비활성');
+    return '<div class="ai-priority-row" data-id="'+item.id+'"><div class="ai-priority-rank">'+(index+1)+'</div><div class="ai-priority-main"><div class="ai-priority-title">'+label+' <span class="status-chip '+(item.configured?'st-done':'st-new')+'">'+(aiEngineLabels[item.provider]||item.provider)+'</span></div><div class="ai-priority-sub">'+meta+'</div></div><div class="ai-priority-actions"><button class="btn btn-o btn-sm" type="button" onclick="moveAdminAiCredential('+item.id+',-1)" '+(index===0?'disabled':'')+'>▲</button><button class="btn btn-o btn-sm" type="button" onclick="moveAdminAiCredential('+item.id+',1)" '+(index===adminAiCredentials.length-1?'disabled':'')+'>▼</button><button class="btn btn-o btn-sm" type="button" onclick="deleteAdminAiCredential('+item.id+')">삭제</button></div></div>';
+  }).join('');
+}
+async function openAdminAiSettings(){
+  if(!appState.isAdmin){showWelcome();return;}
+  setHeaderVisible(true);hideFlowChrome();show('pageAISettings');setHdrSingle('시스템 AI API 관리');
+  document.getElementById('adminAiPriorityList').innerHTML='<div class="loading-state">AI API 설정을 불러오는 중입니다...</div>';
+  document.getElementById('adminAiStatus').style.color='var(--mt)';
+  document.getElementById('adminAiStatus').textContent='등록된 API는 모든 협력사 AI 분석에 공통으로 사용됩니다.';
+  try{
+    const result=await apiRequest('/admin/ai-credentials');
+    adminAiCredentials=result.credentials||[];
+    fillAdminAiProviderOptions(result.providers||[]);
+    renderAdminAiPriorityList();
+  }catch(error){
+    document.getElementById('adminAiPriorityList').innerHTML='<div class="empty-state" style="color:var(--d)">'+escapeHtml(error.message)+'</div>';
+  }
+}
+async function saveAdminAiCredential(){
+  const provider=document.getElementById('adminAiProvider').value;
+  const apiKey=document.getElementById('adminAiApiKey').value.trim();
+  const model=document.getElementById('adminAiModel').value.trim();
+  const displayName=document.getElementById('adminAiDisplayName').value.trim();
+  const priorityRaw=document.getElementById('adminAiPriority').value.trim();
+  const status=document.getElementById('adminAiStatus');
+  const button=document.getElementById('btnAdminAiSave');
   if(!apiKey){status.style.color='var(--d)';status.textContent='API Key를 입력해 주세요.';return;}
   button.disabled=true;button.textContent='연결 확인 중...';status.style.color='var(--mt)';status.textContent='실제 API 연결을 확인한 뒤 암호화 저장합니다.';
-  try{const result=await apiRequest('/connections/'+engine,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey})});input.value='';await refreshAIConnectionState();renderAISettings();const nextStatus=document.getElementById('aiStatus_'+engine);nextStatus.style.color='var(--s)';nextStatus.textContent='✓ '+result.message;}
-  catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;button.disabled=false;button.textContent='연결 확인 및 저장';}
+  try{
+    const payload={provider,apiKey};
+    if(model)payload.model=model;
+    if(displayName)payload.display_name=displayName;
+    if(priorityRaw)payload.priority=Number(priorityRaw);
+    const result=await apiRequest('/admin/ai-credentials',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    document.getElementById('adminAiApiKey').value='';document.getElementById('adminAiDisplayName').value='';document.getElementById('adminAiModel').value='';document.getElementById('adminAiPriority').value='';
+    await openAdminAiSettings();
+    status.style.color='var(--s)';status.textContent='✓ '+result.message;
+  }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
+  finally{button.disabled=false;button.textContent='연결 확인 및 등록';}
 }
-async function deleteAIConnection(engine){
-  if(!confirm(aiEngineLabels[engine]+' API Key를 삭제하시겠습니까? 해당 엔진 프로젝트의 AI 분석을 실행할 수 없게 됩니다.'))return;
-  try{await apiRequest('/connections/'+engine,{method:'DELETE'});await refreshAIConnectionState();renderAISettings();}
+async function deleteAdminAiCredential(id){
+  const item=adminAiCredentials.find(entry=>Number(entry.id)===Number(id));
+  const label=item?(item.display_name||aiEngineLabels[item.provider]||item.provider):('#'+id);
+  if(!confirm(label+' API를 삭제하시겠습니까?'))return;
+  try{await apiRequest('/admin/ai-credentials/'+Number(id),{method:'DELETE'});await openAdminAiSettings();}
   catch(error){alert(error.message);}
 }
-async function setDefaultAIConnection(engine){
-  try{await apiRequest('/connections/'+engine+'/default',{method:'PUT'});await refreshAIConnectionState();renderAISettings();const status=document.getElementById('aiStatus_'+engine);status.style.color='var(--s)';status.textContent='✓ 새 프로젝트 기본 엔진으로 설정했습니다.';}
-  catch(error){alert(error.message);}
+async function moveAdminAiCredential(id,delta){
+  const index=adminAiCredentials.findIndex(entry=>Number(entry.id)===Number(id));
+  const next=index+delta;
+  if(index<0||next<0||next>=adminAiCredentials.length)return;
+  const reordered=[...adminAiCredentials];
+  const [moved]=reordered.splice(index,1);
+  reordered.splice(next,0,moved);
+  adminAiCredentials=reordered;
+  renderAdminAiPriorityList();
+  try{
+    const result=await apiRequest('/admin/ai-credentials/reorder',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ordered_ids:reordered.map(item=>item.id)})});
+    adminAiCredentials=result.credentials||reordered;
+    renderAdminAiPriorityList();
+  }catch(error){alert(error.message);await openAdminAiSettings();}
 }
+async function openAISettings(){return openAdminAiSettings();}
 
 function consultingRoundLabel(company){
   return company.consulting_year&&company.consulting_half
@@ -1880,8 +1957,13 @@ function resetProjectForm(){
 }
 async function openNewProjectForm(){
   if(!appState.companyRegistered){showWelcome();return;}
-  if(!Object.values(appState.aiConnections).some(item=>item.configured&&item.is_default)){
-    showValidationPopup('AI API 설정 필요',['새 프로젝트를 생성하려면 협력사 AI API Key를 등록하고 기본 엔진을 설정해 주세요.']);return;
+  try{
+    await refreshAIConnectionState();
+    if(!appState.aiConnections?.available){
+      showValidationPopup('시스템 AI API 필요',['시스템 관리자가 AI API를 등록한 뒤에 프로젝트를 생성할 수 있습니다.']);return;
+    }
+  }catch(error){
+    showValidationPopup('시스템 AI API 확인 실패',[error.message||'AI API 상태를 확인할 수 없습니다.']);return;
   }
   resetProjectForm();
   hideFlowChrome();
@@ -1926,7 +2008,7 @@ async function openTaskList(name,projectId=ctx.projectId){
   document.getElementById('taskProjectCompany').textContent=appState.companyName;
   document.getElementById('taskProjectGoal').textContent='L1 구분 › L2 대분류 › L3 중분류: '+[ctx.l1,ctx.l2,ctx.l3].filter(Boolean).join(' › ');
   document.getElementById('taskProjectPeriod').textContent='기간: '+(project?formatPeriod(project):'미등록');
-  document.getElementById('taskProjectEngine').textContent='AI엔진 '+({gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude'}[ctx.projectEngine]||ctx.projectEngine);
+  document.getElementById('taskProjectEngine').textContent='AI엔진 '+(aiEngineLabels[ctx.projectEngine]||ctx.projectEngine||'시스템 우선순위');
   hideFlowChrome();
   show('pageTaskList');
   setHdrTrail(ctx.project,'과제 목록');
@@ -1934,8 +2016,9 @@ async function openTaskList(name,projectId=ctx.projectId){
 }
 function openTaskListCurrent(){ openTaskList(ctx.project||'',ctx.projectId); }
 
-function ensureProjectAIConnection(){
-  if(!appState.aiConnections[ctx.projectEngine]?.configured){alert('이 프로젝트의 '+(aiEngineLabels[ctx.projectEngine]||ctx.projectEngine)+' API Key가 협력사 설정에 없습니다. 상단의 AI API 관리에서 등록해 주세요.');return false;}
+async function ensureProjectAIConnection(){
+  try{await refreshAIConnectionState();}catch(error){alert(error.message||'시스템 AI API 상태를 확인할 수 없습니다.');return false;}
+  if(!appState.aiConnections?.available){alert('시스템 관리자가 등록한 활성 AI API가 없습니다. 관리자에게 AI API 등록을 요청해 주세요.');return false;}
   return true;
 }
 
@@ -2148,13 +2231,12 @@ function aggregateProcessHierarchy(processes=[]){
 
 async function generateAIDraft(){
   if(!ctx.projectId||!ctx.taskId){alert('프로젝트와 과제를 먼저 등록해 주세요.');return;}
-  if(!ensureProjectAIConnection()) return;
+  if(!await ensureProjectAIConnection()) return;
   const answers=[...document.querySelectorAll('.interview-answer')].map((input,index)=>'답변 '+(index+1)+': '+input.value.trim()).filter(text=>!text.endsWith(': '));
   if(!answers.length){alert('인터뷰 답변을 하나 이상 입력해 주세요.');return;}
   const button=document.getElementById('btnGenerateDraft');
   const status=document.getElementById('draftStatus');
-  const engineLabel={gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude'}[ctx.projectEngine]||ctx.projectEngine;
-  button.disabled=true;button.textContent=engineLabel+' 분석 중...';status.style.color='var(--mt)';status.textContent='프로젝트에 등록된 '+engineLabel+' 엔진이 프로세스를 분석하고 있습니다.';
+  button.disabled=true;button.textContent='시스템 AI 분석 중...';status.style.color='var(--mt)';status.textContent='시스템 AI API(우선순위 폴백)로 프로세스를 분석하고 있습니다.';
   try{
     const rawAnswers=interviewAnswersPayload().answers;
     const interview=await apiRequest('/interviews/project/'+ctx.projectId,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({interview_type:'text',taskId:ctx.taskId,answers:rawAnswers,text:answers.join('\n')})});
@@ -2352,7 +2434,7 @@ function renderBDW(data){
   const tags=new Map(data.processes.map(item=>[item.id,item.bdw_tag]));ctx.processes.forEach(item=>item.bdw_tag=tags.get(item.id)||'normal');renderFlowchart();
 }
 async function openBDWStep(){
-  if(!ensureProjectAIConnection()) return;
+  if(!await ensureProjectAIConnection()) return;
   if(!await syncProcesses(true)) return;
   const button=document.getElementById('btnRunBDW');button.disabled=true;button.textContent='AI BDW 진단 중...';
   try{
@@ -2428,7 +2510,7 @@ function renderToBeComparison(toBeProcesses){
   const sample=document.querySelector('#t3 .split-eq');if(sample)sample.style.display='none';
 }
 async function runAIFit(){
-  if(!ensureProjectAIConnection()) return;
+  if(!await ensureProjectAIConnection()) return;
   if(!ctx.bdw){alert('BDW 진단을 먼저 완료해 주세요.');return;}
   const button=document.getElementById('btnRunAIFit');button.disabled=true;button.textContent='AI FIT 분석 중...';
   try{

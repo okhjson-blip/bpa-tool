@@ -1,4 +1,5 @@
 import { db } from '../config/database.js';
+import { getPrimarySystemProvider, hasActiveSystemCredential } from '../services/systemCredentialService.js';
 
 const PROJECT_ROLES = ['프로젝트 리더', '프로젝트 담당자', '컨설턴트'];
 const TASK_ROLES = ['과제 리더', '과제 담당자'];
@@ -111,16 +112,17 @@ function validateProject(project) {
 
 export const createProject = async (req, res) => {
   try {
-    if (!req.auth.company.default_ai_provider) {
+    if (!(await hasActiveSystemCredential())) {
       return res.status(400).json({
-        error: '협력사 기본 AI 엔진을 먼저 설정해 주세요.',
-        issues: ['상단 AI API 관리에서 Key를 등록하고 새 프로젝트 기본 엔진을 지정해 주세요.']
+        error: '시스템 AI API가 등록되어 있지 않습니다.',
+        issues: ['시스템 관리자가 AI API 관리에서 Key를 등록한 뒤 프로젝트를 생성할 수 있습니다.']
       });
     }
+    const primaryProvider = await getPrimarySystemProvider();
     const values = projectPayload({
       ...req.body,
       company_name: req.auth.company.name,
-      ai_engine: req.auth.company.default_ai_provider
+      ai_engine: primaryProvider || 'chatgpt'
     });
     const issues = validateProject(values);
     if (issues.length) return res.status(400).json({ error: '프로젝트 정보를 보완해 주세요.', issues });

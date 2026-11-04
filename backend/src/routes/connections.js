@@ -1,21 +1,12 @@
 import express from 'express';
-import { body, param } from 'express-validator';
-import { validate } from '../middleware/validate.js';
-import { requireCompanyWrite } from '../middleware/auth.js';
 import * as connectionController from '../controllers/connectionController.js';
 
 const router = express.Router();
 
+// 협력사 전용 Key 등록은 중단. 시스템 AI 풀 가용 상태만 노출한다.
 router.get('/', connectionController.getConnections);
-router.put('/:engine', requireCompanyWrite, [
-  param('engine').isIn(['chatgpt', 'gemini', 'claude']),
-  body('apiKey').isString().trim().isLength({ min: 10 })
-], validate, connectionController.saveConnection);
-router.delete('/:engine', requireCompanyWrite, [
-  param('engine').isIn(['chatgpt', 'gemini', 'claude'])
-], validate, connectionController.deleteConnection);
-router.put('/:engine/default', requireCompanyWrite, [
-  param('engine').isIn(['chatgpt', 'gemini', 'claude'])
-], validate, connectionController.setDefaultConnection);
+router.put('/:engine', connectionController.saveConnection);
+router.delete('/:engine', connectionController.deleteConnection);
+router.put('/:engine/default', connectionController.setDefaultConnection);
 
 export default router;

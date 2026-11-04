@@ -1,7 +1,6 @@
 import { db } from '../config/database.js';
 import maskSensitiveData from '../middleware/dataMasking.js';
-import LLMService from '../services/llmService.js';
-import { getCompanyApiKey } from '../services/companyCredentialService.js';
+import { analyzeInterviewWithSystemAi } from '../services/systemAiRunner.js';
 import { normalizeProcessToolFields } from '../utils/processTool.js';
 
 export const createInterview = async (req, res) => {
@@ -84,14 +83,9 @@ export const analyzeInterview = async (req, res) => {
       return res.status(400).json({ error: 'AI Draft를 생성할 인터뷰 내용이 없습니다' });
     }
 
-    // 프로젝트에 등록된 AI 엔진으로 실제 분석 수행
-    const apiKey = await getCompanyApiKey(req.auth.companyId, project.ai_engine);
-    const analysisResult = await LLMService.analyzeInterview(
-      project.ai_engine,
-      apiKey,
-      fullText,
-      task || {}
-    );
+    // 시스템 관리자가 등록한 AI API 풀(우선순위 폴백)로 분석 수행
+    const aiOutcome = await analyzeInterviewWithSystemAi(fullText, task || {});
+    const analysisResult = aiOutcome.result;
     const allowedLevels = new Set(['L4', 'L5', 'L6']);
     const allowedMethods = new Set(['manual', 'system']);
     const allowedTools = new Set(['email', 'document', 'excel', 'web', 'erp', 'other']);
@@ -163,8 +157,10 @@ export const analyzeInterview = async (req, res) => {
       analysis: {
         ...analysisResult,
         analysis_timestamp: new Date().toISOString(),
-        engine_used: project.ai_engine,
-        model_used: LLMService.getModel(project.ai_engine),
+        engine_used: aiOutcome.engine_used,
+        model_used: aiOutcome.model_used,
+        priority_used: aiOutcome.priority_used,
+        fallback_attempts: aiOutcome.fallback_attempts,
         processes
       }
     });

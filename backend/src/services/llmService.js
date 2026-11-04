@@ -3,7 +3,9 @@ const REQUEST_TIMEOUT_MS = 290000;
 const MODEL_BY_ENGINE = Object.freeze({
   chatgpt: process.env.OPENAI_MODEL?.trim() || 'gpt-5-nano',
   gemini: process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash-lite',
-  claude: 'claude-sonnet-5'
+  claude: process.env.CLAUDE_MODEL?.trim() || 'claude-sonnet-5',
+  openrouter: process.env.OPENROUTER_MODEL?.trim() || 'openai/gpt-4o-mini',
+  github: process.env.GITHUB_MODELS_MODEL?.trim() || 'openai/gpt-4o-mini'
 });
 
 const SYSTEM_PROMPT = '당신은 비즈니스 프로세스 분석 전문가입니다. 입력 데이터에 근거해 과장 없이 분석하고 지정된 JSON 스키마로만 응답하세요.';
@@ -94,6 +96,33 @@ const AI_FIT_SCHEMA = {
   additionalProperties: false
 };
 
+const QUOTA_PATTERNS = [
+  'quota',
+  'rate limit',
+  'rate_limit',
+  'ratelimit',
+  'exceeded',
+  'insufficient_quota',
+  'resource_exhausted',
+  'too many requests',
+  'usage limit',
+  'usage_limit',
+  'credit',
+  'billing',
+  'capacity',
+  'overloaded',
+  'token limit',
+  'tokens per',
+  'out of credits',
+  'spend limit',
+  'monthly limit',
+  '사용한도',
+  '사용 한도',
+  '할당량',
+  '한도 초과',
+  '요청 한도'
+];
+
 function compactProcesses(processes) {
   return processes.map((process) => ({
     id: process.id,
@@ -132,6 +161,7 @@ async function fetchJson(url, options, providerName) {
       const message = data.error?.message || data.message || response.statusText;
       const error = new Error(`${providerName} API 오류 (${response.status}): ${message}`);
       error.status = response.status;
+      error.providerPayload = data;
       throw error;
     }
     return data;
@@ -143,6 +173,15 @@ async function fetchJson(url, options, providerName) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export function isQuotaOrRateLimitError(error) {
+  const status = Number(error?.status);
+  if (status === 429 || status === 402) return true;
+  const message = String(error?.message || '').toLowerCase();
+  const nested = String(error?.providerPayload?.error?.code || error?.providerPayload?.error?.type || '').toLowerCase();
+  const haystack = `${message} ${nested}`;
+  return QUOTA_PATTERNS.some((pattern) => haystack.includes(pattern));
 }
 
 class LLMProvider {
@@ -257,8 +296,8 @@ ${JSON.stringify(compactProcesses(processes))}`;
 }
 
 class OpenAIProvider extends LLMProvider {
-  constructor(apiKey) {
-    super(apiKey, MODEL_BY_ENGINE.chatgpt, 'OpenAI');
+  constructor(apiKey, model) {
+    super(apiKey, model || MODEL_BY_ENGINE.chatgpt, 'OpenAI');
   }
 
   async generateStructured(schemaName, schema, prompt) {
@@ -298,8 +337,8 @@ class OpenAIProvider extends LLMProvider {
 }
 
 class GeminiProvider extends LLMProvider {
-  constructor(apiKey) {
-    super(apiKey, MODEL_BY_ENGINE.gemini, 'Gemini');
+  constructor(apiKey, model) {
+    super(apiKey, model || MODEL_BY_ENGINE.gemini, 'Gemini');
   }
 
   async generateStructured(schemaName, schema, prompt) {
@@ -332,8 +371,8 @@ class GeminiProvider extends LLMProvider {
 }
 
 class ClaudeProvider extends LLMProvider {
-  constructor(apiKey) {
-    super(apiKey, MODEL_BY_ENGINE.claude, 'Claude');
+  constructor(apiKey, model) {
+    super(apiKey, model || MODEL_BY_ENGINE.claude, 'Claude');
   }
 
   async generateStructured(schemaName, schema, prompt) {
@@ -361,35 +400,105 @@ class ClaudeProvider extends LLMProvider {
   }
 }
 
+class OpenAICompatibleProvider extends LLMProvider {
+  constructor(apiKey, model, providerName, chatCompletionsUrl, extraHeaders = {}) {
+    super(apiKey, model, providerName);
+    this.chatCompletionsUrl = chatCompletionsUrl;
+    this.extraHeaders = extraHeaders;
+  }
+
+  async generateStructured(schemaName, schema, prompt) {
+    const data = await fetchJson(this.chatCompletionsUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+        ...this.extraHeaders
+      },
+      body: JSON.stringify({
+        model: this.model,
+        temperature: 0.2,
+        max_tokens: 8192,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `${SYSTEM_PROMPT}\n반드시 유효한 JSON 객체만 반환하세요. 스키마 이름: ${schemaName}. JSON Schema: ${JSON.stringify(schema)}`
+          },
+          { role: 'user', content: prompt }
+        ]
+      })
+    }, this.providerName);
+
+    const text = data.choices?.[0]?.message?.content || '';
+    return parseStructuredText(text, this.providerName);
+  }
+}
+
+class OpenRouterProvider extends OpenAICompatibleProvider {
+  constructor(apiKey, model) {
+    super(
+      apiKey,
+      model || MODEL_BY_ENGINE.openrouter,
+      'OpenRouter',
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        'HTTP-Referer': process.env.OPENROUTER_SITE_URL?.trim() || 'https://bpa-tool.local',
+        'X-Title': process.env.OPENROUTER_APP_NAME?.trim() || 'BPA Tool'
+      }
+    );
+  }
+}
+
+class GitHubModelsProvider extends OpenAICompatibleProvider {
+  constructor(apiKey, model) {
+    super(
+      apiKey,
+      model || MODEL_BY_ENGINE.github,
+      'GitHub Models',
+      'https://models.github.ai/inference/chat/completions',
+      {
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    );
+  }
+}
+
 export class LLMService {
-  static getProvider(engine, apiKey) {
+  static getProvider(engine, apiKey, modelOverride = null) {
     const normalizedEngine = String(engine || '').toLowerCase();
-    if (normalizedEngine === 'chatgpt') return new OpenAIProvider(apiKey);
-    if (normalizedEngine === 'gemini') return new GeminiProvider(apiKey);
-    if (normalizedEngine === 'claude') return new ClaudeProvider(apiKey);
+    const model = String(modelOverride || '').trim() || null;
+    if (normalizedEngine === 'chatgpt') return new OpenAIProvider(apiKey, model);
+    if (normalizedEngine === 'gemini') return new GeminiProvider(apiKey, model);
+    if (normalizedEngine === 'claude') return new ClaudeProvider(apiKey, model);
+    if (normalizedEngine === 'openrouter') return new OpenRouterProvider(apiKey, model);
+    if (normalizedEngine === 'github') return new GitHubModelsProvider(apiKey, model);
     throw new Error(`지원하지 않는 AI 엔진입니다: ${engine}`);
   }
 
-  static getModel(engine) {
+  static getModel(engine, modelOverride = null) {
+    const override = String(modelOverride || '').trim();
+    if (override) return override;
     return MODEL_BY_ENGINE[String(engine || '').toLowerCase()] || null;
   }
 
-  static analyzeInterview(engine, apiKey, transcription, taskContext = {}) {
-    return this.getProvider(engine, apiKey).analyzeInterview(transcription, taskContext);
+  static analyzeInterview(engine, apiKey, transcription, taskContext = {}, modelOverride = null) {
+    return this.getProvider(engine, apiKey, modelOverride).analyzeInterview(transcription, taskContext);
   }
 
-  static analyzeBDW(engine, apiKey, processes) {
-    return this.getProvider(engine, apiKey).analyzeBDW(processes);
+  static analyzeBDW(engine, apiKey, processes, modelOverride = null) {
+    return this.getProvider(engine, apiKey, modelOverride).analyzeBDW(processes);
   }
 
-  static analyzeAIFit(engine, apiKey, processes) {
-    return this.getProvider(engine, apiKey).analyzeAIFit(processes);
+  static analyzeAIFit(engine, apiKey, processes, modelOverride = null) {
+    return this.getProvider(engine, apiKey, modelOverride).analyzeAIFit(processes);
   }
 
-  static async testConnection(engine, apiKey) {
+  static async testConnection(engine, apiKey, modelOverride = null) {
     const normalizedEngine = String(engine || '').toLowerCase();
     const normalizedKey = String(apiKey || '').trim();
-    const model = this.getModel(normalizedEngine);
+    const model = this.getModel(normalizedEngine, modelOverride);
 
     if (!model || normalizedKey.length < 20 || /\s/.test(normalizedKey)) {
       const error = new Error('Invalid API key or engine');
@@ -402,25 +511,69 @@ export class LLMService {
       chatgpt: {
         name: 'OpenAI',
         url: `https://api.openai.com/v1/models/${model}`,
-        headers: { Authorization: `Bearer ${normalizedKey}` }
+        headers: { Authorization: `Bearer ${normalizedKey}` },
+        method: 'GET'
       },
       gemini: {
         name: 'Gemini',
         url: `https://generativelanguage.googleapis.com/v1beta/models/${model}`,
-        headers: { 'x-goog-api-key': normalizedKey }
+        headers: { 'x-goog-api-key': normalizedKey },
+        method: 'GET'
       },
       claude: {
         name: 'Claude',
         url: `https://api.anthropic.com/v1/models/${model}`,
-        headers: { 'x-api-key': normalizedKey, 'anthropic-version': '2023-06-01' }
+        headers: { 'x-api-key': normalizedKey, 'anthropic-version': '2023-06-01' },
+        method: 'GET'
+      },
+      openrouter: {
+        name: 'OpenRouter',
+        url: 'https://openrouter.ai/api/v1/models',
+        headers: { Authorization: `Bearer ${normalizedKey}` },
+        method: 'GET',
+        validate: (data) => {
+          const ids = (data.data || []).map((item) => item.id);
+          if (ids.length && !ids.includes(model)) {
+            const error = new Error(`OpenRouter 계정에서 ${model} 모델을 찾을 수 없습니다.`);
+            error.status = 404;
+            throw error;
+          }
+        }
+      },
+      github: {
+        name: 'GitHub Models',
+        url: 'https://models.github.ai/inference/chat/completions',
+        headers: {
+          Authorization: `Bearer ${normalizedKey}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json'
+        },
+        method: 'POST',
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: 'ping' }],
+          max_tokens: 1,
+          temperature: 0
+        })
       }
     };
 
+    const request = requestByEngine[normalizedEngine];
+    if (!request) {
+      const error = new Error('지원하지 않는 AI 엔진입니다.');
+      error.code = 'INVALID_API_KEY';
+      error.userMessage = '지원하지 않는 AI 엔진입니다.';
+      throw error;
+    }
+
     try {
-      await fetchJson(requestByEngine[normalizedEngine].url, {
-        method: 'GET',
-        headers: requestByEngine[normalizedEngine].headers
-      }, requestByEngine[normalizedEngine].name);
+      const data = await fetchJson(request.url, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body
+      }, request.name);
+      if (typeof request.validate === 'function') request.validate(data);
       return { engine: normalizedEngine, model };
     } catch (error) {
       if (error.status === 401 || error.status === 403) {

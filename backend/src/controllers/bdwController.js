@@ -1,7 +1,6 @@
 import { db } from '../config/database.js';
-import LLMService from '../services/llmService.js';
-import { getCompanyApiKey } from '../services/companyCredentialService.js';
 import { buildTaskCsvContent, buildTaskReport } from '../services/reportService.js';
+import { analyzeAIFitWithSystemAi, analyzeBDWWithSystemAi } from '../services/systemAiRunner.js';
 import { resolveAiFitSavings, toBeExecutionMinutes } from '../utils/aiFitTime.js';
 
 async function getTaskL6Processes(projectId, taskId) {
@@ -61,8 +60,8 @@ export const analyzeBDW = async (req, res) => {
       return res.status(400).json({ error: 'BDW 진단을 수행할 L6 Act가 없습니다.' });
     }
 
-    const apiKey = await getCompanyApiKey(req.auth.companyId, project.ai_engine);
-    const result = await LLMService.analyzeBDW(project.ai_engine, apiKey, processes);
+    const aiOutcome = await analyzeBDWWithSystemAi(processes);
+    const result = aiOutcome.result;
     const diagnosesById = requireCompleteAnalysis(result.diagnoses, processes, 'BDW');
     const diagnoses = await Promise.all(processes.map(async (process) => {
       const diagnosis = diagnosesById.get(Number(process.id));
@@ -81,9 +80,11 @@ export const analyzeBDW = async (req, res) => {
     if (taskId) await db.update('tasks', Number(taskId), { current_step: 4 });
 
     res.json({
-      message: '등록된 AI 엔진으로 BDW 진단을 완료했습니다.',
-      engine_used: project.ai_engine,
-      model_used: LLMService.getModel(project.ai_engine),
+      message: '시스템 AI API로 BDW 진단을 완료했습니다.',
+      engine_used: aiOutcome.engine_used,
+      model_used: aiOutcome.model_used,
+      priority_used: aiOutcome.priority_used,
+      fallback_attempts: aiOutcome.fallback_attempts,
       diagnoses
     });
   } catch (error) {
@@ -161,8 +162,8 @@ export const analyzeAIFit = async (req, res) => {
       return res.status(400).json({ error: '분석할 프로세스가 없습니다. 먼저 인터뷰 및 AI Draft를 생성하세요' });
     }
 
-    const apiKey = await getCompanyApiKey(req.auth.companyId, project.ai_engine);
-    const aiResult = await LLMService.analyzeAIFit(project.ai_engine, apiKey, processes);
+    const aiOutcome = await analyzeAIFitWithSystemAi(processes);
+    const aiResult = aiOutcome.result;
     const analysisById = requireCompleteAnalysis(aiResult.analysis, processes, 'AI FIT');
     const fitAnalysis = processes.map((proc) => {
       const generated = analysisById.get(Number(proc.id));
@@ -212,8 +213,10 @@ export const analyzeAIFit = async (req, res) => {
     );
 
     res.json({
-      engine_used: project.ai_engine,
-      model_used: LLMService.getModel(project.ai_engine),
+      engine_used: aiOutcome.engine_used,
+      model_used: aiOutcome.model_used,
+      priority_used: aiOutcome.priority_used,
+      fallback_attempts: aiOutcome.fallback_attempts,
       analysis: fitAnalysis,
       summary: {
         immediate_application_count: categoryA.length,
