@@ -83,6 +83,9 @@ export const analyzeBDW = async (req, res) => {
       message: '시스템 AI API로 BDW 진단을 완료했습니다.',
       engine_used: aiOutcome.engine_used,
       model_used: aiOutcome.model_used,
+      rank_used: aiOutcome.rank_used,
+      is_default_used: aiOutcome.is_default_used,
+      attempt_used: aiOutcome.attempt_used,
       priority_used: aiOutcome.priority_used,
       fallback_attempts: aiOutcome.fallback_attempts,
       diagnoses
@@ -215,6 +218,9 @@ export const analyzeAIFit = async (req, res) => {
     res.json({
       engine_used: aiOutcome.engine_used,
       model_used: aiOutcome.model_used,
+      rank_used: aiOutcome.rank_used,
+      is_default_used: aiOutcome.is_default_used,
+      attempt_used: aiOutcome.attempt_used,
       priority_used: aiOutcome.priority_used,
       fallback_attempts: aiOutcome.fallback_attempts,
       analysis: fitAnalysis,

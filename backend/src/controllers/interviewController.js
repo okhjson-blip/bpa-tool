@@ -159,6 +159,9 @@ export const analyzeInterview = async (req, res) => {
         analysis_timestamp: new Date().toISOString(),
         engine_used: aiOutcome.engine_used,
         model_used: aiOutcome.model_used,
+        rank_used: aiOutcome.rank_used,
+        is_default_used: aiOutcome.is_default_used,
+        attempt_used: aiOutcome.attempt_used,
         priority_used: aiOutcome.priority_used,
         fallback_attempts: aiOutcome.fallback_attempts,
         processes

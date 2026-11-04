@@ -16,7 +16,8 @@ router.post('/ai-credentials', [
   body('apiKey').isString().trim().isLength({ min: 10 }),
   body('model').optional({ nullable: true }).isString().trim().isLength({ max: 120 }),
   body('display_name').optional({ nullable: true }).isString().trim().isLength({ max: 120 }),
-  body('priority').optional({ nullable: true }).isInt({ min: 1, max: 9999 })
+  body('is_default').optional({ nullable: true }).isBoolean(),
+  body('make_default').optional({ nullable: true }).isBoolean()
 ], validate, adminAiController.saveAdminAiCredential);
 router.put('/ai-credentials/reorder', [
   body('ordered_ids').isArray({ min: 1 }),
@@ -28,15 +29,15 @@ router.put('/ai-credentials/:id', [
   body('apiKey').isString().trim().isLength({ min: 10 }),
   body('model').optional({ nullable: true }).isString().trim().isLength({ max: 120 }),
   body('display_name').optional({ nullable: true }).isString().trim().isLength({ max: 120 }),
-  body('priority').optional({ nullable: true }).isInt({ min: 1, max: 9999 })
+  body('is_default').optional({ nullable: true }).isBoolean(),
+  body('make_default').optional({ nullable: true }).isBoolean()
 ], validate, adminAiController.saveAdminAiCredential);
 router.delete('/ai-credentials/:id', [
   param('id').isInt({ min: 1 })
 ], validate, adminAiController.deleteAdminAiCredential);
-router.patch('/ai-credentials/:id/priority', [
-  param('id').isInt({ min: 1 }),
-  body('priority').isInt({ min: 1, max: 9999 })
-], validate, adminAiController.updateAdminAiPriority);
+router.put('/ai-credentials/:id/default', [
+  param('id').isInt({ min: 1 })
+], validate, adminAiController.setAdminAiDefault);
 router.get('/companies', adminController.getCompanies);
 router.get('/users', adminController.getCompanyUsers);
 router.post('/users', [

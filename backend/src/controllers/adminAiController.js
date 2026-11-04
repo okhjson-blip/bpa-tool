@@ -5,8 +5,8 @@ import {
   removeSystemCredential,
   reorderSystemCredentials,
   saveSystemCredential,
-  SYSTEM_AI_PROVIDERS,
-  updateSystemCredentialPriority
+  setDefaultSystemCredential,
+  SYSTEM_AI_PROVIDERS
 } from '../services/systemCredentialService.js';
 
 async function writeAdminAiAudit(action, targetId, metadata = {}) {
@@ -42,12 +42,13 @@ export async function saveAdminAiCredential(req, res) {
       apiKey: req.body.apiKey,
       model: req.body.model || connection.model,
       displayName: req.body.display_name || req.body.displayName,
-      priority: req.body.priority,
+      makeDefault: Boolean(req.body.is_default || req.body.make_default || req.body.makeDefault),
       testedModel: connection.model
     });
     await writeAdminAiAudit('system_ai_credential_save', credential.id, {
       provider: credential.provider,
       model: credential.model,
+      is_default: credential.is_default,
       priority: credential.priority
     });
     res.json({
@@ -76,17 +77,21 @@ export async function deleteAdminAiCredential(req, res) {
   }
 }
 
-export async function updateAdminAiPriority(req, res) {
+export async function setAdminAiDefault(req, res) {
   try {
-    const credential = await updateSystemCredentialPriority(req.params.id, req.body.priority);
-    await writeAdminAiAudit('system_ai_credential_priority', credential.id, {
-      priority: credential.priority,
+    const credential = await setDefaultSystemCredential(req.params.id);
+    const credentials = await listSystemCredentials();
+    await writeAdminAiAudit('system_ai_credential_default', credential.id, {
       provider: credential.provider
     });
-    res.json({ message: '연결 우선순위를 변경했습니다.', credential });
+    res.json({
+      message: '기본 AI API로 설정했습니다. 오류 시 2회 재시도 후 다음 순위로 전환됩니다.',
+      credential,
+      credentials
+    });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: error.message || '우선순위를 변경할 수 없습니다.' });
+    res.status(400).json({ error: error.message || '기본 AI API를 설정할 수 없습니다.' });
   }
 }
 

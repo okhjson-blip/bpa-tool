@@ -553,22 +553,22 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="admin-page-tabs"><button class="admin-page-tab" type="button" onclick="openAdminDashboard()">협력사/과제 관리</button><button class="admin-page-tab" type="button" onclick="openAdminUserManagement()">협력사/사용자 관리</button><button class="admin-page-tab on" type="button" onclick="openAdminAiSettings()">AI API 관리</button></div>
   <div class="card">
     <div class="card-title">AI API 등록 <span class="ct-b">AES-256-GCM 암호화 · 연결 확인 후 저장</span></div>
-    <div style="font-size:12px;color:var(--mt);line-height:1.7;margin-bottom:14px">Gemini, OpenAI, Claude, OpenRouter, GitHub Models를 등록할 수 있습니다. 1번 API 사용한도 초과 시 2번, 이어서 3번 API로 자동 전환됩니다.</div>
+    <div style="font-size:12px;color:var(--mt);line-height:1.7;margin-bottom:14px">Gemini, OpenAI, Claude, OpenRouter, GitHub Models를 등록할 수 있습니다. <b>기본</b> API는 오류 시 2회 더 재시도하고, 그래도 실패하면 <b>2순위 → 3순위</b>로 자동 전환됩니다.</div>
     <div class="frow">
       <div class="fg"><label class="fl" for="adminAiProvider">프로바이더 <span class="req">*</span></label><select class="fi" id="adminAiProvider" onchange="syncAdminAiModelPlaceholder()"></select></div>
       <div class="fg"><label class="fl" for="adminAiDisplayName">표시 이름</label><input class="fi" id="adminAiDisplayName" maxlength="120" placeholder="예: 운영용 Gemini"></div>
-      <div class="fg"><label class="fl" for="adminAiPriority">우선순위</label><input class="fi" id="adminAiPriority" type="number" min="1" max="9999" placeholder="비우면 맨 뒤"></div>
+      <div class="fg"><label class="fl" for="adminAiModel">모델(선택)</label><input class="fi" id="adminAiModel" maxlength="120" placeholder="비우면 기본 모델"></div>
     </div>
     <div class="frow">
-      <div class="fg"><label class="fl" for="adminAiModel">모델(선택)</label><input class="fi" id="adminAiModel" maxlength="120" placeholder="비우면 기본 모델"></div>
-      <div class="fg" style="flex:1.4"><label class="fl" for="adminAiApiKey">API Key <span class="req">*</span></label><input class="fi mask" id="adminAiApiKey" type="password" autocomplete="new-password" placeholder="API Key 입력"></div>
+      <div class="fg" style="flex:1.6"><label class="fl" for="adminAiApiKey">API Key <span class="req">*</span></label><input class="fi mask" id="adminAiApiKey" type="password" autocomplete="new-password" placeholder="API Key 입력"></div>
+      <div class="fg" style="flex:0.7;justify-content:flex-end"><label class="fl" for="adminAiMakeDefault">&nbsp;</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--t);min-height:40px"><input id="adminAiMakeDefault" type="checkbox"> 기본으로 등록</label></div>
       <div style="display:flex;align-items:flex-end"><button class="btn btn-p" id="btnAdminAiSave" type="button" onclick="saveAdminAiCredential()">연결 확인 및 등록</button></div>
     </div>
     <div class="inline-status" id="adminAiStatus">등록된 API는 모든 협력사 AI 분석에 공통으로 사용됩니다.</div>
   </div>
   <div class="card">
-    <div class="card-title">연결 우선순위 <span class="ct-b">위가 1번 · 사용한도 초과 시 다음으로 폴백</span></div>
-    <div class="admin-list-toolbar"><span>우선순위 숫자를 바꾸거나 위/아래 버튼으로 순서를 조정한 뒤 저장하세요.</span><button class="btn btn-o btn-sm" type="button" onclick="openAdminAiSettings()">목록 새로고침</button></div>
+    <div class="card-title">연결 순위 <span class="ct-b">기본 → 2순위 → 3순위 · 기본은 실패 시 3회 시도</span></div>
+    <div class="admin-list-toolbar"><span>기본 API를 지정하고, 나머지 API는 위/아래로 순위를 조정하세요.</span><button class="btn btn-o btn-sm" type="button" onclick="openAdminAiSettings()">목록 새로고침</button></div>
     <div class="ai-priority-list" id="adminAiPriorityList"><div class="loading-state">AI API 설정을 불러오는 중입니다...</div></div>
   </div>
 </div>
@@ -1493,10 +1493,15 @@ function fillAdminAiProviderOptions(providers){
 function renderAdminAiPriorityList(){
   const list=document.getElementById('adminAiPriorityList');
   if(!adminAiCredentials.length){list.innerHTML='<div class="empty-state">등록된 시스템 AI API가 없습니다. 위에서 Key를 등록해 주세요.</div>';return;}
-  list.innerHTML=adminAiCredentials.map((item,index)=>{
+  const fallbackItems=adminAiCredentials.filter(item=>!item.is_default);
+  list.innerHTML=adminAiCredentials.map((item)=>{
     const label=escapeHtml(item.display_name||aiEngineLabels[item.provider]||item.provider);
-    const meta='Key '+escapeHtml(item.key_hint||'등록됨')+' · 모델 '+escapeHtml(item.model||'기본')+(item.configured?'':' · 비활성');
-    return '<div class="ai-priority-row" data-id="'+item.id+'"><div class="ai-priority-rank">'+(index+1)+'</div><div class="ai-priority-main"><div class="ai-priority-title">'+label+' <span class="status-chip '+(item.configured?'st-done':'st-new')+'">'+(aiEngineLabels[item.provider]||item.provider)+'</span></div><div class="ai-priority-sub">'+meta+'</div></div><div class="ai-priority-actions"><button class="btn btn-o btn-sm" type="button" onclick="moveAdminAiCredential('+item.id+',-1)" '+(index===0?'disabled':'')+'>▲</button><button class="btn btn-o btn-sm" type="button" onclick="moveAdminAiCredential('+item.id+',1)" '+(index===adminAiCredentials.length-1?'disabled':'')+'>▼</button><button class="btn btn-o btn-sm" type="button" onclick="deleteAdminAiCredential('+item.id+')">삭제</button></div></div>';
+    const rank=escapeHtml(item.rank_label||(item.is_default?'기본':'순위'));
+    const meta='Key '+escapeHtml(item.key_hint||'등록됨')+' · 모델 '+escapeHtml(item.model||'기본')+(item.is_default?' · 오류 시 2회 재시도 후 다음 순위':'' )+(item.configured?'':' · 비활성');
+    const fallbackIndex=fallbackItems.findIndex(entry=>Number(entry.id)===Number(item.id));
+    const moveUpDisabled=item.is_default||fallbackIndex<=0;
+    const moveDownDisabled=item.is_default||fallbackIndex<0||fallbackIndex>=fallbackItems.length-1;
+    return '<div class="ai-priority-row" data-id="'+item.id+'"><div class="ai-priority-rank" style="'+(item.is_default?'background:var(--s)':'')+'">'+rank+'</div><div class="ai-priority-main"><div class="ai-priority-title">'+label+' <span class="status-chip '+(item.is_default?'st-done':item.configured?'st-done':'st-new')+'">'+(item.is_default?'기본':(aiEngineLabels[item.provider]||item.provider))+'</span></div><div class="ai-priority-sub">'+meta+'</div></div><div class="ai-priority-actions">'+(item.is_default?'':'<button class="btn btn-p btn-sm" type="button" onclick="setAdminAiDefault('+item.id+')">기본으로 설정</button>')+'<button class="btn btn-o btn-sm" type="button" onclick="moveAdminAiCredential('+item.id+',-1)" '+(moveUpDisabled?'disabled':'')+'>▲</button><button class="btn btn-o btn-sm" type="button" onclick="moveAdminAiCredential('+item.id+',1)" '+(moveDownDisabled?'disabled':'')+'>▼</button><button class="btn btn-o btn-sm" type="button" onclick="deleteAdminAiCredential('+item.id+')">삭제</button></div></div>';
   }).join('');
 }
 async function openAdminAiSettings(){
@@ -1519,18 +1524,17 @@ async function saveAdminAiCredential(){
   const apiKey=document.getElementById('adminAiApiKey').value.trim();
   const model=document.getElementById('adminAiModel').value.trim();
   const displayName=document.getElementById('adminAiDisplayName').value.trim();
-  const priorityRaw=document.getElementById('adminAiPriority').value.trim();
+  const makeDefault=document.getElementById('adminAiMakeDefault').checked||!adminAiCredentials.length;
   const status=document.getElementById('adminAiStatus');
   const button=document.getElementById('btnAdminAiSave');
   if(!apiKey){status.style.color='var(--d)';status.textContent='API Key를 입력해 주세요.';return;}
   button.disabled=true;button.textContent='연결 확인 중...';status.style.color='var(--mt)';status.textContent='실제 API 연결을 확인한 뒤 암호화 저장합니다.';
   try{
-    const payload={provider,apiKey};
+    const payload={provider,apiKey,is_default:makeDefault};
     if(model)payload.model=model;
     if(displayName)payload.display_name=displayName;
-    if(priorityRaw)payload.priority=Number(priorityRaw);
     const result=await apiRequest('/admin/ai-credentials',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    document.getElementById('adminAiApiKey').value='';document.getElementById('adminAiDisplayName').value='';document.getElementById('adminAiModel').value='';document.getElementById('adminAiPriority').value='';
+    document.getElementById('adminAiApiKey').value='';document.getElementById('adminAiDisplayName').value='';document.getElementById('adminAiModel').value='';document.getElementById('adminAiMakeDefault').checked=false;
     await openAdminAiSettings();
     status.style.color='var(--s)';status.textContent='✓ '+result.message;
   }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
@@ -1543,18 +1547,32 @@ async function deleteAdminAiCredential(id){
   try{await apiRequest('/admin/ai-credentials/'+Number(id),{method:'DELETE'});await openAdminAiSettings();}
   catch(error){alert(error.message);}
 }
+async function setAdminAiDefault(id){
+  try{
+    const result=await apiRequest('/admin/ai-credentials/'+Number(id)+'/default',{method:'PUT'});
+    adminAiCredentials=result.credentials||adminAiCredentials;
+    renderAdminAiPriorityList();
+    const status=document.getElementById('adminAiStatus');
+    status.style.color='var(--s)';status.textContent='✓ '+result.message;
+  }catch(error){alert(error.message);}
+}
 async function moveAdminAiCredential(id,delta){
-  const index=adminAiCredentials.findIndex(entry=>Number(entry.id)===Number(id));
+  const current=adminAiCredentials.find(entry=>Number(entry.id)===Number(id));
+  if(!current||current.is_default)return;
+  const defaultItem=adminAiCredentials.find(entry=>entry.is_default);
+  const fallbacks=adminAiCredentials.filter(entry=>!entry.is_default);
+  const index=fallbacks.findIndex(entry=>Number(entry.id)===Number(id));
   const next=index+delta;
-  if(index<0||next<0||next>=adminAiCredentials.length)return;
-  const reordered=[...adminAiCredentials];
-  const [moved]=reordered.splice(index,1);
-  reordered.splice(next,0,moved);
-  adminAiCredentials=reordered;
+  if(index<0||next<0||next>=fallbacks.length)return;
+  const reorderedFallbacks=[...fallbacks];
+  const [moved]=reorderedFallbacks.splice(index,1);
+  reorderedFallbacks.splice(next,0,moved);
+  const orderedIds=[...(defaultItem?[defaultItem.id]:[]),...reorderedFallbacks.map(item=>item.id)];
+  adminAiCredentials=[...(defaultItem?[defaultItem]:[]),...reorderedFallbacks];
   renderAdminAiPriorityList();
   try{
-    const result=await apiRequest('/admin/ai-credentials/reorder',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ordered_ids:reordered.map(item=>item.id)})});
-    adminAiCredentials=result.credentials||reordered;
+    const result=await apiRequest('/admin/ai-credentials/reorder',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ordered_ids:orderedIds})});
+    adminAiCredentials=result.credentials||adminAiCredentials;
     renderAdminAiPriorityList();
   }catch(error){alert(error.message);await openAdminAiSettings();}
 }
