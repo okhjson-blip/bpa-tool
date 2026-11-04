@@ -5,7 +5,7 @@ const MODEL_BY_ENGINE = Object.freeze({
   gemini: process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash-lite',
   claude: process.env.CLAUDE_MODEL?.trim() || 'claude-sonnet-5',
   openrouter: process.env.OPENROUTER_MODEL?.trim() || 'openai/gpt-4o-mini',
-  github: process.env.GITHUB_MODELS_MODEL?.trim() || 'openai/gpt-4o-mini'
+  groq: process.env.GROQ_MODEL?.trim() || 'openai/gpt-oss-120b'
 });
 
 const SYSTEM_PROMPT = '당신은 비즈니스 프로세스 분석 전문가입니다. 입력 데이터에 근거해 과장 없이 분석하고 지정된 JSON 스키마로만 응답하세요.';
@@ -450,18 +450,38 @@ class OpenRouterProvider extends OpenAICompatibleProvider {
   }
 }
 
-class GitHubModelsProvider extends OpenAICompatibleProvider {
+class GroqProvider extends LLMProvider {
   constructor(apiKey, model) {
-    super(
-      apiKey,
-      model || MODEL_BY_ENGINE.github,
-      'GitHub Models',
-      'https://models.github.ai/inference/chat/completions',
-      {
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28'
-      }
-    );
+    super(apiKey, model || MODEL_BY_ENGINE.groq, 'Groq');
+  }
+
+  async generateStructured(schemaName, schema, prompt) {
+    const data = await fetchJson('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: this.model,
+        temperature: 0.2,
+        max_completion_tokens: 8192,
+        top_p: 1,
+        reasoning_effort: process.env.GROQ_REASONING_EFFORT?.trim() || 'medium',
+        stream: false,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `${SYSTEM_PROMPT}\n반드시 유효한 JSON 객체만 반환하세요. 스키마 이름: ${schemaName}. JSON Schema: ${JSON.stringify(schema)}`
+          },
+          { role: 'user', content: prompt }
+        ]
+      })
+    }, this.providerName);
+
+    const text = data.choices?.[0]?.message?.content || '';
+    return parseStructuredText(text, this.providerName);
   }
 }
 
@@ -473,7 +493,7 @@ export class LLMService {
     if (normalizedEngine === 'gemini') return new GeminiProvider(apiKey, model);
     if (normalizedEngine === 'claude') return new ClaudeProvider(apiKey, model);
     if (normalizedEngine === 'openrouter') return new OpenRouterProvider(apiKey, model);
-    if (normalizedEngine === 'github') return new GitHubModelsProvider(apiKey, model);
+    if (normalizedEngine === 'groq') return new GroqProvider(apiKey, model);
     throw new Error(`지원하지 않는 AI 엔진입니다: ${engine}`);
   }
 
@@ -540,22 +560,19 @@ export class LLMService {
           }
         }
       },
-      github: {
-        name: 'GitHub Models',
-        url: 'https://models.github.ai/inference/chat/completions',
-        headers: {
-          Authorization: `Bearer ${normalizedKey}`,
-          Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-          'Content-Type': 'application/json'
-        },
-        method: 'POST',
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content: 'ping' }],
-          max_tokens: 1,
-          temperature: 0
-        })
+      groq: {
+        name: 'Groq',
+        url: 'https://api.groq.com/openai/v1/models',
+        headers: { Authorization: `Bearer ${normalizedKey}` },
+        method: 'GET',
+        validate: (data) => {
+          const ids = (data.data || []).map((item) => item.id);
+          if (ids.length && !ids.includes(model)) {
+            const error = new Error(`Groq 계정에서 ${model} 모델을 찾을 수 없습니다.`);
+            error.status = 404;
+            throw error;
+          }
+        }
       }
     };
 

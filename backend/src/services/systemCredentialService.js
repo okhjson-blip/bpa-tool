@@ -9,7 +9,7 @@ export const SYSTEM_AI_PROVIDERS = Object.freeze([
   'chatgpt',
   'claude',
   'openrouter',
-  'github'
+  'groq'
 ]);
 
 const SUPPORTED_PROVIDERS = new Set(SYSTEM_AI_PROVIDERS);

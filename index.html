@@ -553,7 +553,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:
   <div class="admin-page-tabs"><button class="admin-page-tab" type="button" onclick="openAdminDashboard()">협력사/과제 관리</button><button class="admin-page-tab" type="button" onclick="openAdminUserManagement()">협력사/사용자 관리</button><button class="admin-page-tab on" type="button" onclick="openAdminAiSettings()">AI API 관리</button></div>
   <div class="card">
     <div class="card-title">AI API 등록 <span class="ct-b">AES-256-GCM 암호화 · 연결 확인 후 저장</span></div>
-    <div style="font-size:12px;color:var(--mt);line-height:1.7;margin-bottom:14px">Gemini, OpenAI, Claude, OpenRouter, GitHub Models를 등록할 수 있습니다. <b>기본</b> API는 오류 시 2회 더 재시도하고, 그래도 실패하면 <b>2순위 → 3순위</b>로 자동 전환됩니다.</div>
+    <div style="font-size:12px;color:var(--mt);line-height:1.7;margin-bottom:14px">Gemini, OpenAI, Claude, OpenRouter, Groq를 등록할 수 있습니다. <b>기본</b> API는 오류 시 2회 더 재시도하고, 그래도 실패하면 <b>2순위 → 3순위</b>로 자동 전환됩니다.</div>
     <div class="frow">
       <div class="fg"><label class="fl" for="adminAiProvider">프로바이더 <span class="req">*</span></label><select class="fi" id="adminAiProvider" onchange="syncAdminAiModelPlaceholder()"></select></div>
       <div class="fg"><label class="fl" for="adminAiDisplayName">표시 이름</label><input class="fi" id="adminAiDisplayName" maxlength="120" placeholder="예: 운영용 Gemini"></div>
@@ -1490,8 +1490,8 @@ async function startApplication(){
   await openProjectList();
 }
 
-const aiEngineLabels={gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude',openrouter:'OpenRouter',github:'GitHub Models'};
-const aiEngineModelHints={gemini:'gemini-3.5-flash-lite',chatgpt:'gpt-5-nano',claude:'claude-sonnet-5',openrouter:'openai/gpt-4o-mini',github:'openai/gpt-4o-mini'};
+const aiEngineLabels={gemini:'Gemini',chatgpt:'OpenAI',claude:'Claude',openrouter:'OpenRouter',groq:'Groq'};
+const aiEngineModelHints={gemini:'gemini-3.5-flash-lite',chatgpt:'gpt-5-nano',claude:'claude-sonnet-5',openrouter:'openai/gpt-4o-mini',groq:'openai/gpt-oss-120b'};
 let adminAiCredentials=[];
 async function refreshAIConnectionState(){
   if(!appState.authenticated||appState.isAdmin){appState.aiConnections={available:false};return null;}
