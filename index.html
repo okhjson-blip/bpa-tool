@@ -1077,8 +1077,30 @@ async function apiRequest(path,options={}){
   const text=await response.text();
   let result={};
   try{result=text?JSON.parse(text):{};}catch{result={error:text||'서버 응답을 해석할 수 없습니다.'};}
-  if(!response.ok){const error=new Error(result.error||('서버가 빈 오류 응답을 반환했습니다. (HTTP '+response.status+')'));error.code=result.code;error.status=response.status;error.issues=result.issues||(result.errors||[]).map(item=>item.msg||String(item));throw error;}
+  if(!response.ok){const error=new Error(result.error||('서버가 빈 오류 응답을 반환했습니다. (HTTP '+response.status+')'));error.code=result.code;error.status=response.status;error.retry=Boolean(result.retry);error.issues=result.issues||(result.errors||[]).map(item=>item.msg||String(item));throw error;}
   return result;
+}
+function isAiConnectionFailure(error){
+  const code=String(error?.code||'');
+  if(error?.retry)return true;
+  if(['AI_CONNECTION_FAILED','AI_CREDENTIAL_NOT_FOUND','AI_CREDENTIAL_DECRYPT_FAILED','AI_QUOTA_EXHAUSTED'].includes(code))return true;
+  const status=Number(error?.status||0);
+  const message=String(error?.message||'');
+  return (status===502||status===503)&&/AI|API|연결|한도|quota|rate limit/i.test(message);
+}
+function notifyAiConnectionFailure(error,operationLabel='AI 분석'){
+  const issues=error?.issues?.length
+    ? error.issues
+    : [
+      operationLabel+'을(를) 위한 AI API 연결에 실패했습니다.',
+      error?.message||'일시적인 연결 문제일 수 있습니다.',
+      '잠시 후 다시 시도해 주세요.'
+    ];
+  const guidance=issues.some(item=>/다시 시도|재시도|문의해/.test(String(item)))
+    ? issues
+    : [...issues,'잠시 후 다시 시도해 주세요.'];
+  showValidationPopup('AI API 연결 실패',guidance,{confirmLabel:'다시 시도하기'});
+  return guidance[0]||'AI API 연결에 실패했습니다.';
 }
 // 네트워크 단절이나 콜드스타트 같은 일시적 실패를 인증 실패와 구분해 재시도한다.
 function isTransientApiError(error){
@@ -1836,10 +1858,12 @@ const participantRoles={
   project:['프로젝트 리더','프로젝트 담당자','컨설턴트'],
   task:['과제 리더','과제 담당자']
 };
-function showValidationPopup(title,issues){
+function showValidationPopup(title,issues,options={}){
   const normalized=[...new Set((issues||[]).filter(Boolean))];
   document.getElementById('validationPopupTitle').textContent=title;
   document.getElementById('validationPopupList').innerHTML=normalized.map(issue=>'<li>'+escapeHtml(issue)+'</li>').join('');
+  const confirmButton=document.getElementById('validationPopupConfirm');
+  if(confirmButton)confirmButton.textContent=options.confirmLabel||'확인';
   document.getElementById('validationPopup').classList.add('open');
 }
 function closeValidationPopup(){
@@ -2035,8 +2059,23 @@ async function openTaskList(name,projectId=ctx.projectId){
 function openTaskListCurrent(){ openTaskList(ctx.project||'',ctx.projectId); }
 
 async function ensureProjectAIConnection(){
-  try{await refreshAIConnectionState();}catch(error){alert(error.message||'시스템 AI API 상태를 확인할 수 없습니다.');return false;}
-  if(!appState.aiConnections?.available){alert('시스템 관리자가 등록한 활성 AI API가 없습니다. 관리자에게 AI API 등록을 요청해 주세요.');return false;}
+  try{await refreshAIConnectionState();}
+  catch(error){
+    notifyAiConnectionFailure({
+      code:'AI_CONNECTION_FAILED',
+      retry:true,
+      issues:['AI API 상태를 확인할 수 없습니다.',error.message||'네트워크 상태를 확인해 주세요.','잠시 후 다시 시도해 주세요.']
+    },'AI API 상태 확인');
+    return false;
+  }
+  if(!appState.aiConnections?.available){
+    notifyAiConnectionFailure({
+      code:'AI_CREDENTIAL_NOT_FOUND',
+      retry:true,
+      issues:['시스템 관리자가 등록한 활성 AI API가 없습니다.','관리자에게 AI API 등록을 요청한 뒤 다시 시도해 주세요.']
+    },'AI 분석');
+    return false;
+  }
   return true;
 }
 
@@ -2266,7 +2305,10 @@ async function generateAIDraft(){
     renderDraftTable();
     await clearPanelDraft('interview_answers');
     status.style.color='var(--s)';status.textContent='✓ '+draft.analysis.model_used+' Draft '+ctx.processes.length+'건 생성·저장 완료';
-  }catch(error){status.style.color='var(--d)';status.textContent='✕ '+error.message;}
+  }catch(error){
+    const message=isAiConnectionFailure(error)?notifyAiConnectionFailure(error,'AI Draft 생성'):error.message;
+    status.style.color='var(--d)';status.textContent='✕ '+message+(isAiConnectionFailure(error)?' · 다시 시도해 주세요.':'');
+  }
   finally{button.disabled=false;button.textContent='✨ AI Draft 생성 →';}
 }
 
@@ -2458,7 +2500,10 @@ async function openBDWStep(){
   try{
     ctx.bdwMeta=await apiRequest('/analysis/project/'+ctx.projectId+'/bdw/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId})});
     await loadBDW();go(4);
-  }catch(error){alert(error.message);}finally{button.disabled=false;button.textContent='BDW 진단 →';}
+  }catch(error){
+    if(isAiConnectionFailure(error))notifyAiConnectionFailure(error,'BDW 진단');
+    else alert(error.message);
+  }finally{button.disabled=false;button.textContent='BDW 진단 →';}
 }
 function renderAIFit(result){
   const processOrder=new Map((ctx.processes||[]).filter(process=>process.level==='L6').map((process,index)=>[Number(process.id),index]));
@@ -2534,7 +2579,10 @@ async function runAIFit(){
   try{
     const result=await apiRequest('/analysis/project/'+ctx.projectId+'/ai-fit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:ctx.taskId})});
     ctx.acceptedAiProcessIds=[];ctx.toBeApplied=false;ctx.report=null;renderAIFit(result);go(5);
-  }catch(error){alert(error.message);}finally{button.disabled=false;button.textContent='✓ 프로세스 확정 & AI FIT 분석 →';}
+  }catch(error){
+    if(isAiConnectionFailure(error))notifyAiConnectionFailure(error,'AI FIT 분석');
+    else alert(error.message);
+  }finally{button.disabled=false;button.textContent='✓ 프로세스 확정 & AI FIT 분석 →';}
 }
 
 function renderReport(report){
@@ -2798,7 +2846,7 @@ bootstrapApplication();
     <button class="popup-close" onclick="closeValidationPopup()">✕</button>
     <div class="popup-title" id="validationPopupTitle">입력 정보를 보완해 주세요</div>
     <ul class="validation-list" id="validationPopupList"></ul>
-    <div style="text-align:right;margin-top:14px"><button class="btn btn-p" type="button" onclick="closeValidationPopup()">확인</button></div>
+    <div style="text-align:right;margin-top:14px"><button class="btn btn-p" id="validationPopupConfirm" type="button" onclick="closeValidationPopup()">확인</button></div>
   </div>
 </div>
 

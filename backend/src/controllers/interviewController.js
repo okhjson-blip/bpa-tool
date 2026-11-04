@@ -1,6 +1,7 @@
 import { db } from '../config/database.js';
 import maskSensitiveData from '../middleware/dataMasking.js';
 import { analyzeInterviewWithSystemAi } from '../services/systemAiRunner.js';
+import { sendAiConnectionFailure } from '../utils/aiConnectionError.js';
 import { normalizeProcessToolFields } from '../utils/processTool.js';
 
 export const createInterview = async (req, res) => {
@@ -169,7 +170,7 @@ export const analyzeInterview = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(502).json({ error: error.message || 'AI 분석 중 오류가 발생했습니다' });
+    return sendAiConnectionFailure(res, error, 'AI Draft 생성');
   }
 };
 

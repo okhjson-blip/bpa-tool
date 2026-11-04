@@ -1,6 +1,7 @@
 import { db } from '../config/database.js';
 import { buildTaskCsvContent, buildTaskReport } from '../services/reportService.js';
 import { analyzeAIFitWithSystemAi, analyzeBDWWithSystemAi } from '../services/systemAiRunner.js';
+import { sendAiConnectionFailure } from '../utils/aiConnectionError.js';
 import { resolveAiFitSavings, toBeExecutionMinutes } from '../utils/aiFitTime.js';
 
 async function getTaskL6Processes(projectId, taskId) {
@@ -92,7 +93,7 @@ export const analyzeBDW = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(502).json({ error: error.message || 'BDW AI 진단 중 오류가 발생했습니다.' });
+    return sendAiConnectionFailure(res, error, 'BDW 진단');
   }
 };
 
@@ -232,7 +233,7 @@ export const analyzeAIFit = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(502).json({ error: error.message || 'AI FIT 분석 중 오류' });
+    return sendAiConnectionFailure(res, error, 'AI FIT 분석');
   }
 };
 
