@@ -97,8 +97,9 @@ function withRankLabels(credentials) {
 async function nextFallbackPriority() {
   const rows = await serviceDb.select('system_ai_credentials');
   const nonDefaults = rows.filter((row) => !row.is_default);
-  if (!nonDefaults.length) return 1;
-  return Math.max(...nonDefaults.map((row) => Number(row.priority) || 0)) + 1;
+  // DB check: priority >= 1. 기본=1, 나머지는 2부터.
+  if (!nonDefaults.length) return 2;
+  return Math.max(2, ...nonDefaults.map((row) => Number(row.priority) || 1)) + 1;
 }
 
 async function clearDefaultFlags(exceptId = null) {
@@ -188,7 +189,7 @@ export async function saveSystemCredential({
 
   const shouldBeDefault = makeDefault || existingRows.length === 0;
   values.is_default = false;
-  values.priority = shouldBeDefault ? 0 : await nextFallbackPriority();
+  values.priority = shouldBeDefault ? 1 : await nextFallbackPriority();
   const inserted = await serviceDb.insert('system_ai_credentials', values);
   if (shouldBeDefault) {
     await setDefaultSystemCredential(inserted.id);
@@ -215,17 +216,17 @@ export async function setDefaultSystemCredential(id) {
   await clearDefaultFlags(existing.id);
   const updated = await serviceDb.update('system_ai_credentials', existing.id, {
     is_default: true,
-    priority: 0
+    priority: 1
   });
 
-  // 나머지 API의 순위 번호를 2순위부터 재정렬한다.
+  // 나머지 API의 순위 번호를 2부터 재정렬한다(화면 라벨: 2순위, 3순위...).
   const others = sortCredentials(
     (await serviceDb.select('system_ai_credentials')).filter((row) => Number(row.id) !== Number(existing.id))
   );
   await Promise.all(others.map((row, index) =>
     serviceDb.update('system_ai_credentials', row.id, {
       is_default: false,
-      priority: index + 1
+      priority: index + 2
     })
   ));
 
@@ -253,12 +254,12 @@ export async function reorderSystemCredentials(orderedIds) {
     .map((row) => Number(row.id));
 
   await clearDefaultFlags(defaultId);
-  await serviceDb.update('system_ai_credentials', defaultId, { is_default: true, priority: 0 });
+  await serviceDb.update('system_ai_credentials', defaultId, { is_default: true, priority: 1 });
   const orderedFallback = [...fallbackIds, ...missingFallback];
   await Promise.all(orderedFallback.map((id, index) =>
     serviceDb.update('system_ai_credentials', id, {
       is_default: false,
-      priority: index + 1
+      priority: index + 2
     })
   ));
 
